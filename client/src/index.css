@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --primary-dark: hsl(213, 87%, 42%);
+  --primary-light: hsl(205, 82%, 59%);
+  --secondary: hsl(142, 76%, 36%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(30, 100%, 48%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  --surface: hsl(0, 0%, 100%);
+  --background-alt: hsl(0, 0%, 98%);
+  --error: hsl(0, 84%, 50%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --primary-dark: hsl(213, 87%, 42%);
+  --primary-light: hsl(205, 82%, 59%);
+  --secondary: hsl(142, 76%, 36%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(30, 100%, 48%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --surface: hsl(240, 10%, 3.9%);
+  --background-alt: hsl(240, 10%, 6%);
+  --error: hsl(0, 84%, 50%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-primary {
+    color: hsl(var(--primary));
+  }
+  
+  .text-primary-dark {
+    color: hsl(var(--primary-dark));
+  }
+  
+  .text-secondary {
+    color: hsl(var(--secondary));
+  }
+  
+  .text-accent {
+    color: hsl(var(--accent));
+  }
+  
+  .text-error {
+    color: hsl(var(--error));
+  }
+  
+  .bg-primary {
+    background-color: hsl(var(--primary));
+  }
+  
+  .bg-primary-dark {
+    background-color: hsl(var(--primary-dark));
+  }
+  
+  .bg-secondary {
+    background-color: hsl(var(--secondary));
+  }
+  
+  .bg-accent {
+    background-color: hsl(var(--accent));
+  }
+  
+  .bg-error {
+    background-color: hsl(var(--error));
+  }
+  
+  .bg-surface {
+    background-color: hsl(var(--surface));
+  }
+  
+  .bg-background-alt {
+    background-color: hsl(var(--background-alt));
+  }
+  
+  .border-primary {
+    border-color: hsl(var(--primary));
+  }
+  
+  .shadow-card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .shadow-card-hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  
+  .hover\:bg-primary-dark:hover {
+    background-color: hsl(var(--primary-dark));
+  }
+  
+  .focus\:ring-primary:focus {
+    --tw-ring-color: hsl(var(--primary));
+  }
+}
