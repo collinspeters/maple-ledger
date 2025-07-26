@@ -1,0 +1,53 @@
+You are building an AI-powered bookkeeping software specifically designed for sole proprietors in Canada.
+
+The software helps users automatically manage their business finances with minimal manual effort. It leverages GPT-4, OCR, and real-time financial logic to automate expense tracking, categorize transactions, and generate CRA-ready reports. It uses a subscription model costing $25 per month with a 14-day free trial and no free plan.
+
+### Target User:
+Canadian sole proprietors who manage their own business finances and need a simple, smart, and automated way to stay on top of income, expenses, receipts, and taxes.
+
+---
+
+## 💡 Key Features:
+
+### 1. **AI Transaction Categorization**
+- Uses GPT-4 to automatically categorize transactions based on vendor, amount, and description.
+- Provides a confidence score and explanation for audit purposes.
+- Stores suggestions with each transaction.
+
+### 2. **Smart Receipt Upload & Matching**
+- Users can upload images or PDFs of receipts.
+- OCR (Mindee) extracts data like vendor, date, and amount.
+- The system tries to automatically match the receipt to an existing transaction (exact amount/date/vendor).
+- Unmatched receipts go to a review queue for manual linking.
+
+### 3. **Bank Feed Integration**
+- Connects to Canadian bank accounts using Plaid.
+- Automatically imports transactions daily.
+- Each imported transaction is categorized by AI and marked for review.
+
+### 4. **Natural Language AI Chat**
+- Users can ask financial questions in plain English (e.g., "How much did I spend on meals last quarter?")
+- GPT-4 converts questions to SQL, queries the database, and responds with a clear summary.
+- Supports queries across P&L, GST, expenses, cash flow, and monthly trends.
+
+### 5. **Financial Reporting (CRA-Ready)**
+- Profit & Loss, Balance Sheet, GST/HST Summary
+- Exportable to PDF and filterable by fiscal period
+- All reports formatted to meet Canadian tax requirements
+
+### 6. **Audit Trail**
+- Every AI-generated suggestion (categorization, match, chat response) is stored with time, confidence level, and optional user override.
+- Full data traceability for CRA audits.
+
+### 7. **Subscription & Access Control**
+- Users receive a 14-day free trial upon signup.
+- After trial ends, access is restricted unless subscribed to a paid plan.
+- Stripe integration handles billing, renewals, and plan enforcement.
+
+### 8. **Multi-Device Access + Secure Hosting**
+- Responsive UI for mobile and desktop
+- Canadian data residency optional but not required
+- Full HTTPS and environment-based configuration
+
+---
+
