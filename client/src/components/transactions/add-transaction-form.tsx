@@ -83,29 +83,38 @@ export default function AddTransactionForm() {
 
   if (!showForm) {
     return (
-      <Card>
-        <CardContent className="p-6">
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>Quick Add</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <Button 
             onClick={() => setShowForm(true)}
-            className="w-full"
+            className="w-full bg-primary hover:bg-primary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Transaction
           </Button>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            AI will categorize using T2125 tax codes
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Plus className="h-5 w-5" />
           <span>Add New Transaction</span>
           <Badge variant="secondary" className="ml-auto">
             <Brain className="h-3 w-3 mr-1" />
-            AI Categorization
+            AI T2125
           </Badge>
         </CardTitle>
       </CardHeader>
