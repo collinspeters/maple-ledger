@@ -300,6 +300,8 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  date: z.string().transform((str) => new Date(str)),
 });
 
 export const insertReceiptSchema = createInsertSchema(receipts).omit({

@@ -23,7 +23,7 @@ export default function QuickAddTransaction() {
           amount: parseFloat(amount).toFixed(2),
           vendor: vendor.trim(),
           description: description.trim(),
-          date: new Date(date).toISOString(),
+          date: date,
           isExpense: true,
         }),
       });
