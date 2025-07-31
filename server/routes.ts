@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
 import session from "express-session";
@@ -12,13 +12,16 @@ import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
 import { categorizeTransaction, processFinancialQuery, extractReceiptData } from "./services/openai";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
-import { insertUserSchema, insertTransactionSchema, insertBankConnectionSchema } from "@shared/schema";
+import { insertUserSchema, insertTransactionSchema, insertBankConnectionSchema, type User } from "@shared/schema";
 import { z } from "zod";
 
+// Extend Express Request to include authenticated user
+interface AuthenticatedRequest extends Request {
+  user: User;
+}
+
 // Stripe setup
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_KEY || "default_key", {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_KEY || "default_key");
 
 // Multer setup for file uploads
 const upload = multer({ 
@@ -77,19 +80,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth middleware
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated()) {
+  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (req.isAuthenticated() && req.user) {
       return next();
     }
     res.status(401).json({ message: "Authentication required" });
   };
 
-  const requireSubscription = (req: any, res: any, next: any) => {
+  const requireSubscription = (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
     
-    if (!checkSubscriptionAccess(req.user)) {
+    if (!checkSubscriptionAccess(req.user as User)) {
       return res.status(403).json({ 
         message: "Subscription required", 
         trialExpired: true 
@@ -141,13 +144,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/login", passport.authenticate('local'), (req, res) => {
+    const user = req.user as User;
     res.json({ 
       user: { 
-        id: req.user.id, 
-        email: req.user.email, 
-        username: req.user.username,
-        businessName: req.user.businessName,
-        subscriptionStatus: req.user.subscriptionStatus 
+        id: user.id, 
+        email: user.email, 
+        username: user.username,
+        businessName: user.businessName,
+        subscriptionStatus: user.subscriptionStatus 
       } 
     });
   });
@@ -162,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/me", requireAuth, (req, res) => {
-    const user = req.user as any;
+    const user = req.user as User;
     res.json({ 
       user: { 
         id: user.id, 
@@ -180,7 +184,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction routes
   app.get("/api/transactions", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const transactions = await storage.getTransactions(req.user.id);
+      const user = req.user as User;
+      const transactions = await storage.getTransactions(user.id);
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch transactions" });
@@ -189,9 +194,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/transactions", requireAuth, requireSubscription, async (req, res) => {
     try {
+      const user = req.user as User;
       const transactionData = insertTransactionSchema.parse({
         ...req.body,
-        userId: req.user.id,
+        userId: user.id,
       });
       
       // Get AI categorization if no category provided
@@ -210,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Store AI suggestion
         await storage.createAiSuggestion({
-          userId: req.user.id,
+          userId: user.id,
           suggestionType: "categorization",
           originalPrompt: `${transactionData.vendor} - ${transactionData.description}`,
           aiResponse: aiResult,
@@ -255,7 +261,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Receipt routes
   app.get("/api/receipts", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const receipts = await storage.getReceipts(req.user.id);
+      const user = req.user as User;
+      const receipts = await storage.getReceipts(user.id);
       res.json(receipts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch receipts" });
@@ -264,13 +271,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/receipts/upload", requireAuth, requireSubscription, upload.single('receipt'), async (req, res) => {
     try {
+      const user = req.user as User;
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
       // Create receipt record
       const receipt = await storage.createReceipt({
-        userId: req.user.id,
+        userId: user.id,
         fileName: req.file.originalname,
         filePath: req.file.path,
         status: "processing",
@@ -281,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       setTimeout(async () => {
         try {
           // Simulate OCR text extraction
-          const mockOcrText = `${req.file.originalname} - Receipt processing simulation`;
+          const mockOcrText = `${req.file!.originalname} - Receipt processing simulation`;
           
           const extractedData = await extractReceiptData(mockOcrText);
           
@@ -309,12 +317,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Financial summary route
   app.get("/api/financial-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
+      const user = req.user as User;
       const { startDate, endDate } = req.query;
       
       const start = startDate ? new Date(startDate as string) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       const end = endDate ? new Date(endDate as string) : new Date();
       
-      const summary = await storage.getFinancialSummary(req.user.id, start, end);
+      const summary = await storage.getFinancialSummary(user.id, start, end);
       res.json(summary);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch financial summary" });
@@ -324,6 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Chat route
   app.post("/api/chat", requireAuth, requireSubscription, async (req, res) => {
     try {
+      const user = req.user as User;
       const { message } = req.body;
       
       if (!message) {
@@ -332,24 +342,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save user message
       await storage.createChatMessage({
-        userId: req.user.id,
+        userId: user.id,
         message,
         isFromUser: true,
       });
 
       // Get financial context
       const summary = await storage.getFinancialSummary(
-        req.user.id,
+        user.id,
         new Date(new Date().getFullYear(), 0, 1), // Start of year
         new Date()
       );
 
       // Process with AI
-      const aiResponse = await processFinancialQuery(message, req.user.id, summary);
+      const aiResponse = await processFinancialQuery(message, user.id, summary);
 
       // Save AI response
       await storage.createChatMessage({
-        userId: req.user.id,
+        userId: user.id,
         message: aiResponse.response,
         isFromUser: false,
       });
@@ -362,7 +372,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/chat/history", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const history = await storage.getChatHistory(req.user.id);
+      const user = req.user as User;
+      const history = await storage.getChatHistory(user.id);
       res.json(history);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch chat history" });
@@ -372,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe subscription routes
   app.post("/api/create-subscription", requireAuth, async (req, res) => {
     try {
-      let user = req.user as any;
+      let user = req.user as User;
 
       if (user.stripeSubscriptionId) {
         const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
@@ -414,7 +425,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Plaid Bank Integration Routes
   app.post("/api/plaid/create-link-token", requireAuth, async (req, res) => {
     try {
-      const linkToken = await createLinkToken(req.user.id);
+      const user = req.user as User;
+      const linkToken = await createLinkToken(user.id);
       res.json({ link_token: linkToken });
     } catch (error) {
       console.error("Error creating link token:", error);
@@ -439,8 +451,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store bank connections for each account
       const connections = [];
       for (const account of accountsData.accounts) {
+        const user = req.user as User;
         const connectionData = {
-          userId: req.user.id,
+          userId: user.id,
           plaidItemId: accountsData.item.item_id,
           plaidAccessToken: accessToken,
           bankName: accountsData.item.institution_id || "Unknown Bank",
@@ -467,7 +480,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/plaid/sync-transactions", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const connections = await storage.getBankConnections(req.user.id);
+      const user = req.user as User;
+      const connections = await storage.getBankConnections(user.id);
       
       if (connections.length === 0) {
         return res.status(400).json({ message: "No bank connections found" });
@@ -480,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Sync transactions from the last sync date
           const newTransactions = await syncTransactions(
             connection.plaidAccessToken, 
-            req.user.id, 
+            user.id, 
             connection.lastSyncAt || undefined
           );
 
@@ -517,7 +531,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bank connections management
   app.get("/api/bank-connections", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const connections = await storage.getBankConnections(req.user.id);
+      const user = req.user as User;
+      const connections = await storage.getBankConnections(user.id);
       res.json(connections);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch bank connections" });
