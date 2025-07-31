@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { T2125_CATEGORIES, getExpenseCategories, getIncomeCategories } from "@shared/t2125-categories";
 
 interface Transaction {
   id: string;
@@ -81,20 +82,10 @@ export default function TransactionReviewQueue() {
     },
   });
 
-  const categories = [
-    "Office Supplies",
-    "Meals & Entertainment", 
-    "Travel & Transportation",
-    "Professional Services",
-    "Marketing & Advertising",
-    "Utilities",
-    "Rent",
-    "Insurance",
-    "Revenue",
-    "Subscriptions",
-    "Equipment",
-    "Other"
-  ];
+  // Get official T2125 categories
+  const expenseCategories = getExpenseCategories();
+  const incomeCategories = getIncomeCategories();
+  const allCategories = [...expenseCategories, ...incomeCategories];
 
   const toggleSelection = (transactionId: string) => {
     setSelectedTransactions(prev => 
@@ -248,7 +239,10 @@ export default function TransactionReviewQueue() {
                         <div>
                           <span className="text-sm text-gray-600">AI Suggests:</span>
                           <Badge variant="outline" className="ml-2">
-                            {transaction.aiCategory}
+                            {(() => {
+                              const category = T2125_CATEGORIES.find(cat => cat.code === transaction.aiCategory);
+                              return category ? category.name : transaction.aiCategory;
+                            })()}
                           </Badge>
                         </div>
                         
@@ -268,13 +262,26 @@ export default function TransactionReviewQueue() {
                             recategorizeMutation.mutate({ id: transaction.id, category })
                           }
                         >
-                          <SelectTrigger className="w-48">
+                          <SelectTrigger className="w-64">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category}
+                            <div className="text-xs font-semibold text-gray-500 px-2 py-1">Expense Categories</div>
+                            {expenseCategories.map((category) => (
+                              <SelectItem key={category.code} value={category.code}>
+                                <div>
+                                  <div className="font-medium">{category.name}</div>
+                                  <div className="text-xs text-gray-500">{category.description}</div>
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <div className="text-xs font-semibold text-gray-500 px-2 py-1 border-t mt-1">Income Categories</div>
+                            {incomeCategories.map((category) => (
+                              <SelectItem key={category.code} value={category.code}>
+                                <div>
+                                  <div className="font-medium">{category.name}</div>
+                                  <div className="text-xs text-gray-500">{category.description}</div>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>

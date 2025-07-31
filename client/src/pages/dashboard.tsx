@@ -4,6 +4,7 @@ import AiAssistant from "@/components/dashboard/ai-assistant";
 import ReceiptUpload from "@/components/dashboard/receipt-upload";
 import QuickActions from "@/components/dashboard/quick-actions";
 import TransactionReviewQueue from "@/components/transactions/transaction-review-queue";
+import AddTransactionForm from "@/components/transactions/add-transaction-form";
 
 export default function Dashboard() {
   return (
@@ -17,6 +18,7 @@ export default function Dashboard() {
         </div>
         
         <div className="space-y-6">
+          <AddTransactionForm />
           <AiAssistant />
           <ReceiptUpload />
           <QuickActions />

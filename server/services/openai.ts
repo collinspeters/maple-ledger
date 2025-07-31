@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { T2125_CATEGORIES, getExpenseCategories, getIncomeCategories, TRANSACTION_MAPPINGS, type T2125Category } from "@shared/t2125-categories";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -25,7 +26,19 @@ export async function categorizeTransaction(
   enrichedContext?: string
 ): Promise<TransactionCategorizationResult> {
   try {
-    const prompt = `You are an AI bookkeeper categorizing transactions for a Canadian sole proprietor.
+    // Generate the category list from official T2125 categories
+    const expenseCategories = getExpenseCategories();
+    const incomeCategories = getIncomeCategories();
+    
+    const categoryList = expenseCategories.map(cat => 
+      `- ${cat.name} (${cat.code}): ${cat.description}${cat.notes ? ` - ${cat.notes}` : ''}`
+    ).join('\n');
+    
+    const incomeList = incomeCategories.map(cat =>
+      `- ${cat.name} (${cat.code}): ${cat.description}`
+    ).join('\n');
+
+    const prompt = `You are an AI bookkeeper categorizing transactions for a Canadian sole proprietor using official T2125 tax form categories.
 
 Transaction Details:
 - Raw Description: ${description}
@@ -33,35 +46,29 @@ Transaction Details:
 - Amount: $${amount}
 ${enrichedContext ? `- Enriched Context: ${enrichedContext}` : ''}
 
-Available Categories:
-- Office Supplies: stationery, software, equipment under $500
-- Meals & Entertainment: business meals (50% deductible), client entertainment  
-- Travel & Transportation: business travel, gas, parking, public transit
-- Professional Services: legal, accounting, consulting fees
-- Marketing & Advertising: ads, promotional materials, website costs
-- Utilities: internet, phone, electricity for business
-- Rent: office space, equipment rental
-- Insurance: business insurance premiums
-- Revenue: income from clients, sales
-- Subscriptions: software subscriptions, online services
-- Equipment: business equipment over $500
-- Other: miscellaneous business expenses
+OFFICIAL T2125 EXPENSE CATEGORIES (choose from these only):
+${categoryList}
 
-Based on the transaction details and enriched context, determine the most accurate category.
+INCOME CATEGORIES:
+${incomeList}
+
+IMPORTANT RULES:
+- Use ONLY the category codes provided above (e.g., "OFFICE_EXPENSES", "MEALS_ENTERTAINMENT")
+- For income transactions, use "BUSINESS_INCOME" or "PROFESSIONAL_INCOME"
+- Consider Canadian tax compliance and T2125 form requirements
+- Use enriched merchant context to improve accuracy
+- Set confidence higher (0.8+) when merchant context clearly indicates business type
+- Remember: MEALS_ENTERTAINMENT is only 50% deductible, VEHICLE_EXPENSES require business use logs
+
+Based on the transaction details and enriched context, determine the most accurate T2125 category.
 
 Respond with JSON in this exact format:
 {
-  "category": "Office Supplies",
+  "category": "OFFICE_EXPENSES",
   "confidence": 0.95,
-  "explanation": "Brief explanation of why this category was chosen based on the merchant context",
+  "explanation": "Brief explanation of why this T2125 category was chosen based on merchant context and tax rules",
   "isExpense": true
-}
-
-Consider:
-- Canadian tax rules and CRA guidelines
-- The enriched merchant context to improve accuracy
-- Common business expense patterns
-- Set confidence higher (0.8+) when enriched context clearly indicates the business type`;
+}`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -72,8 +79,11 @@ Consider:
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
+    // Validate that the returned category exists in our T2125 categories
+    const validCategory = T2125_CATEGORIES.find(cat => cat.code === result.category);
+    
     return {
-      category: result.category || "Other",
+      category: validCategory ? result.category : "OTHER_EXPENSES",
       confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
       explanation: result.explanation || "Unable to categorize automatically",
       isExpense: result.isExpense !== false, // Default to expense
@@ -81,7 +91,7 @@ Consider:
   } catch (error) {
     console.error("OpenAI categorization error:", error);
     return {
-      category: "Other",
+      category: "OTHER_EXPENSES",
       confidence: 0,
       explanation: "AI categorization failed - manual review required",
       isExpense: true,

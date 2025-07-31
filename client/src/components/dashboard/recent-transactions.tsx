@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { T2125_CATEGORIES } from "@shared/t2125-categories";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -64,11 +65,15 @@ export default function RecentTransactions() {
       );
     }
 
+    // Get the display name from T2125 categories
+    const t2125Category = T2125_CATEGORIES.find(cat => cat.code === category);
+    const displayName = t2125Category ? t2125Category.name : category;
+
     if (confidence >= 0.9) {
       return (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
           <Brain className="mr-1 h-3 w-3" />
-          {category}
+          {displayName}
         </span>
       );
     }
@@ -76,7 +81,7 @@ export default function RecentTransactions() {
     return (
       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
         <Check className="mr-1 h-3 w-3" />
-        {category}
+        {displayName}
       </span>
     );
   };
