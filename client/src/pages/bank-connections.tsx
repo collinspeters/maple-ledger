@@ -1,36 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Trash2, Plus, RefreshCw, Building2, CreditCard } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { 
+  Building2, 
+  CreditCard, 
+  RefreshCw, 
+  Trash2,
+  Plus,
+  CheckCircle,
+  Clock
+} from "lucide-react";
 
-interface BankConnection {
+type BankConnection = {
   id: string;
   bankName: string;
   accountName: string;
   accountType: string;
   accountMask: string | null;
   lastSyncAt: string | null;
-  isActive: boolean;
-}
+};
 
 export default function BankConnections() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [linkToken, setLinkToken] = useState<string | null>(null);
 
   // Fetch bank connections
   const { data: connections = [], isLoading } = useQuery<BankConnection[]>({
     queryKey: ["/api/bank-connections"],
-  });
-
-  // Fetch link token for Plaid Link
-  const { data: linkTokenData } = useQuery({
-    queryKey: ["/api/plaid/create-link-token"],
-    enabled: false, // Only fetch when needed
   });
 
   // Delete bank connection mutation
@@ -40,8 +42,8 @@ export default function BankConnections() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       toast({
-        title: "Bank Connection Removed",
-        description: "Your bank account has been disconnected successfully.",
+        title: "Connection Removed",
+        description: "Bank connection has been successfully removed.",
       });
     },
     onError: () => {
@@ -81,14 +83,20 @@ export default function BankConnections() {
       const response = await fetch("/api/plaid/exchange-public-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ public_token })
-      }).then(res => res.json()) as { connections: number };
+      });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json() as { connections: number };
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       
       toast({
         title: "Bank Connected!",
-        description: `Successfully connected ${response.connections} bank account(s).`,
+        description: `Successfully connected ${result.connections} bank account(s).`,
       });
     } catch (error) {
       toast({
@@ -101,18 +109,15 @@ export default function BankConnections() {
     }
   };
 
-  // State for Plaid link token
-  const [currentLinkToken, setCurrentLinkToken] = useState<string | null>(null);
-
   // Initialize Plaid Link
   const { open, ready } = usePlaidLink({
-    token: currentLinkToken,
+    token: linkToken,
     onSuccess,
     onExit: (err) => {
       if (err) {
         console.error("Plaid Link Error:", err);
         toast({
-          title: "Connection Cancelled", 
+          title: "Connection Cancelled",
           description: "Bank connection was cancelled.",
           variant: "destructive",
         });
@@ -120,11 +125,6 @@ export default function BankConnections() {
       setIsConnecting(false);
     },
   });
-
-  // Debug effect to monitor ready state
-  useEffect(() => {
-    console.log("Plaid Link state:", { ready, hasToken: !!currentLinkToken, isConnecting });
-  }, [ready, currentLinkToken, isConnecting]);
 
   // Start connection process
   const startConnection = async () => {
@@ -145,16 +145,15 @@ export default function BankConnections() {
       const tokenResponse = await response.json() as { link_token: string };
       console.log("Received link token:", tokenResponse.link_token?.substring(0, 20) + "...");
       
-      // Set the token which will trigger usePlaidLink to update
-      setCurrentLinkToken(tokenResponse.link_token);
+      // Set token and open immediately
+      setLinkToken(tokenResponse.link_token);
       
-      // Wait for the hook to initialize with the new token, then open
+      // Small delay to ensure hook updates, then open
       setTimeout(() => {
-        console.log("Opening Plaid Link... ready:", ready, "token:", !!tokenResponse.link_token);
-        if (tokenResponse.link_token) {
-          open();
-        }
-      }, 500);
+        console.log("Opening Plaid Link... ready:", ready);
+        open();
+      }, 100);
+      
     } catch (error) {
       console.error("Failed to start connection:", error);
       setIsConnecting(false);
@@ -224,132 +223,82 @@ export default function BankConnections() {
       </div>
 
       {connections.length === 0 ? (
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-          <CardContent className="pt-8">
-            <div className="text-center py-12">
-              <div className="bg-primary/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Building2 className="h-12 w-12 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">No Bank Accounts Connected</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
-                Connect your Canadian bank accounts to automatically import transactions
-                and keep your books up to date.
-              </p>
-              <Button 
-                onClick={startConnection} 
-                disabled={isConnecting}
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 px-8 py-3"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                {isConnecting ? "Connecting..." : "Connect Your First Bank Account"}
-              </Button>
-              <div className="mt-6 text-sm text-gray-500">
-                🔒 Bank-level security • Instant synchronization • Canadian banks supported
-              </div>
-            </div>
+        <Card className="text-center py-12 shadow-lg border-gray-200 hover:shadow-xl transition-all duration-300">
+          <CardContent>
+            <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Bank Connections</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              Connect your Canadian bank accounts to automatically import and categorize transactions. 
+              We support RBC, TD, Scotiabank, BMO, CIBC, and more.
+            </p>
+            <Button
+              onClick={startConnection}
+              disabled={isConnecting}
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {isConnecting ? "Connecting..." : "Connect Your First Bank"}
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
-          {connections.map((connection: BankConnection) => (
-            <Card key={connection.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1 bg-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-gray-50 to-white">
-                <CardTitle className="text-lg font-semibold flex items-center text-gray-900">
-                  <div className="bg-primary/10 p-2 rounded-full mr-3">
+        <div className="grid gap-4">
+          {connections.map((connection) => (
+            <Card key={connection.id} className="shadow-sm border-gray-200 hover:shadow-md transition-all duration-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
                     {getAccountTypeIcon(connection.accountType)}
-                  </div>
-                  <div>
-                    <span>{connection.accountName}</span>
-                    {connection.accountMask && (
-                      <span className="ml-3 text-gray-500 font-normal">
-                        ****{connection.accountMask}
-                      </span>
-                    )}
-                  </div>
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteMutation.mutate(connection.id)}
-                  disabled={deleteMutation.isPending}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Bank</p>
-                    <p className="font-medium text-gray-900">{connection.bankName}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Account Type</p>
-                    <p className="font-medium text-gray-900">
-                      {connection.accountType.charAt(0).toUpperCase() + connection.accountType.slice(1)}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Last Sync</p>
-                    <p className="font-medium text-gray-900">{formatLastSync(connection.lastSyncAt)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Status</p>
-                    <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-2 ${
-                        connection.isActive ? "bg-green-500" : "bg-red-500"
-                      }`} />
-                      <span className={`font-medium ${
-                        connection.isActive ? "text-green-700" : "text-red-700"
-                      }`}>
-                        {connection.isActive ? "Active" : "Inactive"}
-                      </span>
+                    <div>
+                      <CardTitle className="text-lg text-gray-900">
+                        {connection.bankName}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">
+                        {connection.accountName}
+                        {connection.accountMask && ` ••••${connection.accountMask}`}
+                      </p>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge 
+                      variant={connection.lastSyncAt ? "default" : "secondary"}
+                      className={connection.lastSyncAt ? "bg-green-100 text-green-800" : ""}
+                    >
+                      {connection.lastSyncAt ? (
+                        <>
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Connected
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="h-3 w-3 mr-1" />
+                          Pending
+                        </>
+                      )}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteMutation.mutate(connection.id)}
+                      disabled={deleteMutation.isPending}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>Last sync: {formatLastSync(connection.lastSyncAt)}</span>
+                  <span className="capitalize">{connection.accountType} Account</span>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
-
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
-            <div className="bg-blue-100 p-2 rounded-full mr-3">
-              <Building2 className="h-5 w-5 text-blue-600" />
-            </div>
-            Supported Canadian Banks
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {[
-              "Royal Bank of Canada (RBC)",
-              "TD Canada Trust", 
-              "Bank of Nova Scotia",
-              "Bank of Montreal (BMO)",
-              "CIBC",
-              "National Bank of Canada",
-              "Desjardins",
-              "And many more..."
-            ].map((bank, index) => (
-              <div key={index} className="flex items-center space-x-2 p-2 bg-white rounded-lg shadow-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">{bank}</span>
-              </div>
-            ))}
-          </div>
-          <div className="bg-white p-4 rounded-lg border border-blue-200">
-            <p className="text-sm text-gray-600 flex items-center">
-              <span className="text-lg mr-2">🔒</span>
-              Your banking credentials are securely handled by Plaid and never stored on our servers.
-              All connections use bank-level encryption and security protocols.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
