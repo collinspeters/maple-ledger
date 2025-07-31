@@ -74,7 +74,6 @@ export async function getTransactions(accessToken: string, startDate: Date, endD
       access_token: accessToken,
       start_date: startDate.toISOString().split('T')[0],
       end_date: endDate.toISOString().split('T')[0],
-      count: 500,
     };
 
     const response = await plaidClient.transactionsGet(request);
