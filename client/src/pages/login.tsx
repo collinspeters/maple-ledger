@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Brain } from "lucide-react";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@bookkeepai.com");
+  const [password, setPassword] = useState("demo123");
   const { login, isLoginLoading } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,8 +68,8 @@ export default function Login() {
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary-dark"
-              disabled={isLoginLoading || !email || !password}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
+              disabled={isLoginLoading}
             >
               {isLoginLoading ? "Signing In..." : "Sign In"}
             </Button>
