@@ -15,7 +15,8 @@ import {
   type InsertAiSuggestion,
   type ChatMessage,
   type InsertChatMessage,
-  type BankConnection
+  type BankConnection,
+  type InsertBankConnection
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
@@ -271,6 +272,35 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(bankConnections)
       .where(eq(bankConnections.userId, userId));
+  }
+
+  async createBankConnection(connection: InsertBankConnection): Promise<BankConnection> {
+    const [newConnection] = await db
+      .insert(bankConnections)
+      .values(connection)
+      .returning();
+    return newConnection;
+  }
+
+  async updateBankConnection(id: string, updates: Partial<BankConnection>): Promise<BankConnection> {
+    const [connection] = await db
+      .update(bankConnections)
+      .set(updates)
+      .where(eq(bankConnections.id, id))
+      .returning();
+    return connection;
+  }
+
+  async deleteBankConnection(id: string): Promise<void> {
+    await db.delete(bankConnections).where(eq(bankConnections.id, id));
+  }
+
+  async getBankConnectionByPlaidItemId(plaidItemId: string): Promise<BankConnection | undefined> {
+    const [connection] = await db
+      .select()
+      .from(bankConnections)
+      .where(eq(bankConnections.plaidItemId, plaidItemId));
+    return connection || undefined;
   }
 }
 

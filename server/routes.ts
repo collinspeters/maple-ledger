@@ -11,7 +11,8 @@ import fs from "fs";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
 import { categorizeTransaction, processFinancialQuery, extractReceiptData } from "./services/openai";
-import { insertUserSchema, insertTransactionSchema } from "@shared/schema";
+import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
+import { insertUserSchema, insertTransactionSchema, insertBankConnectionSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Stripe setup
@@ -407,6 +408,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Plaid Bank Integration Routes
+  app.post("/api/plaid/create-link-token", requireAuth, async (req, res) => {
+    try {
+      const linkToken = await createLinkToken(req.user.id);
+      res.json({ link_token: linkToken });
+    } catch (error) {
+      console.error("Error creating link token:", error);
+      res.status(500).json({ message: "Failed to create link token" });
+    }
+  });
+
+  app.post("/api/plaid/exchange-public-token", requireAuth, async (req, res) => {
+    try {
+      const { public_token } = req.body;
+      
+      if (!public_token) {
+        return res.status(400).json({ message: "Public token is required" });
+      }
+
+      // Exchange public token for access token
+      const accessToken = await exchangePublicToken(public_token);
+      
+      // Get account information
+      const accountsData = await getAccounts(accessToken);
+      
+      // Store bank connections for each account
+      const connections = [];
+      for (const account of accountsData.accounts) {
+        const connectionData = {
+          userId: req.user.id,
+          plaidItemId: accountsData.item.item_id,
+          plaidAccessToken: accessToken,
+          bankName: accountsData.item.institution_id || "Unknown Bank",
+          accountType: account.type,
+          accountId: account.account_id,
+          accountName: account.name,
+          accountMask: account.mask || null,
+          lastSyncAt: new Date(),
+        };
+
+        const connection = await storage.createBankConnection(connectionData);
+        connections.push(connection);
+      }
+
+      res.json({ 
+        message: "Bank accounts connected successfully", 
+        connections: connections.length 
+      });
+    } catch (error) {
+      console.error("Error exchanging public token:", error);
+      res.status(500).json({ message: "Failed to connect bank account" });
+    }
+  });
+
+  app.post("/api/plaid/sync-transactions", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const connections = await storage.getBankConnections(req.user.id);
+      
+      if (connections.length === 0) {
+        return res.status(400).json({ message: "No bank connections found" });
+      }
+
+      let totalSynced = 0;
+      
+      for (const connection of connections) {
+        try {
+          // Sync transactions from the last sync date
+          const newTransactions = await syncTransactions(
+            connection.plaidAccessToken, 
+            req.user.id, 
+            connection.lastSyncAt || undefined
+          );
+
+          // Create transactions in database
+          for (const transactionData of newTransactions) {
+            try {
+              await storage.createTransaction(transactionData);
+              totalSynced++;
+            } catch (error) {
+              // Skip duplicates (likely existing transactions)
+              console.log("Skipping duplicate transaction:", transactionData.plaidTransactionId);
+            }
+          }
+
+          // Update last sync date
+          await storage.updateBankConnection(connection.id, {
+            lastSyncAt: new Date()
+          });
+        } catch (error) {
+          console.error(`Error syncing transactions for connection ${connection.id}:`, error);
+        }
+      }
+
+      res.json({ 
+        message: `Successfully synced ${totalSynced} new transactions`,
+        syncedCount: totalSynced 
+      });
+    } catch (error) {
+      console.error("Error syncing transactions:", error);
+      res.status(500).json({ message: "Failed to sync transactions" });
+    }
+  });
+
+  // Bank connections management
+  app.get("/api/bank-connections", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const connections = await storage.getBankConnections(req.user.id);
+      res.json(connections);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch bank connections" });
+    }
+  });
+
+  app.delete("/api/bank-connections/:id", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      await storage.deleteBankConnection(req.params.id);
+      res.json({ message: "Bank connection removed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove bank connection" });
     }
   });
 

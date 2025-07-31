@@ -11,7 +11,8 @@ import {
   Settings,
   User,
   MoreVertical,
-  Clock
+  Clock,
+  Building2
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -23,6 +24,7 @@ export default function Sidebar() {
     { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: "3" },
     { href: "/receipts", icon: Receipt, label: "Receipts", badge: "2" },
     { href: "/reports", icon: ChartLine, label: "Reports" },
+    { href: "/bank-connections", icon: Building2, label: "Bank Connections" },
     { href: "/ai-assistant", icon: MessageSquare, label: "AI Assistant" },
     { href: "/settings", icon: Settings, label: "Settings" },
   ];

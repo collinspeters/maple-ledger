@@ -70,9 +70,13 @@ export const aiSuggestions = pgTable("ai_suggestions", {
 export const bankConnections = pgTable("bank_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
+  plaidItemId: text("plaid_item_id").notNull(),
+  plaidAccessToken: text("plaid_access_token").notNull(),
   bankName: text("bank_name").notNull(),
+  accountType: text("account_type").notNull(),
   accountId: text("account_id").notNull(),
-  accessToken: text("access_token"),
+  accountName: text("account_name").notNull(),
+  accountMask: text("account_mask"),
   lastSyncAt: timestamp("last_sync_at"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -152,6 +156,11 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   createdAt: true,
 });
 
+export const insertBankConnectionSchema = createInsertSchema(bankConnections).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -164,3 +173,4 @@ export type InsertAiSuggestion = z.infer<typeof insertAiSuggestionSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type BankConnection = typeof bankConnections.$inferSelect;
+export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
