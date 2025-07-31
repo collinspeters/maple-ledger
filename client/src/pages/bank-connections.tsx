@@ -117,16 +117,22 @@ export default function BankConnections() {
   const startConnection = async () => {
     try {
       setIsConnecting(true);
-      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token") as { link_token: string };
+      console.log("Starting bank connection process...");
       
-      // Re-enable the query to fetch the token
+      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token") as { link_token: string };
+      console.log("Received link token:", tokenResponse.link_token?.substring(0, 20) + "...");
+      
+      // Update query cache with the token
       queryClient.setQueryData(["/api/plaid/create-link-token"], tokenResponse);
       
-      // Update the Plaid Link with new token and open
+      // Wait a moment for the usePlaidLink hook to update, then open
       setTimeout(() => {
+        console.log("Opening Plaid Link...");
         open();
-      }, 100);
+        setIsConnecting(false);
+      }, 200);
     } catch (error) {
+      console.error("Failed to start connection:", error);
       setIsConnecting(false);
       toast({
         title: "Error",
@@ -162,28 +168,30 @@ export default function BankConnections() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Bank Connections</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-gray-900">Bank Connections</h1>
+          <p className="text-gray-600 mt-2">
             Connect your Canadian bank accounts for automatic transaction import
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-3">
           {connections.length > 0 && (
             <Button
               onClick={() => syncMutation.mutate()}
               disabled={syncMutation.isPending}
               variant="outline"
+              className="shadow-sm border-gray-300 hover:bg-gray-50 transition-all duration-200"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Sync Transactions
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+              {syncMutation.isPending ? "Syncing..." : "Sync Transactions"}
             </Button>
           )}
           <Button
             onClick={startConnection}
             disabled={isConnecting}
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
           >
             <Plus className="h-4 w-4 mr-2" />
             {isConnecting ? "Connecting..." : "Connect Bank Account"}
@@ -192,62 +200,85 @@ export default function BankConnections() {
       </div>
 
       {connections.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Bank Accounts Connected</h3>
-              <p className="text-muted-foreground mb-4">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+          <CardContent className="pt-8">
+            <div className="text-center py-12">
+              <div className="bg-primary/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Building2 className="h-12 w-12 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">No Bank Accounts Connected</h3>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
                 Connect your Canadian bank accounts to automatically import transactions
                 and keep your books up to date.
               </p>
-              <Button onClick={startConnection} disabled={isConnecting}>
-                <Plus className="h-4 w-4 mr-2" />
-                Connect Your First Bank Account
+              <Button 
+                onClick={startConnection} 
+                disabled={isConnecting}
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 px-8 py-3"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                {isConnecting ? "Connecting..." : "Connect Your First Bank Account"}
               </Button>
+              <div className="mt-6 text-sm text-gray-500">
+                🔒 Bank-level security • Instant synchronization • Canadian banks supported
+              </div>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-6">
           {connections.map((connection: BankConnection) => (
-            <Card key={connection.id}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  {getAccountTypeIcon(connection.accountType)}
-                  <span className="ml-2">{connection.accountName}</span>
-                  {connection.accountMask && (
-                    <span className="ml-2 text-muted-foreground">
-                      ****{connection.accountMask}
-                    </span>
-                  )}
+            <Card key={connection.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-1 bg-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r from-gray-50 to-white">
+                <CardTitle className="text-lg font-semibold flex items-center text-gray-900">
+                  <div className="bg-primary/10 p-2 rounded-full mr-3">
+                    {getAccountTypeIcon(connection.accountType)}
+                  </div>
+                  <div>
+                    <span>{connection.accountName}</span>
+                    {connection.accountMask && (
+                      <span className="ml-3 text-gray-500 font-normal">
+                        ****{connection.accountMask}
+                      </span>
+                    )}
+                  </div>
                 </CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteMutation.mutate(connection.id)}
                   disabled={deleteMutation.isPending}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Bank: {connection.bankName}</p>
-                    <p className="text-muted-foreground">
-                      Type: {connection.accountType.charAt(0).toUpperCase() + connection.accountType.slice(1)}
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Bank</p>
+                    <p className="font-medium text-gray-900">{connection.bankName}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Account Type</p>
+                    <p className="font-medium text-gray-900">
+                      {connection.accountType.charAt(0).toUpperCase() + connection.accountType.slice(1)}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-muted-foreground">
-                      Last Sync: {formatLastSync(connection.lastSyncAt)}
-                    </p>
-                    <div className="flex items-center mt-1">
-                      <div className={`w-2 h-2 rounded-full mr-2 ${
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Last Sync</p>
+                    <p className="font-medium text-gray-900">{formatLastSync(connection.lastSyncAt)}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Status</p>
+                    <div className="flex items-center">
+                      <div className={`w-3 h-3 rounded-full mr-2 ${
                         connection.isActive ? "bg-green-500" : "bg-red-500"
                       }`} />
-                      <span className="text-xs">
+                      <span className={`font-medium ${
+                        connection.isActive ? "text-green-700" : "text-red-700"
+                      }`}>
                         {connection.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
@@ -259,24 +290,40 @@ export default function BankConnections() {
         </div>
       )}
 
-      <Card>
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
         <CardHeader>
-          <CardTitle>Supported Canadian Banks</CardTitle>
+          <CardTitle className="text-xl font-bold text-gray-900 flex items-center">
+            <div className="bg-blue-100 p-2 rounded-full mr-3">
+              <Building2 className="h-5 w-5 text-blue-600" />
+            </div>
+            Supported Canadian Banks
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>• Royal Bank of Canada (RBC)</div>
-            <div>• TD Canada Trust</div>
-            <div>• Bank of Nova Scotia</div>
-            <div>• Bank of Montreal (BMO)</div>
-            <div>• CIBC</div>
-            <div>• National Bank of Canada</div>
-            <div>• Desjardins</div>
-            <div>• And many more...</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {[
+              "Royal Bank of Canada (RBC)",
+              "TD Canada Trust", 
+              "Bank of Nova Scotia",
+              "Bank of Montreal (BMO)",
+              "CIBC",
+              "National Bank of Canada",
+              "Desjardins",
+              "And many more..."
+            ].map((bank, index) => (
+              <div key={index} className="flex items-center space-x-2 p-2 bg-white rounded-lg shadow-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">{bank}</span>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            Your banking credentials are securely handled by Plaid and never stored on our servers.
-          </p>
+          <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <p className="text-sm text-gray-600 flex items-center">
+              <span className="text-lg mr-2">🔒</span>
+              Your banking credentials are securely handled by Plaid and never stored on our servers.
+              All connections use bank-level encryption and security protocols.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

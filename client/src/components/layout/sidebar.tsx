@@ -41,7 +41,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-surface shadow-lg border-r border-gray-200 flex flex-col">
+    <div className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col">
       {/* Logo and branding */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -76,19 +76,22 @@ export default function Sidebar() {
       )}
 
       {/* Navigation Menu */}
-      <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
+      <nav className="flex-1 p-4 space-y-1">
+        {menuItems.map((item, index) => (
           <Link key={item.href} href={item.href}>
-            <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition-colors ${
+            <div className={`animate-slide-in flex items-center space-x-3 px-3 py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-sm ${
               isActive(item.href)
-                ? "bg-primary/10 text-primary"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}>
-              <item.icon className="w-4 h-4" />
-              <span>{item.label}</span>
+                ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 shadow-sm"
+                : "text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm"
+            }`}
+            style={{ animationDelay: `${index * 0.05}s` }}>
+              <item.icon className={`w-5 h-5 transition-transform duration-200 ${
+                isActive(item.href) ? "scale-110" : "hover:scale-105"
+              }`} />
+              <span className="flex-1">{item.label}</span>
               {item.badge && (
-                <span className={`ml-auto text-white text-xs px-1.5 py-0.5 rounded-full ${
-                  item.label === "Transactions" ? "bg-accent" : "bg-secondary"
+                <span className={`text-white text-xs px-2 py-1 rounded-full shadow-sm animate-pulse-soft ${
+                  item.label === "Transactions" ? "bg-gradient-to-r from-orange-500 to-orange-600" : "bg-gradient-to-r from-blue-500 to-blue-600"
                 }`}>
                   {item.badge}
                 </span>
