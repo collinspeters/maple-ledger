@@ -148,8 +148,9 @@ export default function Register() {
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary-dark"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md"
               disabled={isRegisterLoading || !isValid}
+              style={{ visibility: 'visible', display: 'block' }}
             >
               {isRegisterLoading ? "Creating Account..." : "Start Free Trial"}
             </Button>

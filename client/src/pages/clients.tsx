@@ -71,7 +71,8 @@ export default function Clients() {
           </div>
           <Button 
             onClick={() => setShowClientModal(true)}
-            className="bg-primary hover:bg-primary-dark"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md"
+            style={{ visibility: 'visible', display: 'flex', alignItems: 'center' }}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Client
