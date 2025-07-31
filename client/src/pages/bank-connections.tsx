@@ -191,7 +191,7 @@ export default function BankConnections() {
           <Button
             onClick={startConnection}
             disabled={isConnecting}
-            className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
           >
             <Plus className="h-4 w-4 mr-2" />
             {isConnecting ? "Connecting..." : "Connect Bank Account"}
@@ -215,7 +215,7 @@ export default function BankConnections() {
                 onClick={startConnection} 
                 disabled={isConnecting}
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 px-8 py-3"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 px-8 py-3"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 {isConnecting ? "Connecting..." : "Connect Your First Bank Account"}
