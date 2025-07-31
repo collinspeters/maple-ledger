@@ -89,7 +89,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
   const updateClientMutation = useMutation({
     mutationFn: (data: ClientFormData) =>
       apiRequest(`/api/clients/${client?.id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(data),
       }),
     onSuccess: () => {
