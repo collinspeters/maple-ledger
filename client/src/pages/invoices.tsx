@@ -14,9 +14,12 @@ interface Invoice {
   status: string;
   issueDate: string;
   dueDate: string;
+  subtotal: string;
+  taxAmount: string;
   totalAmount: string;
   currency: string;
   paidAt?: string;
+  notes?: string;
   client?: {
     businessName: string;
     email: string;
