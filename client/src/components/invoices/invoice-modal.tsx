@@ -48,6 +48,7 @@ const itemSchema = z.object({
   description: z.string().min(1, "Description is required"),
   quantity: z.string().min(1, "Quantity is required"),
   unitPrice: z.string().min(1, "Unit price is required"),
+  totalPrice: z.string().optional(),
   taxable: z.boolean(),
 });
 
