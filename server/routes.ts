@@ -380,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe subscription routes
+  // Stripe subscription routes  
   app.post("/api/create-subscription", requireAuth, async (req, res) => {
     try {
       let user = req.user as User;

@@ -14,6 +14,11 @@ export function checkSubscriptionAccess(user: User): boolean {
     return true;
   }
   
+  // Demo accounts have extended access
+  if (user.email === "demo@bookkeepai.com") {
+    return true;
+  }
+  
   if (user.subscriptionStatus === "trial" && user.trialEndsAt) {
     return new Date() < new Date(user.trialEndsAt);
   }
