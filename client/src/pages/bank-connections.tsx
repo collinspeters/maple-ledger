@@ -101,11 +101,6 @@ export default function BankConnections() {
     }
   };
 
-  // Debug effect to monitor ready state
-  useEffect(() => {
-    console.log("Plaid Link state:", { ready, hasToken: !!currentLinkToken, isConnecting });
-  }, [ready, currentLinkToken, isConnecting]);
-
   // State for Plaid link token
   const [currentLinkToken, setCurrentLinkToken] = useState<string | null>(null);
 
@@ -125,6 +120,11 @@ export default function BankConnections() {
       setIsConnecting(false);
     },
   });
+
+  // Debug effect to monitor ready state
+  useEffect(() => {
+    console.log("Plaid Link state:", { ready, hasToken: !!currentLinkToken, isConnecting });
+  }, [ready, currentLinkToken, isConnecting]);
 
   // Start connection process
   const startConnection = async () => {
