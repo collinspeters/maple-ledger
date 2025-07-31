@@ -19,10 +19,10 @@ export default function QuickAddTransaction() {
       return apiRequest("/api/transactions", {
         method: "POST",
         body: JSON.stringify({
-          amount: parseFloat(amount).toString(),
+          amount: parseFloat(amount).toFixed(2),
           vendor,
           description,
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString(),
           isExpense: true,
         }),
       });
@@ -43,10 +43,11 @@ export default function QuickAddTransaction() {
           : `Added to review queue for manual categorization`,
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Transaction creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to add transaction",
+        description: error?.message || "Failed to add transaction",
         variant: "destructive",
       });
     },
@@ -54,7 +55,15 @@ export default function QuickAddTransaction() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !vendor || !description) return;
+    if (!amount || !vendor || !description) {
+      toast({
+        title: "Validation Error", 
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    console.log("Submitting transaction:", { amount, vendor, description });
     createTransactionMutation.mutate();
   };
 
@@ -64,7 +73,7 @@ export default function QuickAddTransaction() {
         <CardTitle className="flex items-center space-x-2">
           <Plus className="h-5 w-5" />
           <span>Quick Add Transaction</span>
-          <Brain className="h-4 w-4 ml-auto text-primary" title="AI T2125 Categorization" />
+          <Brain className="h-4 w-4 ml-auto text-primary" />
         </CardTitle>
       </CardHeader>
       <CardContent>
