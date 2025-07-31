@@ -23,7 +23,7 @@ export default function BankConnections() {
   const [isConnecting, setIsConnecting] = useState(false);
 
   // Fetch bank connections
-  const { data: connections = [], isLoading } = useQuery({
+  const { data: connections = [], isLoading } = useQuery<BankConnection[]>({
     queryKey: ["/api/bank-connections"],
   });
 
@@ -36,7 +36,7 @@ export default function BankConnections() {
   // Delete bank connection mutation
   const deleteMutation = useMutation({
     mutationFn: (connectionId: string) =>
-      apiRequest("DELETE", `/api/bank-connections/${connectionId}`),
+      apiRequest("DELETE", `/api/bank-connections/${connectionId}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       toast({
@@ -55,7 +55,7 @@ export default function BankConnections() {
 
   // Sync transactions mutation
   const syncMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/plaid/sync-transactions"),
+    mutationFn: () => apiRequest("POST", "/api/plaid/sync-transactions", {}),
     onSuccess: (data: { syncedCount: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
@@ -78,7 +78,7 @@ export default function BankConnections() {
     try {
       setIsConnecting(true);
       const response = await apiRequest("POST", "/api/plaid/exchange-public-token", {
-        public_token,
+        body: JSON.stringify({ public_token }),
       }) as { connections: number };
 
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
@@ -119,7 +119,7 @@ export default function BankConnections() {
   const startConnection = async () => {
     try {
       setIsConnecting(true);
-      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token") as { link_token: string };
+      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token", {}) as { link_token: string };
       
       // Re-enable the query to fetch the token
       queryClient.setQueryData(["/api/plaid/create-link-token"], tokenResponse);

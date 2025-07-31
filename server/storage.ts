@@ -82,6 +82,10 @@ export interface IStorage {
   
   // Bank connections
   getBankConnections(userId: string): Promise<BankConnection[]>;
+  createBankConnection(connection: InsertBankConnection): Promise<BankConnection>;
+  updateBankConnection(id: string, updates: Partial<BankConnection>): Promise<BankConnection>;
+  deleteBankConnection(id: string): Promise<void>;
+  getBankConnectionByPlaidItemId(plaidItemId: string): Promise<BankConnection | undefined>;
 
   // Client methods
   getClients(userId: string): Promise<Client[]>;
@@ -324,7 +328,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(bankConnections)
-      .where(eq(bankConnections.userId, userId));
+      .where(eq(bankConnections.userId, userId))
+      .orderBy(desc(bankConnections.createdAt));
   }
 
   async createBankConnection(connection: InsertBankConnection): Promise<BankConnection> {
