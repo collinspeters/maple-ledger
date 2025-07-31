@@ -125,3 +125,13 @@ Preferred communication style: Simple, everyday language.
 - HTTPS enforcement in production
 
 The application follows a monorepo structure with shared TypeScript types and schemas, enabling type safety across the full stack while maintaining clear separation of concerns between client, server, and shared code.
+
+## Recent Changes
+
+### January 31, 2025 - Invoice Preview & UI Fixes
+- ✅ Implemented animated invoice preview with framer-motion transitions
+- ✅ Fixed button visibility issues (Add Client, Create Invoice, Sign Up buttons)
+- ✅ Fixed registration flow - new users now get proper 14-day trial setup
+- ✅ Enhanced invoice preview with minimize/expand functionality
+- ✅ Added professional invoice layout matching Canadian business standards
+- ✅ Integrated real-time preview with form data and calculated totals

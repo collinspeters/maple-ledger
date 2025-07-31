@@ -1,0 +1,177 @@
+Here’s a **comprehensive blueprint** of the core user flows, automation logic, and interdependencies for your AI bookkeeping SaaS MVP — optimized for hyper-fast Replit agent development:
+
+---
+
+## ✅ Core MVP Feature Blueprint for AI Bookkeeping SaaS (Canada Sole Proprietors)
+
+---
+
+### 🔹 1. **Auto-Categorize Transactions**
+
+#### User Flow:
+
+1. Bank transaction data is synced via Plaid.
+2. Transactions are parsed and checked against AI-powered categorization model.
+3. Suggested category shown with confidence %.
+4. User can approve, edit, or bulk-edit.
+
+#### Edge Cases:
+
+* ❌ Missing merchant name → fallback to raw bank description.
+* ⚠️ Low AI confidence → request manual confirmation.
+* 🔁 Repeating vendor → auto-learn and apply same category.
+
+#### Automation & Interdependencies:
+
+* **Plaid Sync → Categorization Engine**
+* **User Edits → Retrain small local model for preferences**
+* **Categorized Data → P\&L + Tax Report Generation**
+
+---
+
+### 🔹 2. **Upload Receipts → Auto OCR + Match**
+
+#### User Flow:
+
+1. User uploads photo or PDF of receipt.
+2. Mindee extracts merchant, date, total, tax, category hints.
+3. System matches with nearest transaction (date ±3 days + amount tolerance).
+4. Linked and stored as receipt proof.
+
+#### Edge Cases:
+
+* ❌ No matching transaction = keep pending, flag user.
+* 📌 Multiple possible matches → show options to confirm.
+* 🗂️ Non-standard receipt format → fallback to manual entry.
+
+#### Automation & Interdependencies:
+
+* **Receipt → Transaction Matching**
+* **Matched Receipt → Audit Trail Compliance**
+* **Receipt + Transaction → Input for CRA GST Reports**
+
+---
+
+### 🔹 3. **Connect to Bank Feeds (Plaid)**
+
+#### User Flow:
+
+1. User clicks “Connect Bank”
+2. OAuth Plaid flow triggers (secure)
+3. Tokens stored encrypted
+4. Daily sync of new transactions
+
+#### Edge Cases:
+
+* 🔒 Token expires → show “Reconnect” banner
+* ⚠️ Duplicate transactions → run deduplication check (ID + date + amount)
+
+#### Interdependencies:
+
+* **Bank Feed → Transaction Categorization**
+* **Bank Feed → Cash Flow Summary**
+* **Bank Feed → P\&L, Balance Sheet**
+
+---
+
+### 🔹 4. **Generate Financial Reports (P\&L, Balance Sheet, Tax)**
+
+#### User Flow:
+
+1. User clicks “Reports”
+2. Choose type (P\&L, Balance Sheet, GST/HST Summary)
+3. System queries Postgres Views
+4. Export to PDF via Puppeteer
+
+#### Edge Cases:
+
+* ❌ No data → show “No reportable data” message
+* 📆 Custom date ranges, fiscal year toggle
+
+#### Automation & Interdependencies:
+
+* **Reports ← Categorized Transactions + AI Summarization**
+* **Reports → CRA-Tax Export Module**
+* **Reports → Chat with Reports Interface**
+
+---
+
+### 🔹 5. **Invoicing**
+
+\[As provided in your original example — already excellent.]
+
+---
+
+### 🔹 6. **Chat-Based or Voice-Powered Commands**
+
+#### User Flow:
+
+1. User opens AI Chat Interface
+2. Types: “How much did I spend on travel last month?”
+3. GPT-4 parses → generates SQL query → pulls Postgres data
+4. Returns summarized insight + data visualization
+
+#### Automation & Interdependencies:
+
+* **GPT-4 + Langchain → Structured SQL + Summary**
+* **Voice Command (Future): Whisper or similar + text handling**
+* **Chat UI → Connects to all modules: Reports, Journal Entries, Receipts**
+
+---
+
+### 🔹 7. **CRA / Canada Tax-Specific Logic**
+
+#### Built-In Functions:
+
+* GST/HST rate application (based on province)
+* Zero-rated + exempt transaction handling
+* Quarterly & Annual GST/HST return-ready summaries
+* CRA audit-ready transaction trails (receipt + transaction + category + vendor)
+
+---
+
+### 🔹 8. **Natural Language → Journal Entry or Add Transaction**
+
+#### User Flow:
+
+1. User types: “Add a \$58 expense for office supplies from Staples yesterday.”
+2. GPT-4 extracts structured data → calls AddTransaction endpoint
+3. Transaction added with “AI-Added” tag
+
+#### Edge Cases:
+
+* ❌ Ambiguous input → request clarification
+* ⚠️ Conflicting date formats → use locale settings
+
+#### Automation & Interdependencies:
+
+* **Langchain + OpenAI → NLP → Function Call (Replit API)**
+* **Entry → Auto-categorized + flagged for user validation**
+
+---
+
+## ⚙️ System Stack Reference
+
+| Module              | Tool/Tech Used                          |
+| ------------------- | --------------------------------------- |
+| **OCR**             | Mindee                                  |
+| **Bank Sync**       | Plaid                                   |
+| **Financial Logic** | PostgreSQL Views                        |
+| **PDF Reports**     | Puppeteer                               |
+| **AI Layer**        | GPT-4 + Langchain                       |
+| **Payments**        | Stripe                                  |
+| **UI**              | Replit + React (or HTMX for simplicity) |
+
+---
+
+## ⏱️ Rapid Dev Notes for Agent Build
+
+* Pre-create PostgreSQL views for: `monthly_cashflow_summary`, `categorized_expense_totals`, `tax_ready_transactions`
+* Use Replit Secrets for API keys: `OPENAI_KEY`, `MINDEE_KEY`, `PLAID_KEY`, `STRIPE_KEY`
+* Use Replit DB or Supabase for scalable Postgres backend
+* Use Webhooks for Plaid and Stripe syncs
+* Modularize feature folders: `receipts`, `reports`, `transactions`, `chat`, `invoices`, `clients`
+
+---
+
+Would you like me to package this into a plug-and-play JSON/Markdown spec file or export a Notion-style SOP template for your dev agent in Replit?
