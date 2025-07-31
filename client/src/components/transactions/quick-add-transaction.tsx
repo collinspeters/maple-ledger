@@ -20,8 +20,8 @@ export default function QuickAddTransaction() {
         method: "POST",
         body: JSON.stringify({
           amount: parseFloat(amount).toFixed(2),
-          vendor,
-          description,
+          vendor: vendor.trim(),
+          description: description.trim(),
           date: new Date().toISOString(),
           isExpense: true,
         }),

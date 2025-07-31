@@ -315,8 +315,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(transaction);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Transaction validation error:", error.errors);
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
+      console.error("Transaction creation error:", error);
       res.status(500).json({ message: "Failed to create transaction" });
     }
   });
