@@ -91,6 +91,112 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Invoicing tables - Wave-inspired
+export const clients = pgTable("clients", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  businessName: text("business_name").notNull(),
+  contactName: text("contact_name"),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  province: text("province"),
+  postalCode: text("postal_code"),
+  country: text("country").default("Canada"),
+  taxNumber: text("tax_number"),
+  currency: text("currency").default("CAD"),
+  paymentTerms: integer("payment_terms").default(30), // days
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const invoices = pgTable("invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  invoiceNumber: text("invoice_number").notNull(),
+  status: text("status").default("draft"), // draft, sent, paid, overdue, cancelled
+  issueDate: timestamp("issue_date").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  termsConditions: text("terms_conditions"),
+  paidAt: timestamp("paid_at"),
+  currency: text("currency").default("CAD"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const invoiceItems = pgTable("invoice_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: varchar("invoice_id").notNull().references(() => invoices.id),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).default("1"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  taxable: boolean("taxable").default(true),
+});
+
+export const estimates = pgTable("estimates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  estimateNumber: text("estimate_number").notNull(),
+  status: text("status").default("draft"), // draft, sent, accepted, declined, expired
+  issueDate: timestamp("issue_date").notNull(),
+  expiryDate: timestamp("expiry_date").notNull(),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  acceptedAt: timestamp("accepted_at"),
+  convertedInvoiceId: varchar("converted_invoice_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const estimateItems = pgTable("estimate_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  estimateId: varchar("estimate_id").notNull().references(() => estimates.id),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).default("1"),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  taxable: boolean("taxable").default(true),
+});
+
+// Expense categories for Canadian tax compliance
+export const expenseCategories = pgTable("expense_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  taxDeductible: boolean("tax_deductible").default(true),
+  craCode: text("cra_code"), // Canada Revenue Agency expense code
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Recurring transactions for subscriptions, rent, etc.
+export const recurringTransactions = pgTable("recurring_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  vendor: text("vendor"),
+  category: text("category"),
+  frequency: text("frequency").notNull(), // daily, weekly, monthly, quarterly, yearly
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  lastProcessed: timestamp("last_processed"),
+  isActive: boolean("is_active").default(true),
+  isExpense: boolean("is_expense").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   transactions: many(transactions),
@@ -122,6 +228,60 @@ export const receiptsRelations = relations(receipts, ({ one, many }) => ({
     references: [transactions.id],
   }),
   aiSuggestions: many(aiSuggestions),
+}));
+
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  user: one(users, {
+    fields: [clients.userId],
+    references: [users.id],
+  }),
+  invoices: many(invoices),
+  estimates: many(estimates),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  user: one(users, {
+    fields: [invoices.userId],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [invoices.clientId],
+    references: [clients.id],
+  }),
+  items: many(invoiceItems),
+}));
+
+export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
+  invoice: one(invoices, {
+    fields: [invoiceItems.invoiceId],
+    references: [invoices.id],
+  }),
+}));
+
+export const estimatesRelations = relations(estimates, ({ one, many }) => ({
+  user: one(users, {
+    fields: [estimates.userId],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [estimates.clientId],
+    references: [clients.id],
+  }),
+  items: many(estimateItems),
+}));
+
+export const estimateItemsRelations = relations(estimateItems, ({ one }) => ({
+  estimate: one(estimates, {
+    fields: [estimateItems.estimateId],
+    references: [estimates.id],
+  }),
+}));
+
+export const recurringTransactionsRelations = relations(recurringTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [recurringTransactions.userId],
+    references: [users.id],
+  }),
 }));
 
 // Insert schemas
@@ -161,6 +321,42 @@ export const insertBankConnectionSchema = createInsertSchema(bankConnections).om
   createdAt: true,
 });
 
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({
+  id: true,
+});
+
+export const insertEstimateSchema = createInsertSchema(estimates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEstimateItemSchema = createInsertSchema(estimateItems).omit({
+  id: true,
+});
+
+export const insertExpenseCategorySchema = createInsertSchema(expenseCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertRecurringTransactionSchema = createInsertSchema(recurringTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -174,3 +370,17 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type BankConnection = typeof bankConnections.$inferSelect;
 export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = z.infer<typeof insertClientSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type InvoiceItem = typeof invoiceItems.$inferSelect;
+export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
+export type Estimate = typeof estimates.$inferSelect;
+export type InsertEstimate = z.infer<typeof insertEstimateSchema>;
+export type EstimateItem = typeof estimateItems.$inferSelect;
+export type InsertEstimateItem = z.infer<typeof insertEstimateItemSchema>;
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
+export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
+export type InsertRecurringTransaction = z.infer<typeof insertRecurringTransactionSchema>;

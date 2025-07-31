@@ -12,7 +12,10 @@ import {
   User,
   MoreVertical,
   Clock,
-  Building2
+  Building2,
+  FileText,
+  Users,
+  Calculator
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -21,6 +24,9 @@ export default function Sidebar() {
 
   const menuItems = [
     { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/clients", icon: Users, label: "Clients" },
+    { href: "/invoices", icon: FileText, label: "Invoices" },
+    { href: "/estimates", icon: Calculator, label: "Estimates" },
     { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: "3" },
     { href: "/receipts", icon: Receipt, label: "Receipts", badge: "2" },
     { href: "/reports", icon: ChartLine, label: "Reports" },

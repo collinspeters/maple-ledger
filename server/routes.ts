@@ -12,7 +12,20 @@ import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
 import { categorizeTransaction, processFinancialQuery, extractReceiptData } from "./services/openai";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
-import { insertUserSchema, insertTransactionSchema, insertBankConnectionSchema, type User } from "@shared/schema";
+import { 
+  insertUserSchema, 
+  insertTransactionSchema, 
+  insertBankConnectionSchema,
+  insertClientSchema,
+  insertInvoiceSchema,
+  insertInvoiceItemSchema,
+  insertEstimateSchema,
+  insertEstimateItemSchema,
+  type User,
+  type Client,
+  type Invoice,
+  type Estimate 
+} from "@shared/schema";
 import { z } from "zod";
 
 // Extend Express Request to include authenticated user
@@ -36,8 +49,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     resave: false,
     saveUninitialized: false,
     cookie: { 
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      secure: false, // Set to false for development, true for production
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
     }
   }));
 
@@ -574,6 +589,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Bank connection removed successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to remove bank connection" });
+    }
+  });
+
+  // Wave-inspired Invoicing & Client Management Routes
+  
+  // Client management routes
+  app.get("/api/clients", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const clients = await storage.getClients(user.id);
+      res.json(clients);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/clients", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const clientData = insertClientSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
+      const client = await storage.createClient(clientData);
+      res.json(client);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Invoice management routes
+  app.get("/api/invoices", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const invoices = await storage.getInvoices(user.id);
+      res.json(invoices);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/invoices", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { invoice: invoiceData, items } = req.body;
+      
+      // Generate invoice number
+      const invoiceCount = await storage.getInvoices(user.id);
+      const invoiceNumber = `INV-${String(invoiceCount.length + 1).padStart(4, '0')}`;
+      
+      const parsedInvoice = insertInvoiceSchema.parse({
+        ...invoiceData,
+        userId: user.id,
+        invoiceNumber,
+      });
+      
+      const parsedItems = items.map((item: any) => 
+        insertInvoiceItemSchema.parse(item)
+      );
+      
+      const invoice = await storage.createInvoice(parsedInvoice, parsedItems);
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/invoices/:id/mark-paid", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const invoice = await storage.markInvoicePaid(id);
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }  
+  });
+
+  // Estimate management routes
+  app.get("/api/estimates", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const estimates = await storage.getEstimates(user.id);
+      res.json(estimates);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/estimates/:id/convert-to-invoice", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const invoice = await storage.convertEstimateToInvoice(id);
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
   });
 

@@ -5,6 +5,13 @@ import {
   aiSuggestions, 
   chatMessages,
   bankConnections,
+  clients,
+  invoices,
+  invoiceItems,
+  estimates,
+  estimateItems,
+  expenseCategories,
+  recurringTransactions,
   type User, 
   type InsertUser,
   type Transaction,
@@ -16,7 +23,21 @@ import {
   type ChatMessage,
   type InsertChatMessage,
   type BankConnection,
-  type InsertBankConnection
+  type InsertBankConnection,
+  type Client,
+  type InsertClient,
+  type Invoice,
+  type InsertInvoice,
+  type InvoiceItem,
+  type InsertInvoiceItem,
+  type Estimate,
+  type InsertEstimate,
+  type EstimateItem,
+  type InsertEstimateItem,
+  type ExpenseCategory,
+  type InsertExpenseCategory,
+  type RecurringTransaction,
+  type InsertRecurringTransaction
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
@@ -61,6 +82,38 @@ export interface IStorage {
   
   // Bank connections
   getBankConnections(userId: string): Promise<BankConnection[]>;
+
+  // Client methods
+  getClients(userId: string): Promise<Client[]>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: string, updates: Partial<Client>): Promise<Client>;
+  deleteClient(id: string): Promise<void>;
+
+  // Invoice methods  
+  getInvoices(userId: string): Promise<Invoice[]>;
+  getInvoice(id: string): Promise<Invoice | undefined>;
+  createInvoice(invoice: InsertInvoice, items: InsertInvoiceItem[]): Promise<Invoice>;
+  updateInvoice(id: string, updates: Partial<Invoice>): Promise<Invoice>;
+  deleteInvoice(id: string): Promise<void>;
+  markInvoicePaid(id: string): Promise<Invoice>;
+
+  // Estimate methods
+  getEstimates(userId: string): Promise<Estimate[]>;
+  getEstimate(id: string): Promise<Estimate | undefined>;
+  createEstimate(estimate: InsertEstimate, items: InsertEstimateItem[]): Promise<Estimate>;
+  updateEstimate(id: string, updates: Partial<Estimate>): Promise<Estimate>;
+  deleteEstimate(id: string): Promise<void>;
+  convertEstimateToInvoice(estimateId: string): Promise<Invoice>;
+
+  // Expense categories
+  getExpenseCategories(): Promise<ExpenseCategory[]>;
+  createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory>;
+
+  // Recurring transactions
+  getRecurringTransactions(userId: string): Promise<RecurringTransaction[]>;
+  createRecurringTransaction(transaction: InsertRecurringTransaction): Promise<RecurringTransaction>;
+  updateRecurringTransaction(id: string, updates: Partial<RecurringTransaction>): Promise<RecurringTransaction>;
+  deleteRecurringTransaction(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -301,6 +354,190 @@ export class DatabaseStorage implements IStorage {
       .from(bankConnections)
       .where(eq(bankConnections.plaidItemId, plaidItemId));
     return connection || undefined;
+  }
+
+  // Client methods
+  async getClients(userId: string): Promise<Client[]> {
+    return await db.select().from(clients)
+      .where(eq(clients.userId, userId))
+      .orderBy(desc(clients.createdAt));
+  }
+
+  async createClient(client: InsertClient): Promise<Client> {
+    const [newClient] = await db.insert(clients).values(client).returning();
+    return newClient;
+  }
+
+  async updateClient(id: string, updates: Partial<Client>): Promise<Client> {
+    const [updatedClient] = await db.update(clients)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clients.id, id))
+      .returning();
+    return updatedClient;
+  }
+
+  async deleteClient(id: string): Promise<void> {
+    await db.delete(clients).where(eq(clients.id, id));
+  }
+
+  // Invoice methods
+  async getInvoices(userId: string): Promise<Invoice[]> {
+    return await db.select().from(invoices)
+      .where(eq(invoices.userId, userId))
+      .orderBy(desc(invoices.createdAt));
+  }
+
+  async getInvoice(id: string): Promise<Invoice | undefined> {
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
+    return invoice || undefined;
+  }
+
+  async createInvoice(invoice: InsertInvoice, items: InsertInvoiceItem[]): Promise<Invoice> {
+    const [newInvoice] = await db.insert(invoices).values(invoice).returning();
+    
+    if (items.length > 0) {
+      await db.insert(invoiceItems).values(
+        items.map(item => ({ ...item, invoiceId: newInvoice.id }))
+      );
+    }
+    
+    return newInvoice;
+  }
+
+  async updateInvoice(id: string, updates: Partial<Invoice>): Promise<Invoice> {
+    const [updatedInvoice] = await db.update(invoices)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(invoices.id, id))
+      .returning();
+    return updatedInvoice;
+  }
+
+  async deleteInvoice(id: string): Promise<void> {
+    await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+    await db.delete(invoices).where(eq(invoices.id, id));
+  }
+
+  async markInvoicePaid(id: string): Promise<Invoice> {
+    const [paidInvoice] = await db.update(invoices)
+      .set({ status: "paid", paidAt: new Date(), updatedAt: new Date() })
+      .where(eq(invoices.id, id))
+      .returning();
+    return paidInvoice;
+  }
+
+  // Estimate methods
+  async getEstimates(userId: string): Promise<Estimate[]> {
+    return await db.select().from(estimates)
+      .where(eq(estimates.userId, userId))
+      .orderBy(desc(estimates.createdAt));
+  }
+
+  async getEstimate(id: string): Promise<Estimate | undefined> {
+    const [estimate] = await db.select().from(estimates).where(eq(estimates.id, id));
+    return estimate || undefined;
+  }
+
+  async createEstimate(estimate: InsertEstimate, items: InsertEstimateItem[]): Promise<Estimate> {
+    const [newEstimate] = await db.insert(estimates).values(estimate).returning();
+    
+    if (items.length > 0) {
+      await db.insert(estimateItems).values(
+        items.map(item => ({ ...item, estimateId: newEstimate.id }))
+      );
+    }
+    
+    return newEstimate;
+  }
+
+  async updateEstimate(id: string, updates: Partial<Estimate>): Promise<Estimate> {
+    const [updatedEstimate] = await db.update(estimates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(estimates.id, id))
+      .returning();
+    return updatedEstimate;
+  }
+
+  async deleteEstimate(id: string): Promise<void> {
+    await db.delete(estimateItems).where(eq(estimateItems.estimateId, id));
+    await db.delete(estimates).where(eq(estimates.id, id));
+  }
+
+  async convertEstimateToInvoice(estimateId: string): Promise<Invoice> {
+    const estimate = await this.getEstimate(estimateId);
+    if (!estimate) throw new Error("Estimate not found");
+
+    const estimateItemsData = await db.select().from(estimateItems)
+      .where(eq(estimateItems.estimateId, estimateId));
+
+    // Generate invoice number
+    const invoiceCount = await db.select({ count: sql`count(*)` }).from(invoices)
+      .where(eq(invoices.userId, estimate.userId));
+    const invoiceNumber = `INV-${String(Number(invoiceCount[0].count) + 1).padStart(4, '0')}`;
+
+    const invoiceData: InsertInvoice = {
+      userId: estimate.userId,
+      clientId: estimate.clientId,
+      invoiceNumber,
+      issueDate: new Date(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      subtotal: estimate.subtotal,
+      taxAmount: estimate.taxAmount,
+      totalAmount: estimate.totalAmount,
+      notes: estimate.notes,
+    };
+
+    const invoice = await this.createInvoice(invoiceData, estimateItemsData.map(item => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      taxable: item.taxable,
+      invoiceId: "", // This will be set by createInvoice
+    })));
+
+    // Mark estimate as accepted and link to invoice
+    await this.updateEstimate(estimateId, {
+      status: "accepted",
+      acceptedAt: new Date(),
+      convertedInvoiceId: invoice.id,
+    });
+
+    return invoice;
+  }
+
+  // Expense categories
+  async getExpenseCategories(): Promise<ExpenseCategory[]> {
+    return await db.select().from(expenseCategories)
+      .orderBy(expenseCategories.name);
+  }
+
+  async createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory> {
+    const [newCategory] = await db.insert(expenseCategories).values(category).returning();
+    return newCategory;
+  }
+
+  // Recurring transactions
+  async getRecurringTransactions(userId: string): Promise<RecurringTransaction[]> {
+    return await db.select().from(recurringTransactions)
+      .where(eq(recurringTransactions.userId, userId))
+      .orderBy(desc(recurringTransactions.createdAt));
+  }
+
+  async createRecurringTransaction(transaction: InsertRecurringTransaction): Promise<RecurringTransaction> {
+    const [newTransaction] = await db.insert(recurringTransactions).values(transaction).returning();
+    return newTransaction;
+  }
+
+  async updateRecurringTransaction(id: string, updates: Partial<RecurringTransaction>): Promise<RecurringTransaction> {
+    const [updatedTransaction] = await db.update(recurringTransactions)
+      .set(updates)
+      .where(eq(recurringTransactions.id, id))
+      .returning();
+    return updatedTransaction;
+  }
+
+  async deleteRecurringTransaction(id: string): Promise<void> {
+    await db.delete(recurringTransactions).where(eq(recurringTransactions.id, id));
   }
 }
 

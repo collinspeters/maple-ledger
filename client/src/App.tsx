@@ -10,6 +10,9 @@ import { checkSubscriptionAccess } from "@/lib/auth";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
+import Clients from "@/pages/clients";
+import Invoices from "@/pages/invoices";
+import Estimates from "@/pages/estimates";
 import Transactions from "@/pages/transactions";
 import Receipts from "@/pages/receipts";
 import Reports from "@/pages/reports";
@@ -81,6 +84,9 @@ function Router() {
       <Route path="/login" component={() => <AuthRoute component={Login} />} />
       <Route path="/register" component={() => <AuthRoute component={Register} />} />
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/clients" component={() => <ProtectedRoute component={Clients} />} />
+      <Route path="/invoices" component={() => <ProtectedRoute component={Invoices} />} />
+      <Route path="/estimates" component={() => <ProtectedRoute component={Estimates} />} />
       <Route path="/transactions" component={() => <ProtectedRoute component={Transactions} />} />
       <Route path="/receipts" component={() => <ProtectedRoute component={Receipts} />} />
       <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
