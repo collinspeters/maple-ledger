@@ -11,6 +11,7 @@ import fs from "fs";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
 import { categorizeTransaction, processFinancialQuery, extractReceiptData, parseNaturalLanguageTransaction } from "./services/openai";
+import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } from "./services/merchant-enrichment";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
 import { 
   insertUserSchema, 
@@ -217,6 +218,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Review queue endpoint for transactions needing manual review
+  app.get("/api/transactions/review-queue", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const transactions = await storage.getTransactions(user.id);
+      const reviewQueue = transactions.filter(t => t.needsReview);
+      res.json(reviewQueue);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch review queue" });
+    }
+  });
+
   app.post("/api/transactions", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
@@ -225,34 +238,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
       });
       
-      // Get AI categorization if no category provided
+      // Enhanced AI categorization with merchant enrichment
       let aiCategory = null;
       let aiConfidence = null;
+      let aiExplanation = null;
+      let needsReview = false;
       
-      if (!transactionData.category && transactionData.vendor) {
-        const aiResult = await categorizeTransaction(
-          transactionData.vendor,
-          parseFloat(transactionData.amount),
-          transactionData.description
-        );
-        
-        aiCategory = aiResult.category;
-        aiConfidence = aiResult.confidence.toString();
-        
-        // Store AI suggestion
-        await storage.createAiSuggestion({
-          userId: user.id,
-          suggestionType: "categorization",
-          originalPrompt: `${transactionData.vendor} - ${transactionData.description}`,
-          aiResponse: aiResult,
-          confidence: aiResult.confidence.toString(),
-        });
+      if (!transactionData.category && (transactionData.vendor || transactionData.description)) {
+        try {
+          let enrichedContext = '';
+          
+          // Check cache first
+          const description = transactionData.description || transactionData.vendor || '';
+          const cachedEnrichment = await getCachedEnrichment(description);
+          
+          if (cachedEnrichment) {
+            enrichedContext = cachedEnrichment.enrichedContext;
+          } else {
+            // Enrich merchant information via web search
+            const enrichment = await enrichMerchantDescription(
+              description,
+              parseFloat(transactionData.amount)
+            );
+            enrichedContext = enrichment.enrichedContext;
+            
+            // Cache the result
+            setCachedEnrichment(description, enrichment);
+          }
+          
+          // Perform AI categorization with enriched context
+          const aiResult = await categorizeTransaction(
+            transactionData.vendor || 'Unknown',
+            parseFloat(transactionData.amount),
+            transactionData.description || '',
+            enrichedContext
+          );
+          
+          aiCategory = aiResult.category;
+          aiConfidence = aiResult.confidence.toString();
+          aiExplanation = aiResult.explanation;
+          
+          // Auto-assign if high confidence (>80%), otherwise flag for review
+          if (aiResult.confidence > 0.8) {
+            needsReview = false;
+          } else {
+            needsReview = true;
+          }
+          
+          // Store AI suggestion with enriched context
+          await storage.createAiSuggestion({
+            userId: user.id,
+            suggestionType: "categorization",
+            originalPrompt: `${transactionData.vendor} - ${transactionData.description}`,
+            aiResponse: {
+              ...aiResult,
+              enrichedContext
+            },
+            confidence: aiResult.confidence.toString(),
+          });
+        } catch (error) {
+          console.error("Enhanced categorization failed:", error);
+          needsReview = true;
+          aiExplanation = "Categorization failed - manual review required";
+        }
       }
       
       const transaction = await storage.createTransaction({
         ...transactionData,
         aiCategory,
         aiConfidence,
+        aiExplanation,
+        needsReview,
         category: transactionData.category || aiCategory,
       });
       

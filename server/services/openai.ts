@@ -21,27 +21,21 @@ export interface ChatResponse {
 export async function categorizeTransaction(
   vendor: string, 
   amount: number, 
-  description: string
+  description: string,
+  enrichedContext?: string
 ): Promise<TransactionCategorizationResult> {
   try {
-    const prompt = `As a Canadian business expense categorization expert, analyze this transaction and categorize it according to CRA guidelines.
+    const prompt = `You are an AI bookkeeper categorizing transactions for a Canadian sole proprietor.
 
 Transaction Details:
-- Vendor: ${vendor}
+- Raw Description: ${description}
+- Vendor/Merchant: ${vendor}
 - Amount: $${amount}
-- Description: ${description}
+${enrichedContext ? `- Enriched Context: ${enrichedContext}` : ''}
 
-Respond with JSON in this exact format:
-{
-  "category": "Office Supplies" | "Meals & Entertainment" | "Travel & Transportation" | "Professional Services" | "Marketing & Advertising" | "Utilities" | "Rent" | "Insurance" | "Revenue" | "Other",
-  "confidence": 0.95,
-  "explanation": "Brief explanation of why this category was chosen",
-  "isExpense": true
-}
-
-Use these Canadian business expense categories:
+Available Categories:
 - Office Supplies: stationery, software, equipment under $500
-- Meals & Entertainment: business meals (50% deductible), client entertainment
+- Meals & Entertainment: business meals (50% deductible), client entertainment  
 - Travel & Transportation: business travel, gas, parking, public transit
 - Professional Services: legal, accounting, consulting fees
 - Marketing & Advertising: ads, promotional materials, website costs
@@ -49,12 +43,28 @@ Use these Canadian business expense categories:
 - Rent: office space, equipment rental
 - Insurance: business insurance premiums
 - Revenue: income from clients, sales
+- Subscriptions: software subscriptions, online services
+- Equipment: business equipment over $500
 - Other: miscellaneous business expenses
 
-Consider Canadian tax rules and common business practices.`;
+Based on the transaction details and enriched context, determine the most accurate category.
+
+Respond with JSON in this exact format:
+{
+  "category": "Office Supplies",
+  "confidence": 0.95,
+  "explanation": "Brief explanation of why this category was chosen based on the merchant context",
+  "isExpense": true
+}
+
+Consider:
+- Canadian tax rules and CRA guidelines
+- The enriched merchant context to improve accuracy
+- Common business expense patterns
+- Set confidence higher (0.8+) when enriched context clearly indicates the business type`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.1,
