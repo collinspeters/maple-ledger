@@ -36,7 +36,7 @@ export default function BankConnections() {
   // Delete bank connection mutation
   const deleteMutation = useMutation({
     mutationFn: (connectionId: string) =>
-      apiRequest("DELETE", `/api/bank-connections/${connectionId}`),
+      fetch(`/api/bank-connections/${connectionId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       toast({
@@ -55,8 +55,9 @@ export default function BankConnections() {
 
   // Sync transactions mutation
   const syncMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/plaid/sync-transactions"),
-    onSuccess: (data: { syncedCount: number }) => {
+    mutationFn: () => fetch("/api/plaid/sync-transactions", { method: "POST" }),
+    onSuccess: async (response) => {
+      const data = await response.json() as { syncedCount: number };
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       toast({
@@ -77,7 +78,11 @@ export default function BankConnections() {
   const onSuccess = async (public_token: string) => {
     try {
       setIsConnecting(true);
-      const response = await apiRequest("POST", "/api/plaid/exchange-public-token", { public_token }) as { connections: number };
+      const response = await fetch("/api/plaid/exchange-public-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ public_token })
+      }).then(res => res.json()) as { connections: number };
 
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       
@@ -119,7 +124,10 @@ export default function BankConnections() {
       setIsConnecting(true);
       console.log("Starting bank connection process...");
       
-      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token") as { link_token: string };
+      const tokenResponse = await fetch("/api/plaid/create-link-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      }).then(res => res.json()) as { link_token: string };
       console.log("Received link token:", tokenResponse.link_token?.substring(0, 20) + "...");
       
       // Update query cache with the token
