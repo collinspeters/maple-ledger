@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -101,15 +101,23 @@ export default function BankConnections() {
     }
   };
 
+  // Debug effect to monitor ready state
+  useEffect(() => {
+    console.log("Plaid Link state:", { ready, hasToken: !!currentLinkToken, isConnecting });
+  }, [ready, currentLinkToken, isConnecting]);
+
+  // State for Plaid link token
+  const [currentLinkToken, setCurrentLinkToken] = useState<string | null>(null);
+
   // Initialize Plaid Link
   const { open, ready } = usePlaidLink({
-    token: (linkTokenData as { link_token?: string })?.link_token || null,
+    token: currentLinkToken,
     onSuccess,
     onExit: (err) => {
       if (err) {
         console.error("Plaid Link Error:", err);
         toast({
-          title: "Connection Cancelled",
+          title: "Connection Cancelled", 
           description: "Bank connection was cancelled.",
           variant: "destructive",
         });
@@ -124,27 +132,35 @@ export default function BankConnections() {
       setIsConnecting(true);
       console.log("Starting bank connection process...");
       
-      const tokenResponse = await fetch("/api/plaid/create-link-token", {
+      const response = await fetch("/api/plaid/create-link-token", {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
-      }).then(res => res.json()) as { link_token: string };
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const tokenResponse = await response.json() as { link_token: string };
       console.log("Received link token:", tokenResponse.link_token?.substring(0, 20) + "...");
       
-      // Update query cache with the token
-      queryClient.setQueryData(["/api/plaid/create-link-token"], tokenResponse);
+      // Set the token which will trigger usePlaidLink to update
+      setCurrentLinkToken(tokenResponse.link_token);
       
-      // Wait a moment for the usePlaidLink hook to update, then open
+      // Wait for the hook to initialize with the new token, then open
       setTimeout(() => {
-        console.log("Opening Plaid Link...");
-        open();
-        setIsConnecting(false);
-      }, 200);
+        console.log("Opening Plaid Link... ready:", ready, "token:", !!tokenResponse.link_token);
+        if (tokenResponse.link_token) {
+          open();
+        }
+      }, 500);
     } catch (error) {
       console.error("Failed to start connection:", error);
       setIsConnecting(false);
       toast({
         title: "Error",
-        description: "Failed to initialize bank connection. Please try again.",
+        description: `Failed to initialize bank connection: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
