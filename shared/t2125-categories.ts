@@ -161,7 +161,7 @@ export const T2125_CATEGORIES: T2125Category[] = [
     code: "PROFESSIONAL_INCOME",
     name: "Professional Income",
     description: "Income from professional services",
-    lineNumber: "8000",
+    lineNumber: "8001",
     isFullyDeductible: false,
     notes: "This is income, not an expense"
   }
@@ -236,3 +236,8 @@ export const TRANSACTION_MAPPINGS: Record<string, string> = {
   'marketing': 'ADVERTISING',
   'advertising': 'ADVERTISING'
 };
+
+// Additional helper function for finding categories by code
+export function findCategoryByCode(code: string): T2125Category | undefined {
+  return T2125_CATEGORIES.find(cat => cat.code === code);
+}

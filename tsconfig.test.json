@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "commonjs",
+    "target": "es2018"
+  },
+  "include": [
+    "tests/**/*",
+    "shared/**/*",
+    "server/**/*"
+  ]
+}

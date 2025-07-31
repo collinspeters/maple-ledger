@@ -128,7 +128,19 @@ The application follows a monorepo structure with shared TypeScript types and sc
 
 ## Recent Changes
 
-### January 31, 2025 - Invoice Preview & UI Fixes
+### January 31, 2025 - Comprehensive Unit Testing & Issue Resolution
+- ✅ Created complete Jest testing infrastructure with TypeScript support
+- ✅ Implemented 45+ unit tests covering T2125 categories, transaction processing, AI integration
+- ✅ Fixed T2125 category line number duplication (PROFESSIONAL_INCOME now uses 8001)
+- ✅ Added `findCategoryByCode` helper function to T2125 categories
+- ✅ Enhanced OpenAI service error handling and confidence score validation
+- ✅ Created comprehensive security tests for input validation and SQL injection prevention
+- ✅ Validated database schema integrity for all tables (transactions, users, invoices, receipts)
+- ✅ Confirmed AI categorization works with replenished OpenAI API credits
+- ✅ All transaction form fields working correctly with proper date handling
+- ✅ Review queue functionality validated for low-confidence AI categorizations
+
+### Previous - Invoice Preview & UI Fixes
 - ✅ Implemented animated invoice preview with framer-motion transitions
 - ✅ Fixed button visibility issues (Add Client, Create Invoice, Sign Up buttons)
 - ✅ Fixed registration flow - new users now get proper 14-day trial setup
