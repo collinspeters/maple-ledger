@@ -166,3 +166,88 @@ If information is unclear or missing, omit that field. Date should be YYYY-MM-DD
     };
   }
 }
+
+export interface ParsedTransaction {
+  amount: number;
+  description: string;
+  vendor?: string;
+  category?: string;
+  date: string;
+  confidence: number;
+  action: 'add_transaction' | 'add_expense' | 'query_data';
+  isExpense: boolean;
+}
+
+export async function parseNaturalLanguageTransaction(text: string): Promise<ParsedTransaction> {
+  try {
+    const prompt = `You are a Canadian bookkeeping AI assistant. Parse this natural language input into structured transaction data or identify if it's a query.
+
+Input: "${text}"
+
+Respond with JSON in this exact format:
+{
+  "action": "add_transaction" | "add_expense" | "query_data",
+  "amount": 123.45,
+  "description": "Clear transaction description",
+  "vendor": "Vendor name if mentioned",
+  "category": "Office Supplies" | "Meals & Entertainment" | "Travel & Transportation" | "Professional Services" | "Marketing & Advertising" | "Utilities" | "Rent" | "Insurance" | "Revenue" | "Other",
+  "date": "2024-01-31T12:00:00.000Z",
+  "confidence": 0.95,
+  "isExpense": true
+}
+
+Guidelines:
+- If amount mentioned: action = "add_transaction" or "add_expense"
+- If asking questions like "how much", "what did I spend": action = "query_data"
+- Parse relative dates: "yesterday", "Monday", "last week", etc.
+- Extract vendor names from context
+- Categorize according to Canadian business expense categories
+- Default to today's date if no date mentioned
+- Set confidence based on clarity of the input (0.0 to 1.0)
+- Revenue transactions have isExpense: false
+- Expenses have isExpense: true`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    
+    // Parse and validate the date
+    let parsedDate = new Date();
+    if (result.date) {
+      try {
+        parsedDate = new Date(result.date);
+        if (isNaN(parsedDate.getTime())) {
+          parsedDate = new Date();
+        }
+      } catch {
+        parsedDate = new Date();
+      }
+    }
+    
+    return {
+      action: result.action || "add_expense",
+      amount: Math.abs(parseFloat(result.amount) || 0),
+      description: result.description || text,
+      vendor: result.vendor || undefined,
+      category: result.category || "Other",
+      date: parsedDate.toISOString(),
+      confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
+      isExpense: result.isExpense !== false,
+    };
+  } catch (error) {
+    console.error("OpenAI natural language parsing error:", error);
+    return {
+      action: "add_expense",
+      amount: 0,
+      description: text,
+      date: new Date().toISOString(),
+      confidence: 0,
+      isExpense: true,
+    };
+  }
+}

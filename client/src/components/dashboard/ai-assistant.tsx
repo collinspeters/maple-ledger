@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Brain, Send } from "lucide-react";
 import { ChatMessage } from "@shared/schema";
+import NaturalLanguageInput from "@/components/chat/natural-language-input";
 
 export default function AiAssistant() {
   const [message, setMessage] = useState("");
@@ -17,8 +18,11 @@ export default function AiAssistant() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await apiRequest("POST", "/api/chat", { message });
-      return response.json();
+      const response = await apiRequest("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chat/history"] });
@@ -48,6 +52,14 @@ export default function AiAssistant() {
       
       <CardContent className="p-6">
         <div className="space-y-4">
+          {/* Natural Language Input */}
+          <NaturalLanguageInput 
+            onTransactionAdded={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/financial-summary"] });
+            }} 
+          />
+          
           {/* Chat messages */}
           {recentMessages.length > 0 ? (
             <div className="space-y-3 max-h-48 overflow-y-auto">

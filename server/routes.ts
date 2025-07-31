@@ -10,7 +10,7 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
-import { categorizeTransaction, processFinancialQuery, extractReceiptData } from "./services/openai";
+import { categorizeTransaction, processFinancialQuery, extractReceiptData, parseNaturalLanguageTransaction } from "./services/openai";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
 import { 
   insertUserSchema, 
@@ -694,6 +694,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(invoice);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // AI-powered natural language processing
+  app.post("/api/ai/parse-transaction", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ message: "Text input is required" });
+      }
+
+      const parsed = await parseNaturalLanguageTransaction(text);
+      res.json({ parsed });
+    } catch (error: any) {
+      console.error("Natural language parsing error:", error);
+      res.status(500).json({ message: "Failed to process natural language input" });
+    }
+  });
+
+  // Enhanced Financial Reports API
+  app.get("/api/reports/financial-summary/:period?", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;  
+      const period = req.params.period || 'current-month';
+      
+      // Get transactions for the user
+      const transactions = await storage.getTransactions(user.id);
+      
+      // Calculate date range based on period
+      const now = new Date();
+      let startDate: Date;
+      let endDate = now;
+      
+      switch (period) {
+        case 'current-month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'last-month':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          break;
+        case 'current-quarter':
+          const quarter = Math.floor(now.getMonth() / 3);
+          startDate = new Date(now.getFullYear(), quarter * 3, 1);
+          break;
+        case 'current-year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+      
+      // Filter transactions by date range
+      const filteredTransactions = transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        return transactionDate >= startDate && transactionDate <= endDate;
+      });
+      
+      // Calculate financial summary
+      let totalRevenue = 0;
+      let totalExpenses = 0;
+      const expensesByCategory: { [key: string]: number } = {};
+      
+      filteredTransactions.forEach(transaction => {
+        const amount = parseFloat(transaction.amount);
+        if (transaction.isExpense) {
+          totalExpenses += amount;
+          const category = transaction.category || 'Other';
+          expensesByCategory[category] = (expensesByCategory[category] || 0) + amount;
+        } else {
+          totalRevenue += amount;
+        }
+      });
+      
+      const netIncome = totalRevenue - totalExpenses;
+      
+      // Convert expenses by category to array format
+      const totalExpensesForPercentage = totalExpenses || 1; // Avoid division by zero
+      const expensesByCategoryArray = Object.entries(expensesByCategory).map(([category, amount]) => ({
+        category,
+        amount,
+        percentage: Math.round((amount / totalExpensesForPercentage) * 100)
+      }));
+      
+      // Generate monthly data for cash flow (simplified)
+      const monthlyData = [];
+      if (period === 'current-year') {
+        for (let month = 0; month < 12; month++) {
+          const monthStart = new Date(now.getFullYear(), month, 1);
+          const monthEnd = new Date(now.getFullYear(), month + 1, 0);
+          const monthTransactions = filteredTransactions.filter(t => {
+            const date = new Date(t.date);
+            return date >= monthStart && date <= monthEnd;
+          });
+          
+          let monthRevenue = 0;
+          let monthExpenses = 0;
+          
+          monthTransactions.forEach(t => {
+            const amount = parseFloat(t.amount);
+            if (t.isExpense) {
+              monthExpenses += amount;
+            } else {
+              monthRevenue += amount;
+            }
+          });
+          
+          monthlyData.push({
+            month: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            revenue: monthRevenue,
+            expenses: monthExpenses,
+            profit: monthRevenue - monthExpenses
+          });
+        }
+      }
+      
+      const summary = {
+        totalRevenue,
+        totalExpenses,
+        netIncome,
+        expensesByCategory: expensesByCategoryArray,
+        monthlyData
+      };
+      
+      res.json(summary);
+    } catch (error: any) {
+      console.error("Financial summary error:", error);
+      res.status(500).json({ message: "Failed to generate financial summary" });
     }
   });
 
