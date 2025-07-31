@@ -3,13 +3,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Eye, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import InvoicePreview from "./invoice-preview";
+import InvoicePreviewButton from "./invoice-preview-button";
 
 interface Client {
   id: string;
@@ -64,6 +66,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
   const [items, setItems] = useState<ItemFormData[]>([
     { description: "", quantity: "1", unitPrice: "0", taxable: true }
   ]);
+  const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: clients } = useQuery<Client[]>({
@@ -298,6 +301,10 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
+            <InvoicePreviewButton
+              onClick={() => setShowPreview(true)}
+              disabled={!form.getValues("clientId") || items.length === 0}
+            />
             <Button 
               type="submit" 
               disabled={createInvoiceMutation.isPending}
@@ -308,6 +315,53 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
           </div>
         </form>
       </div>
+
+      {/* Invoice Preview */}
+      {showPreview && (
+        <InvoicePreview
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          onSend={() => {
+            // Handle send functionality - create and send invoice
+            const formData = form.getValues();
+            createInvoiceMutation.mutate({ invoice: formData, items });
+            setShowPreview(false);
+          }}
+          invoice={{
+            invoiceNumber: `INV-${Date.now()}`,
+            client: clients?.find(c => c.id === form.getValues("clientId")) || {
+              id: "",
+              businessName: "Select a client",
+              email: "",
+              country: "Canada"
+            },
+            issueDate: form.getValues("issueDate"),
+            dueDate: form.getValues("dueDate"),
+            items: items.map(item => ({
+              description: item.description,
+              quantity: parseFloat(item.quantity) || 0,
+              unitPrice: parseFloat(item.unitPrice) || 0,
+              totalPrice: (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0),
+              taxable: item.taxable
+            })),
+            subtotal,
+            taxAmount,
+            totalAmount: total,
+            notes: form.getValues("notes"),
+            status: "draft"
+          }}
+          businessInfo={{
+            businessName: "Demo Tech Consulting",
+            address: "123 Business Street",
+            city: "Toronto",
+            province: "ON",
+            postalCode: "M5V 3A8",
+            country: "Canada",
+            email: "demo@bookkeepai.com",
+            phone: "(416) 555-0123"
+          }}
+        />
+      )}
     </div>
   );
 }
