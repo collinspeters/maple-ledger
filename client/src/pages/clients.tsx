@@ -110,7 +110,7 @@ export default function Clients() {
                 <FileText className="h-8 w-8 text-orange-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {clients?.reduce((sum, client) => sum + client.paymentTerms, 0) / (clients?.length || 1) || 30}
+                    {clients ? Math.round(clients.reduce((sum, client) => sum + client.paymentTerms, 0) / clients.length) : 30}
                   </p>
                   <p className="text-sm text-gray-600">Avg Payment Terms (days)</p>
                 </div>
