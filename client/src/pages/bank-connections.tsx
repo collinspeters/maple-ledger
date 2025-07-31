@@ -36,7 +36,7 @@ export default function BankConnections() {
   // Delete bank connection mutation
   const deleteMutation = useMutation({
     mutationFn: (connectionId: string) =>
-      apiRequest("DELETE", `/api/bank-connections/${connectionId}`, {}),
+      apiRequest("DELETE", `/api/bank-connections/${connectionId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       toast({
@@ -55,7 +55,7 @@ export default function BankConnections() {
 
   // Sync transactions mutation
   const syncMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/plaid/sync-transactions", {}),
+    mutationFn: () => apiRequest("POST", "/api/plaid/sync-transactions"),
     onSuccess: (data: { syncedCount: number }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
@@ -77,9 +77,7 @@ export default function BankConnections() {
   const onSuccess = async (public_token: string) => {
     try {
       setIsConnecting(true);
-      const response = await apiRequest("POST", "/api/plaid/exchange-public-token", {
-        body: JSON.stringify({ public_token }),
-      }) as { connections: number };
+      const response = await apiRequest("POST", "/api/plaid/exchange-public-token", { public_token }) as { connections: number };
 
       queryClient.invalidateQueries({ queryKey: ["/api/bank-connections"] });
       
@@ -119,16 +117,14 @@ export default function BankConnections() {
   const startConnection = async () => {
     try {
       setIsConnecting(true);
-      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token", {}) as { link_token: string };
+      const tokenResponse = await apiRequest("POST", "/api/plaid/create-link-token") as { link_token: string };
       
       // Re-enable the query to fetch the token
       queryClient.setQueryData(["/api/plaid/create-link-token"], tokenResponse);
       
-      // Small delay to ensure token is set
+      // Update the Plaid Link with new token and open
       setTimeout(() => {
-        if (ready) {
-          open();
-        }
+        open();
       }, 100);
     } catch (error) {
       setIsConnecting(false);
@@ -187,7 +183,7 @@ export default function BankConnections() {
           )}
           <Button
             onClick={startConnection}
-            disabled={isConnecting || !ready}
+            disabled={isConnecting}
           >
             <Plus className="h-4 w-4 mr-2" />
             {isConnecting ? "Connecting..." : "Connect Bank Account"}
