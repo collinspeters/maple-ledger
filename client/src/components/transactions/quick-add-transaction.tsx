@@ -11,6 +11,7 @@ export default function QuickAddTransaction() {
   const [amount, setAmount] = useState("");
   const [vendor, setVendor] = useState("");
   const [description, setDescription] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Today's date as default
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -22,7 +23,7 @@ export default function QuickAddTransaction() {
           amount: parseFloat(amount).toFixed(2),
           vendor: vendor.trim(),
           description: description.trim(),
-          date: new Date().toISOString(),
+          date: new Date(date).toISOString(),
           isExpense: true,
         }),
       });
@@ -33,6 +34,7 @@ export default function QuickAddTransaction() {
       setAmount("");
       setVendor("");
       setDescription("");
+      setDate(new Date().toISOString().split('T')[0]);
       
       const confidence = data.aiConfidence ? parseFloat(data.aiConfidence) : 0;
       
@@ -55,7 +57,7 @@ export default function QuickAddTransaction() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !vendor || !description) {
+    if (!amount || !vendor || !description || !date) {
       toast({
         title: "Validation Error", 
         description: "Please fill in all fields",
@@ -63,7 +65,7 @@ export default function QuickAddTransaction() {
       });
       return;
     }
-    console.log("Submitting transaction:", { amount, vendor, description });
+    console.log("Submitting transaction:", { amount, vendor, description, date });
     createTransactionMutation.mutate();
   };
 
@@ -78,6 +80,12 @@ export default function QuickAddTransaction() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
           <Input
             type="number"
             step="0.01"
@@ -101,7 +109,7 @@ export default function QuickAddTransaction() {
           <Button
             type="submit"
             className="w-full"
-            disabled={createTransactionMutation.isPending || !amount || !vendor || !description}
+            disabled={createTransactionMutation.isPending || !amount || !vendor || !description || !date}
           >
             {createTransactionMutation.isPending ? (
               <>
