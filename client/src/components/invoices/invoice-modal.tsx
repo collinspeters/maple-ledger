@@ -332,8 +332,18 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
             client: clients?.find(c => c.id === form.getValues("clientId")) || {
               id: "",
               businessName: "Select a client",
+              contactName: "",
               email: "",
-              country: "Canada"
+              phone: "",
+              address: "",
+              city: "",
+              province: "",
+              postalCode: "",
+              country: "Canada",
+              currency: "CAD",
+              paymentTerms: 30,
+              isActive: true,
+              createdAt: new Date().toISOString()
             },
             issueDate: form.getValues("issueDate"),
             dueDate: form.getValues("dueDate"),
