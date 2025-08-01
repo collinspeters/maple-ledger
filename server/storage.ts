@@ -240,10 +240,23 @@ export class DatabaseStorage implements IStorage {
   async updateReceipt(id: string, updates: Partial<Receipt>): Promise<Receipt> {
     const [receipt] = await db
       .update(receipts)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(receipts.id, id))
       .returning();
     return receipt;
+  }
+
+  async getReceiptById(id: string): Promise<Receipt | null> {
+    const [receipt] = await db
+      .select()
+      .from(receipts)
+      .where(eq(receipts.id, id))
+      .limit(1);
+    return receipt || null;
+  }
+
+  async deleteReceipt(id: string): Promise<void> {
+    await db.delete(receipts).where(eq(receipts.id, id));
   }
 
   async getUnmatchedReceipts(userId: string): Promise<Receipt[]> {

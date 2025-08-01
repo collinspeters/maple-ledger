@@ -1,0 +1,48 @@
+✅ User Flow:
+User clicks "Upload Receipt"
+Can drag-and-drop or browse to upload PDF, JPG, PNG
+Optional: Add note/tag to receipt
+System processes image/PDF with Mindee OCR
+Extracted fields:
+Vendor/Merchant Name
+Date
+Total Amount
+Taxes (GST/HST/PST)
+Currency
+Optional line items (if available)
+System attempts to auto-match receipt to a synced bank transaction
+Match logic:
+Date ± 3 days
+Amount match within ± $1.00
+Vendor name similarity > 70% (use fuzzy matching or vector embedding)
+If confident match found:
+Link receipt to transaction
+Update transaction metadata:
+receipt_attached = true
+receipt_source = upload
+extracted_data = {taxes, vendor, memo}
+audit_ready = true
+If no match or low confidence:
+Store as “Unmatched Receipts”
+Show suggested transactions for user to manually match
+User confirms or adjusts match
+Can manually assign receipt to a different transaction
+Or flag as “standalone expense” → new transaction created with receipt data
+🚨 Edge Cases & Error Handling:
+Scenario	Handling
+🔒 Receipt uploaded but unreadable	Show "OCR failed – try again or enter manually"
+❌ Multiple transactions match criteria	Present top 3 suggestions, sorted by confidence
+⚠️ No match found	Store in unmatched_receipts → remind user weekly
+🗂️ Receipt for split transaction	Allow user to mark as split → attach receipt to all parts
+🧾 Tax info missing in OCR	Ask user to confirm HST/GST breakdown or mark “no tax included”
+🐛 Mindee API timeout or failure	Retry once, fallback to manual input form
+🔁 Duplicate receipt uploaded	Detect hash or visual similarity → warn user
+🔁 Automation Flows & Interdependencies:
+Trigger	Automation
+📥 Receipt uploaded	→ Mindee OCR request → extract structured data
+🧠 OCR data parsed	→ Match algorithm triggered → suggested transaction returned
+✅ User confirms match	→ Update Transaction object: add receipt, mark audit-ready, adjust memo/category if needed
+🔁 Receipt auto-matched	→ P&L and Tax Reports updated if tax info extracted
+📁 Receipt linked to transaction	→ Included in CRA audit trail exports (PDF bundle per transaction)
+📤 New receipt uploaded	→ Activity log entry created → weekly summary of unmatched receipts generated
+🕵️‍♂️ Receipt flagged as expense w/o transaction	→ Triggers creation of new transaction with AI-categorization → linked instantly

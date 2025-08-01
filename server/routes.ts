@@ -13,16 +13,20 @@ import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRema
 import { categorizeTransaction, processFinancialQuery, extractReceiptData, parseNaturalLanguageTransaction } from "./services/openai";
 import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } from "./services/merchant-enrichment";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
+import { processReceiptOCR, findTransactionMatches } from "./services/ocr";
 import { 
   insertUserSchema, 
   insertTransactionSchema, 
   insertBankConnectionSchema,
+  insertReceiptSchema,
   insertClientSchema,
   insertInvoiceSchema,
   insertInvoiceItemSchema,
   insertEstimateSchema,
   insertEstimateItemSchema,
   type User,
+  type Receipt,
+  type InsertReceipt,
   type Client,
   type Invoice,
   type Estimate 
@@ -721,6 +725,265 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(invoice);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Receipt Management Routes
+  app.get("/api/receipts", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const receipts = await storage.getReceipts(user.id);
+      res.json(receipts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch receipts" });
+    }
+  });
+
+  app.get("/api/receipts/unmatched", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const unmatchedReceipts = await storage.getUnmatchedReceipts(user.id);
+      
+      // For each unmatched receipt, find suggested transaction matches
+      const receiptsWithSuggestions = await Promise.all(
+        unmatchedReceipts.map(async (receipt) => {
+          const suggestions = await findTransactionMatches(receipt, user.id);
+          return {
+            ...receipt,
+            suggestedMatches: suggestions
+          };
+        })
+      );
+      
+      res.json(receiptsWithSuggestions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch unmatched receipts" });
+    }
+  });
+
+  app.post("/api/receipts/upload", requireAuth, requireSubscription, upload.array('receipts', 10), async (req, res) => {
+    try {
+      const user = req.user as User;
+      const files = req.files as Express.Multer.File[];
+      const { notes, tags } = req.body;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      const uploadedReceipts = [];
+      const tagArray = tags ? tags.split(',').map((tag: string) => tag.trim()) : [];
+
+      for (const file of files) {
+        try {
+          // Create receipt record
+          const receiptData = {
+            userId: user.id,
+            fileName: file.originalname,
+            filePath: file.path,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            notes: notes || null,
+            tags: tagArray.length > 0 ? tagArray : null,
+            status: "processing"
+          };
+
+          const receipt = await storage.createReceipt(receiptData);
+          uploadedReceipts.push(receipt);
+
+          // Start OCR processing asynchronously
+          processReceiptOCR(receipt.id, file.path, file.mimetype)
+            .then(async (ocrData) => {
+              // Update receipt with extracted data
+              await storage.updateReceipt(receipt.id, {
+                ocrData,
+                extractedAmount: ocrData.amount,
+                extractedVendor: ocrData.vendor,
+                extractedDate: ocrData.date ? new Date(ocrData.date) : null,
+                extractedTax: ocrData.tax,
+                extractedCurrency: ocrData.currency || "CAD",
+                extractedLineItems: ocrData.lineItems,
+                status: "processed",
+                updatedAt: new Date()
+              });
+
+              // Find and suggest transaction matches
+              const updatedReceipt = await storage.getReceiptById(receipt.id);
+              if (updatedReceipt) {
+                const matches = await findTransactionMatches(updatedReceipt, user.id);
+                if (matches.length > 0) {
+                  await storage.updateReceipt(receipt.id, {
+                    suggestedMatches: matches,
+                    updatedAt: new Date()
+                  });
+                }
+              }
+            })
+            .catch(async (error) => {
+              console.error(`OCR processing failed for receipt ${receipt.id}:`, error);
+              await storage.updateReceipt(receipt.id, {
+                status: "failed",
+                processingError: error.message,
+                updatedAt: new Date()
+              });
+            });
+
+        } catch (error) {
+          console.error("Error creating receipt record:", error);
+        }
+      }
+
+      res.json({
+        message: "Receipts uploaded successfully",
+        uploadedCount: uploadedReceipts.length,
+        receipts: uploadedReceipts
+      });
+
+    } catch (error) {
+      console.error("Receipt upload error:", error);
+      res.status(500).json({ message: "Failed to upload receipts" });
+    }
+  });
+
+  app.get("/api/receipts/:id/preview", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const receipt = await storage.getReceiptById(req.params.id);
+      
+      if (!receipt || receipt.userId !== user.id) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+
+      // Serve the file
+      res.sendFile(path.resolve(receipt.filePath));
+    } catch (error) {
+      res.status(500).json({ message: "Failed to load receipt preview" });
+    }
+  });
+
+  app.get("/api/receipts/:id/thumbnail", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const receipt = await storage.getReceiptById(req.params.id);
+      
+      if (!receipt || receipt.userId !== user.id) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+
+      // For images, serve a smaller version (you could implement thumbnail generation here)
+      if (receipt.mimeType?.startsWith('image/')) {
+        res.sendFile(path.resolve(receipt.filePath));
+      } else {
+        // For PDFs, return a default icon or generate thumbnail
+        res.status(404).json({ message: "Thumbnail not available" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to load receipt thumbnail" });
+    }
+  });
+
+  app.get("/api/receipts/:id/download", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const receipt = await storage.getReceiptById(req.params.id);
+      
+      if (!receipt || receipt.userId !== user.id) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+
+      res.download(receipt.filePath, receipt.fileName);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to download receipt" });
+    }
+  });
+
+  app.post("/api/receipts/:id/match", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { transactionId, action } = req.body;
+      const receiptId = req.params.id;
+
+      const receipt = await storage.getReceiptById(receiptId);
+      if (!receipt || receipt.userId !== user.id) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+
+      if (action === 'confirm') {
+        // Link receipt to transaction
+        await storage.updateReceipt(receiptId, {
+          isMatched: true,
+          matchedTransactionId: transactionId,
+          matchConfidence: "1.0", // User confirmed match
+          isAuditReady: true,
+          updatedAt: new Date()
+        });
+
+        // Update transaction to show receipt is attached
+        await storage.updateTransaction(transactionId, {
+          receiptId: receiptId,
+          receiptAttached: true,
+          receiptSource: "upload",
+          auditReady: true,
+          updatedAt: new Date()
+        });
+
+        res.json({ message: "Receipt matched successfully" });
+
+      } else if (action === 'reject') {
+        // Remove this transaction from suggested matches
+        const currentSuggestions = receipt.suggestedMatches || [];
+        const filteredSuggestions = currentSuggestions.filter((match: any) => match.id !== transactionId);
+        
+        await storage.updateReceipt(receiptId, {
+          suggestedMatches: filteredSuggestions,
+          updatedAt: new Date()
+        });
+
+        res.json({ message: "Match suggestion rejected" });
+      } else {
+        res.status(400).json({ message: "Invalid action" });
+      }
+
+    } catch (error) {
+      res.status(500).json({ message: "Failed to process match" });
+    }
+  });
+
+  app.delete("/api/receipts/:id", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const receipt = await storage.getReceiptById(req.params.id);
+      
+      if (!receipt || receipt.userId !== user.id) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+
+      // Remove file from filesystem
+      try {
+        if (fs.existsSync(receipt.filePath)) {
+          fs.unlinkSync(receipt.filePath);
+        }
+      } catch (error) {
+        console.error("Error deleting receipt file:", error);
+      }
+
+      // If receipt was matched, update the transaction
+      if (receipt.isMatched && receipt.matchedTransactionId) {
+        await storage.updateTransaction(receipt.matchedTransactionId, {
+          receiptId: null,
+          receiptAttached: false,
+          receiptSource: null,
+          auditReady: false,
+          updatedAt: new Date()
+        });
+      }
+
+      // Delete receipt record
+      await storage.deleteReceipt(req.params.id);
+
+      res.json({ message: "Receipt deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete receipt" });
     }
   });
 

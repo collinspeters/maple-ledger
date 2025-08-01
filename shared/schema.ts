@@ -34,8 +34,12 @@ export const transactions = pgTable("transactions", {
   userOverride: boolean("user_override").default(false),
   isReviewed: boolean("is_reviewed").default(false),
   isExpense: boolean("is_expense").default(true),
-  receiptId: varchar("receipt_id"),
+  receiptId: varchar("receipt_id").references(() => receipts.id),
+  receiptAttached: boolean("receipt_attached").default(false),
+  receiptSource: text("receipt_source"), // upload, bank_feed, manual
   bankTransactionId: text("bank_transaction_id"),
+  extractedTaxData: jsonb("extracted_tax_data"), // GST/HST/PST breakdown
+  auditReady: boolean("audit_ready").default(false),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -46,14 +50,26 @@ export const receipts = pgTable("receipts", {
   userId: varchar("user_id").notNull().references(() => users.id),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
   ocrData: jsonb("ocr_data"),
   extractedAmount: decimal("extracted_amount", { precision: 10, scale: 2 }),
   extractedVendor: text("extracted_vendor"),
   extractedDate: timestamp("extracted_date"),
+  extractedTax: decimal("extracted_tax", { precision: 10, scale: 2 }),
+  extractedCurrency: text("extracted_currency").default("CAD"),
+  extractedLineItems: jsonb("extracted_line_items"),
   isMatched: boolean("is_matched").default(false),
   matchedTransactionId: varchar("matched_transaction_id"),
-  status: text("status").default("processing"), // processing, processed, matched, unmatched
+  matchConfidence: decimal("match_confidence", { precision: 3, scale: 2 }),
+  suggestedMatches: jsonb("suggested_matches"), // Array of suggested transaction matches
+  status: text("status").default("processing"), // processing, processed, matched, unmatched, failed
+  processingError: text("processing_error"),
+  notes: text("notes"),
+  tags: text("tags").array(),
+  isAuditReady: boolean("is_audit_ready").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const aiSuggestions = pgTable("ai_suggestions", {
@@ -307,6 +323,7 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 export const insertReceiptSchema = createInsertSchema(receipts).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertAiSuggestionSchema = createInsertSchema(aiSuggestions).omit({

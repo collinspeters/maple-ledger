@@ -1,0 +1,100 @@
+🔹 Feature #4: Generate Financial Reports (P&L, Balance Sheet, GST/HST Summary)
+
+✅ User Flow:
+User navigates to “Reports” dashboard
+Options shown:
+📊 Profit & Loss
+📄 Balance Sheet
+🧾 GST/HST Summary
+📅 Custom Report (date range + category filters)
+User selects report type and date range
+Presets: This Month, Last Month, This Quarter, This Fiscal Year
+Custom start/end date picker
+Optional filters: account, category, client, tags
+System queries Postgres Views for pre-aggregated data
+Views ensure ultra-fast read performance
+Categorization + journal entries already factored in
+Report preview rendered in-app
+Interactive chart + table
+Key figures highlighted (e.g., Net Profit, Revenue, Expenses breakdown)
+User clicks “Export” → PDF generated using Puppeteer
+Headers: Company info, logo, report title, date range
+Branded, audit-ready formatting
+Auto-saved to user’s documents/downloads in-app
+Optional Actions:
+📨 Email report to self or accountant
+🗃️ Auto-attach to CRA tax folder
+📁 Add report to AI Chat context for analysis (e.g., “Why is net income lower this month?”)
+🚨 Edge Cases & Error Handling:
+Scenario	Handling
+❌ No data in range	Display: “No reportable data – try a different date range”
+⚠️ Categories uncategorized	Show warning: “4 transactions uncategorized – may affect accuracy”
+🐛 DB view timeout	Retry with optimized fallback query (aggregate by month)
+📅 User selects invalid range	Prevent submit, show validation error
+📄 Export fails	Retry → fallback to CSV download prompt
+🔁 Automation Flows & Interdependencies:
+Trigger	Automation
+🧾 Categorized Transactions	→ Used by P&L, GST/HST, Cashflow reports
+📥 Receipt-Linked Transactions	→ Tagged as “audit-ready” → included in summary counts
+🧠 AI Categorization → Tax Code Flagging	→ Auto-calculates GST/HST breakdown by province & category
+📅 Fiscal Year Start Setup	→ Affects Balance Sheet & Retained Earnings
+📂 Report Generated	→ Saved to "Documents" module → available in AI chat and accountant export
+📨 Email Report	→ Uses Replit mailer or SendGrid via API
+🧠 AI Enhancements (Optional / Phase 2):
+AI Summary Generator: “This month, your revenue decreased by 12% due to lower invoice collection.”
+Chat → Report Generation: User types “Give me last quarter’s P&L” → AI builds it instantly
+Anomaly Detection: GPT flags sudden expense spikes, revenue drops, or tax errors
+Insight Cards: GPT highlights KPIs like “Top 3 Expense Categories,” “Net Profit Trend”
+📊 Report Type Details:
+🔷 Profit & Loss (Income Statement)
+
+Field	Source Table / View	Notes
+Revenue	categorized_transactions	Grouped by income accounts
+COGS	categorized_transactions	Grouped by cost accounts
+Gross Profit	Calculated	Revenue - COGS
+Expenses	categorized_transactions	Grouped by expense category
+Net Profit	Calculated	Revenue - COGS - Expenses
+🔷 Balance Sheet
+
+Field	Source	Notes
+Assets	journal_entries / ledger	Includes bank, receivables, etc.
+Liabilities	journal_entries / ledger	Loans, payables, tax owing
+Owner’s Equity	calculated	Assets - Liabilities
+Retained Earnings	historical P&L	Prior net profits
+🔷 GST/HST Tax Summary
+
+Field	Source	Notes
+Tax Collected	categorized_income	GST/HST charged on sales
+Tax Paid	categorized_expenses	GST/HST paid on purchases (ITCs)
+Net Tax Owing	Calculated	Collected - Paid
+Province Breakdown	Categorized by location	Auto-handled using province mapping
+Filing Period Status	Per user config	Show due dates + reminders
+🗃️ PostgreSQL View Example (P&L):
+CREATE VIEW pnl_summary AS
+SELECT
+  date_trunc('month', transaction_date) AS month,
+  category_type,
+  category_name,
+  SUM(amount) AS total
+FROM categorized_transactions
+GROUP BY month, category_type, category_name;
+📄 PDF Report Structure (Puppeteer HTML Template)
+Header: Company Logo + Name + Report Type
+Date Range: Start → End
+Table:
+For P&L: Revenue, COGS, Expenses, Net Profit
+For Balance Sheet: Assets, Liabilities, Equity
+Footer: Page number, generation timestamp, "Powered by [Your SaaS]"
+🛠️ Implementation Blueprint for Replit Agent:
+Backend:
+Create API endpoints: /reports/income, /reports/balance-sheet, /reports/tax-summary
+Hook into precomputed Postgres Views
+Use Puppeteer or pdfkit for rendering/export
+Store PDFs in Supabase or Replit filesystem
+Frontend:
+Use charting library (Chart.js, ApexCharts) for visualization
+Date range picker + filters
+Loading state + export/share options
+Secrets/Infra:
+Ensure read-only DB user for reporting queries
+Use caching for commonly accessed ranges (e.g., current quarter)
