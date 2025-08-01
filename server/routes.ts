@@ -987,6 +987,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Financial Reports Routes
+  app.get("/api/reports/profit-loss", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;  
+      const { from, to } = req.query;
+      
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+      
+      const { generateProfitLossReport } = await import('./services/reports');
+      const report = await generateProfitLossReport(user.id, startDate, endDate);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("P&L report error:", error);
+      res.status(500).json({ message: "Failed to generate profit & loss report" });
+    }
+  });
+
+  app.get("/api/reports/balance-sheet", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { asOf } = req.query;
+      
+      const asOfDate = asOf ? new Date(asOf as string) : new Date();
+      
+      const { generateBalanceSheetReport } = await import('./services/reports');
+      const report = await generateBalanceSheetReport(user.id, asOfDate);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Balance sheet report error:", error);
+      res.status(500).json({ message: "Failed to generate balance sheet report" });
+    }
+  });
+
+  app.get("/api/reports/tax-summary", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+      
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+      
+      const { generateTaxSummaryReport } = await import('./services/reports');
+      const report = await generateTaxSummaryReport(user.id, startDate, endDate);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Tax summary report error:", error);
+      res.status(500).json({ message: "Failed to generate tax summary report" });
+    }
+  });
+
+  app.get("/api/reports/trial-balance", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { asOf } = req.query;
+      
+      const asOfDate = asOf ? new Date(asOf as string) : new Date();
+      
+      const { generateTrialBalanceReport } = await import('./services/reports');
+      const report = await generateTrialBalanceReport(user.id, asOfDate);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Trial balance report error:", error);
+      res.status(500).json({ message: "Failed to generate trial balance report" });
+    }
+  });
+
+  app.get("/api/reports/general-ledger", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+      
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+      
+      const { generateGeneralLedgerReport } = await import('./services/reports');
+      const report = await generateGeneralLedgerReport(user.id, startDate, endDate);
+      
+      res.json(report);
+    } catch (error) {
+      console.error("General ledger report error:", error);
+      res.status(500).json({ message: "Failed to generate general ledger report" });
+    }
+  });
+
   app.post("/api/invoices/:id/mark-paid", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
