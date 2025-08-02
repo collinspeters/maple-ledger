@@ -30,7 +30,7 @@ export default function Banking() {
   const queryClient = useQueryClient();
 
   // Fetch bank connections
-  const { data: connections = [], isLoading } = useQuery({
+  const { data: connections = [], isLoading } = useQuery<BankConnection[]>({
     queryKey: ["/api/bank-connections"],
   });
 

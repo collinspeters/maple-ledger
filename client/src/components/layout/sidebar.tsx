@@ -30,7 +30,7 @@ export default function Sidebar() {
     { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: "3" },
     { href: "/receipts", icon: Receipt, label: "Receipts", badge: "2" },
     { href: "/reports", icon: ChartLine, label: "Reports" },
-    { href: "/banking", icon: Building2, label: "Banking" },
+    { href: "/banking", icon: Building2, label: "🏦 Connect Bank", highlight: true },
     { href: "/ai-assistant", icon: MessageSquare, label: "AI Assistant" },
     { href: "/settings", icon: Settings, label: "Settings" },
   ];
@@ -82,6 +82,8 @@ export default function Sidebar() {
             <div className={`animate-slide-in flex items-center space-x-3 px-3 py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-sm ${
               isActive(item.href)
                 ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 shadow-sm"
+                : item.highlight
+                ? "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 hover:from-green-100 hover:to-emerald-100 shadow-sm animate-pulse-soft"
                 : "text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm"
             }`}
             style={{ animationDelay: `${index * 0.05}s` }}>
@@ -94,6 +96,11 @@ export default function Sidebar() {
                   item.label === "Transactions" ? "bg-gradient-to-r from-orange-500 to-orange-600" : "bg-gradient-to-r from-blue-500 to-blue-600"
                 }`}>
                   {item.badge}
+                </span>
+              )}
+              {item.highlight && !isActive(item.href) && (
+                <span className="text-green-600 text-xs font-bold animate-pulse">
+                  NEW!
                 </span>
               )}
             </div>
