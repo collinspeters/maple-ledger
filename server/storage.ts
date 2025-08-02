@@ -205,7 +205,7 @@ export class DatabaseStorage implements IStorage {
     const [transaction] = await db
       .select()
       .from(transactions)
-      .where(eq(transactions.plaidTransactionId, plaidTransactionId));
+      .where(eq(transactions.bankTransactionId, plaidTransactionId));
     return transaction || undefined;
   }
 

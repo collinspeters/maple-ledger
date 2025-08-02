@@ -623,8 +623,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 date: new Date(transaction.date),
                 category: transaction.category?.[0] || 'Other',
                 isExpense: transaction.amount > 0, // Plaid uses positive for outflows
-                plaidTransactionId: transaction.transaction_id,
-                plaidAccountId: transaction.account_id,
+                bankTransactionId: transaction.transaction_id,
+                accountId: transaction.account_id,
                 confidence: 0.9, // High confidence for Plaid data
                 isVerified: false, // Require user verification
               };
@@ -676,7 +676,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           syncResults.push({
             connectionId: connection.id,
             bankName: connection.bankName,
-            error: error.message
+            error: error instanceof Error ? error.message : 'Unknown error'
           });
         }
       }
@@ -979,7 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       } else if (action === 'reject') {
         // Remove this transaction from suggested matches
-        const currentSuggestions = receipt.suggestedMatches || [];
+        const currentSuggestions = Array.isArray(receipt.suggestedMatches) ? receipt.suggestedMatches : [];
         const filteredSuggestions = currentSuggestions.filter((match: any) => match.id !== transactionId);
         
         await storage.updateReceipt(receiptId, {
