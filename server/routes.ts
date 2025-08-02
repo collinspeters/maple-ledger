@@ -558,11 +558,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Public token is required" });
       }
 
-      // Exchange public token for access token
-      const accessToken = await exchangePublicToken(public_token);
+      // Exchange public token for access token using enhanced quickstart method
+      const tokenData = await exchangePublicToken(public_token);
       
-      // Get account information
-      const accountsData = await getAccounts(accessToken);
+      // Get account information using enhanced quickstart method
+      const accountsData = await getAccounts(tokenData.accessToken);
       
       // Store bank connections for each account
       const connections = [];
@@ -570,8 +570,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = req.user as User;
         const connectionData = {
           userId: user.id,
-          plaidItemId: accountsData.item.item_id,
-          plaidAccessToken: accessToken,
+          plaidItemId: tokenData.itemId,
+          plaidAccessToken: tokenData.accessToken,
           bankName: accountsData.item.institution_id || "Unknown Bank",
           accountType: account.type,
           accountId: account.account_id,
@@ -586,7 +586,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         message: "Bank accounts connected successfully", 
-        connections: connections.length 
+        connections: connections.length,
+        itemId: tokenData.itemId,
+        requestId: tokenData.requestId
       });
     } catch (error) {
       console.error("Error exchanging public token:", error);
@@ -604,24 +606,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let totalSynced = 0;
+      const syncResults = [];
       
       for (const connection of connections) {
         try {
-          // Sync transactions from the last sync date
-          const newTransactions = await syncTransactions(
-            connection.plaidAccessToken, 
-            user.id, 
-            connection.lastSyncAt || undefined
-          );
-
-          // Create transactions in database
-          for (const transactionData of newTransactions) {
+          // Use new sync method that follows Plaid's quickstart pattern
+          const syncData = await syncTransactions(connection.plaidAccessToken);
+          
+          // Process added transactions
+          for (const transaction of syncData.added) {
             try {
+              const transactionData = {
+                userId: user.id,
+                description: transaction.name,
+                amount: Math.abs(transaction.amount).toString(),
+                date: new Date(transaction.date),
+                category: transaction.category?.[0] || 'Other',
+                isExpense: transaction.amount > 0, // Plaid uses positive for outflows
+                plaidTransactionId: transaction.transaction_id,
+                plaidAccountId: transaction.account_id,
+                confidence: 0.9, // High confidence for Plaid data
+                isVerified: false, // Require user verification
+              };
+
               await storage.createTransaction(transactionData);
               totalSynced++;
             } catch (error) {
               // Skip duplicates (likely existing transactions)
-              console.log("Skipping duplicate transaction:", transactionData.plaidTransactionId);
+              console.log("Skipping duplicate transaction:", transaction.transaction_id);
+            }
+          }
+
+          // Process modified transactions
+          for (const transaction of syncData.modified) {
+            try {
+              // Update existing transaction if it exists
+              const existingTransaction = await storage.getTransactionByPlaidId(transaction.transaction_id);
+              if (existingTransaction) {
+                const updatedData = {
+                  description: transaction.name,
+                  amount: Math.abs(transaction.amount).toString(),
+                  date: new Date(transaction.date),
+                  category: transaction.category?.[0] || 'Other',
+                  isExpense: transaction.amount > 0,
+                };
+                await storage.updateTransaction(existingTransaction.id, updatedData);
+              }
+            } catch (error) {
+              console.log("Error updating transaction:", transaction.transaction_id, error);
             }
           }
 
@@ -629,14 +661,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateBankConnection(connection.id, {
             lastSyncAt: new Date()
           });
+
+          syncResults.push({
+            connectionId: connection.id,
+            bankName: connection.bankName,
+            added: syncData.added.length,
+            modified: syncData.modified.length,
+            removed: syncData.removed.length,
+            hasMore: syncData.hasMore
+          });
+
         } catch (error) {
           console.error(`Error syncing transactions for connection ${connection.id}:`, error);
+          syncResults.push({
+            connectionId: connection.id,
+            bankName: connection.bankName,
+            error: error.message
+          });
         }
       }
 
       res.json({ 
         message: `Successfully synced ${totalSynced} new transactions`,
-        syncedCount: totalSynced 
+        syncedCount: totalSynced,
+        results: syncResults
       });
     } catch (error) {
       console.error("Error syncing transactions:", error);

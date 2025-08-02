@@ -54,6 +54,7 @@ export interface IStorage {
   // Transaction methods
   getTransactions(userId: string, limit?: number): Promise<Transaction[]>;
   getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]>;
+  getTransactionByPlaidId(plaidTransactionId: string): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction>;
   deleteTransaction(id: string): Promise<void>;
@@ -198,6 +199,14 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(transactions.date));
+  }
+
+  async getTransactionByPlaidId(plaidTransactionId: string): Promise<Transaction | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.plaidTransactionId, plaidTransactionId));
+    return transaction || undefined;
   }
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
