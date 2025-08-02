@@ -151,8 +151,10 @@ export async function getTransactions(accessToken: string, startDate: Date, endD
       access_token: accessToken,
       start_date: startDate.toISOString().split('T')[0],
       end_date: endDate.toISOString().split('T')[0],
-      count: 500, // Maximum number of transactions per request
-      offset: 0,
+      options: {
+        count: 500, // Maximum number of transactions per request
+        offset: 0,
+      }
     };
 
     const response = await plaidClient.transactionsGet(request);
@@ -167,8 +169,10 @@ export async function getTransactions(accessToken: string, startDate: Date, endD
         access_token: accessToken,
         start_date: startDate.toISOString().split('T')[0],
         end_date: endDate.toISOString().split('T')[0],
-        count: 500,
-        offset: transactions.length,
+        options: {
+          count: 500,
+          offset: transactions.length,
+        }
       };
       
       const paginatedResponse = await plaidClient.transactionsGet(paginatedRequest);
@@ -274,8 +278,8 @@ export async function processCanadianTransactions(transactions: Transaction[]) {
       if (isGstHstApplicable) {
         taxInfo = {
           province,
-          gstHstRate: getCanadianTaxRate(province),
-          estimatedTax: amount * (getCanadianTaxRate(province) / 100),
+          gstHstRate: getCanadianTaxRate(province || ''),
+          estimatedTax: amount * (getCanadianTaxRate(province || '') / 100),
         };
       }
     }
