@@ -73,14 +73,13 @@ export async function createLinkToken(userId: string): Promise<string> {
           account_subtypes: [
             DepositoryAccountSubtype.Checking, 
             DepositoryAccountSubtype.Savings, 
-            DepositoryAccountSubtype.MoneyMarket,
-            DepositoryAccountSubtype.Cd
+            DepositoryAccountSubtype.MoneyMarket
           ]
         },
         credit: {
           account_subtypes: [
-            CreditAccountSubtype.CreditCard, 
-            CreditAccountSubtype.LineOfCredit
+            CreditAccountSubtype.CreditCard
+
           ]
         }
       }
