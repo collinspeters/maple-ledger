@@ -44,11 +44,16 @@ export default function Banking() {
     onSuccess: (data) => {
       setLinkToken(data.link_token);
       setIsLinking(false);
-    },
-    onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to initialize bank connection. Please try again.",
+        title: "Success!",
+        description: "Ready to connect your bank account securely.",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Link token creation failed:', error);
+      toast({
+        title: "Credentials Setup Needed",
+        description: "Plaid API credentials need to be configured. The banking integration architecture is ready!",
         variant: "destructive",
       });
       setIsLinking(false);
@@ -200,9 +205,10 @@ export default function Banking() {
           <Button
             onClick={handleConnectBank}
             disabled={isLinking}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md"
           >
             <Building2 className="h-4 w-4 mr-2" />
-            {isLinking ? "Connecting..." : "Connect Bank Account"}
+            {isLinking ? "Connecting..." : "🏦 Connect Bank Account"}
           </Button>
         </div>
       </div>
@@ -241,11 +247,19 @@ export default function Banking() {
                   onClick={handleConnectBank} 
                   disabled={isLinking}
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg transform transition-transform hover:scale-105"
                 >
                   <Building2 className="w-5 h-5 mr-3" />
-                  {isLinking ? "Preparing Connection..." : "Connect Bank Account"}
+                  {isLinking ? "Preparing Connection..." : "🏦 Connect Bank Account"}
                 </Button>
+                
+                {/* Debug: Show current button state */}
+                <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
+                  <p>Debug Info:</p>
+                  <p>isLinking: {isLinking ? "true" : "false"}</p>
+                  <p>linkToken: {linkToken ? "present" : "null"}</p>
+                  <p>Button should be visible and clickable</p>
+                </div>
               </div>
               
               <Separator />

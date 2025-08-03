@@ -53,6 +53,12 @@ const configuration = new Configuration({
 
 export const plaidClient = new PlaidApi(configuration);
 
+console.log('Plaid Configuration:', {
+  clientId: PLAID_CLIENT_ID?.substring(0, 10) + '...',
+  secret: PLAID_SECRET?.substring(0, 10) + '...',
+  environment: PLAID_ENV
+});
+
 // Create link token for Plaid Link initialization - following official quickstart pattern
 export async function createLinkToken(userId: string): Promise<string> {
   try {
