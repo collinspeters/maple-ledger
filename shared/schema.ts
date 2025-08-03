@@ -38,6 +38,11 @@ export const transactions = pgTable("transactions", {
   receiptAttached: boolean("receipt_attached").default(false),
   receiptSource: text("receipt_source"), // upload, bank_feed, manual
   bankTransactionId: text("bank_transaction_id"),
+  bankConnectionId: varchar("bank_connection_id").references(() => bankConnections.id),
+  accountId: text("account_id"), // Plaid account ID for linking
+  isTransfer: boolean("is_transfer").default(false),
+  transferPairId: varchar("transfer_pair_id"), // Links matching transfer transactions
+  transferType: text("transfer_type"), // 'internal', 'external', 'payment'
   extractedTaxData: jsonb("extracted_tax_data"), // GST/HST/PST breakdown
   auditReady: boolean("audit_ready").default(false),
   notes: text("notes"),
@@ -91,6 +96,7 @@ export const bankConnections = pgTable("bank_connections", {
   userId: varchar("user_id").notNull().references(() => users.id),
   plaidItemId: text("plaid_item_id").notNull(),
   plaidAccessToken: text("plaid_access_token").notNull(),
+  accessToken: text("access_token"), // Keep existing column
   bankName: text("bank_name").notNull(),
   accountType: text("account_type").notNull(),
   accountId: text("account_id").notNull(),
@@ -172,6 +178,7 @@ export const estimates = pgTable("estimates", {
   notes: text("notes"),
   acceptedAt: timestamp("acceptedAt"),
   convertedInvoiceId: varchar("convertedInvoiceId"),
+  currency: text("currency").default("CAD"),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });

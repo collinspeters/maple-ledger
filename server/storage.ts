@@ -350,8 +350,26 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(bankConnections)
-      .where(eq(bankConnections.userId, userId))
+      .where(
+        and(
+          eq(bankConnections.userId, userId),
+          eq(bankConnections.isActive, true)
+        )
+      )
       .orderBy(desc(bankConnections.createdAt));
+  }
+
+  async getBankConnectionsByItemId(userId: string, itemId: string): Promise<BankConnection[]> {
+    return await db
+      .select()
+      .from(bankConnections)
+      .where(
+        and(
+          eq(bankConnections.userId, userId),
+          eq(bankConnections.plaidItemId, itemId),
+          eq(bankConnections.isActive, true)
+        )
+      );
   }
 
   async createBankConnection(connection: InsertBankConnection): Promise<BankConnection> {

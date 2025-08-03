@@ -200,14 +200,28 @@ export async function getTransactions(accessToken: string, startDate: Date, endD
   }
 }
 
-// Categorize transaction for Canadian tax purposes
-export function categorizePlaidTransaction(transaction: any): {
+// Enhanced categorization for Canadian tax purposes with transfer detection
+export function categorizePlaidTransaction(transaction: any, userAccounts: string[] = []): {
   category: string;
   isExpense: boolean;
   confidence: number;
+  isTransfer: boolean;
+  transferType?: 'internal' | 'external' | 'payment';
 } {
-  const { category, amount } = transaction;
+  const { category, amount, name, payment_channel } = transaction;
   const isExpense = amount > 0; // Plaid uses positive for expenses
+  
+  // Detect transfers first
+  const transferResult = detectTransfer(transaction, userAccounts);
+  if (transferResult.isTransfer) {
+    return {
+      category: 'Transfer',
+      isExpense: false, // Transfers are not expenses
+      confidence: transferResult.confidence,
+      isTransfer: true,
+      transferType: transferResult.transferType,
+    };
+  }
   
   // Map Plaid categories to Canadian business categories
   const categoryMappings: Record<string, string> = {
@@ -225,7 +239,6 @@ export function categorizePlaidTransaction(transaction: any): {
     'Hardware Stores': 'Equipment and Supplies',
     'Payment': 'Income',
     'Deposit': 'Income',
-    'Transfer': 'Transfer',
   };
 
   const primaryCategory = category?.[0] || 'Other';
@@ -234,7 +247,89 @@ export function categorizePlaidTransaction(transaction: any): {
   return {
     category: mappedCategory,
     isExpense,
-    confidence: 0.85, // High confidence for automated categorization
+    confidence: 0.85,
+    isTransfer: false,
+  };
+}
+
+// Detect if a transaction is a transfer between accounts
+function detectTransfer(transaction: any, userAccounts: string[]): {
+  isTransfer: boolean;
+  confidence: number;
+  transferType?: 'internal' | 'external' | 'payment';
+} {
+  const { category, name, payment_channel, amount } = transaction;
+  const description = name.toLowerCase();
+  
+  // High confidence transfer indicators
+  const transferKeywords = [
+    'transfer', 'trf', 'e-transfer', 'etransfer', 'interac',
+    'online transfer', 'mobile transfer', 'internal transfer',
+    'account transfer', 'between accounts', 'from account', 'to account'
+  ];
+  
+  const paymentKeywords = [
+    'payment', 'pmt', 'bill payment', 'online payment',
+    'autopay', 'pre-authorized', 'pre-auth', 'recurring payment'
+  ];
+  
+  // Check for transfer keywords
+  const hasTransferKeyword = transferKeywords.some(keyword => 
+    description.includes(keyword)
+  );
+  
+  const hasPaymentKeyword = paymentKeywords.some(keyword => 
+    description.includes(keyword)
+  );
+  
+  // Check Plaid categories
+  const isPlaidTransfer = category && (
+    category.includes('Transfer') || 
+    category.includes('Deposit') ||
+    category.includes('Payroll') ||
+    category.includes('Bank Fees')
+  );
+  
+  // Payment channel indicators
+  const isOnlineTransfer = payment_channel === 'online' || payment_channel === 'other';
+  
+  // Determine transfer type and confidence
+  if (hasTransferKeyword && isOnlineTransfer) {
+    return {
+      isTransfer: true,
+      confidence: 0.95,
+      transferType: 'internal'
+    };
+  }
+  
+  if (hasPaymentKeyword) {
+    return {
+      isTransfer: true,
+      confidence: 0.80,
+      transferType: 'payment'
+    };
+  }
+  
+  if (isPlaidTransfer && amount < 0) { // Incoming transfer
+    return {
+      isTransfer: true,
+      confidence: 0.75,
+      transferType: 'external'
+    };
+  }
+  
+  // Low confidence transfer detection based on patterns
+  if (description.includes('deposit') && amount < 0) {
+    return {
+      isTransfer: true,
+      confidence: 0.60,
+      transferType: 'external'
+    };
+  }
+  
+  return {
+    isTransfer: false,
+    confidence: 0
   };
 }
 
@@ -269,21 +364,27 @@ export async function syncTransactions(accessToken: string, cursor?: string): Pr
   }
 }
 
-// Enhanced transaction processing for Canadian bookkeeping
-export async function processCanadianTransactions(transactions: Transaction[]) {
+// Enhanced transaction processing for Canadian bookkeeping with transfer detection
+export async function processCanadianTransactions(
+  transactions: Transaction[], 
+  userAccounts: string[] = []
+) {
   return transactions.map(transaction => {
     // Convert Plaid transaction to our internal format
     const amount = Math.abs(transaction.amount);
     const isExpense = transaction.amount > 0; // Plaid uses positive for outflows
     
-    // Extract Canadian tax information if available
+    // Enhanced categorization with transfer detection
+    const categorization = categorizePlaidTransaction(transaction, userAccounts);
+    
+    // Extract Canadian tax information if available (skip for transfers)
     let taxInfo = null;
-    if (transaction.location?.country === 'CA') {
+    if (!categorization.isTransfer && transaction.location?.country === 'CA') {
       // Look for GST/HST patterns in merchant name or location
       const province = transaction.location.region;
       const isGstHstApplicable = ['ON', 'BC', 'AB', 'SK', 'MB', 'QC', 'NB', 'NS', 'PE', 'NL', 'YT', 'NT', 'NU'].includes(province || '');
       
-      if (isGstHstApplicable) {
+      if (isGstHstApplicable && categorization.isExpense) {
         taxInfo = {
           province,
           gstHstRate: getCanadianTaxRate(province || ''),
@@ -296,18 +397,30 @@ export async function processCanadianTransactions(transactions: Transaction[]) {
       plaidTransactionId: transaction.transaction_id,
       accountId: transaction.account_id,
       amount: amount.toString(),
-      isExpense,
+      isExpense: categorization.isTransfer ? false : categorization.isExpense,
+      isTransfer: categorization.isTransfer,
+      transferType: categorization.transferType,
       description: transaction.name,
       merchant: transaction.merchant_name || transaction.name,
       date: new Date(transaction.date),
-      category: transaction.category?.[0] || 'Other',
+      category: categorization.category,
       subcategory: transaction.category?.[1] || null,
       location: transaction.location,
       paymentChannel: transaction.payment_channel,
+      aiCategory: categorization.category,
+      aiConfidence: categorization.confidence,
+      needsReview: categorization.confidence < 0.8, // Low confidence needs review
       taxInfo,
       rawPlaidData: transaction,
     };
   });
+}
+
+// Get user's account IDs for transfer detection
+export async function getUserAccountIds(userId: string): Promise<string[]> {
+  // This would query the database to get all account IDs for the user
+  // For now, return empty array - will be implemented in storage layer
+  return [];
 }
 
 // Helper function for Canadian tax rates
