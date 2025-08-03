@@ -345,6 +345,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk operations endpoint
+  app.post("/api/transactions/bulk", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { action, transactionIds } = req.body;
+      
+      if (!action || !transactionIds || !Array.isArray(transactionIds)) {
+        return res.status(400).json({ message: "Invalid bulk action request" });
+      }
+
+      // Validate that all transactions belong to the user
+      const userTransactions = await storage.getTransactions(user.id);
+      const userTransactionIds = new Set(userTransactions.map(t => t.id));
+      const invalidIds = transactionIds.filter(id => !userTransactionIds.has(id));
+      
+      if (invalidIds.length > 0) {
+        return res.status(403).json({ message: "Some transactions don't belong to this user" });
+      }
+
+      let results = [];
+
+      switch (action.type) {
+        case 'category':
+          if (!action.newValue) {
+            return res.status(400).json({ message: "Category value required" });
+          }
+          for (const id of transactionIds) {
+            const transaction = await storage.updateTransaction(id, { 
+              category: action.newValue,
+              needsReview: false,
+              isReviewed: true
+            });
+            results.push(transaction);
+          }
+          break;
+
+        case 'account':
+          if (!action.newValue) {
+            return res.status(400).json({ message: "Account value required" });
+          }
+          for (const id of transactionIds) {
+            const transaction = await storage.updateTransaction(id, { 
+              bankConnectionId: action.newValue
+            });
+            results.push(transaction);
+          }
+          break;
+
+        case 'salesTax':
+          if (!action.newValue) {
+            return res.status(400).json({ message: "Sales tax value required" });
+          }
+          const taxRate = parseFloat(action.newValue) / 100;
+          for (const id of transactionIds) {
+            const currentTransaction = userTransactions.find(t => t.id === id);
+            if (currentTransaction) {
+              const amount = parseFloat(currentTransaction.amount);
+              const taxAmount = amount * taxRate;
+              const transaction = await storage.updateTransaction(id, { 
+                taxAmount: taxAmount.toString(),
+                taxRate: action.newValue
+              });
+              results.push(transaction);
+            }
+          }
+          break;
+
+        case 'review':
+          for (const id of transactionIds) {
+            const transaction = await storage.updateTransaction(id, { 
+              isReviewed: true,
+              needsReview: false
+            });
+            results.push(transaction);
+          }
+          break;
+
+        case 'delete':
+          for (const id of transactionIds) {
+            await storage.deleteTransaction(id);
+          }
+          results = { deletedCount: transactionIds.length };
+          break;
+
+        default:
+          return res.status(400).json({ message: "Invalid bulk action type" });
+      }
+
+      res.json({ 
+        success: true, 
+        affectedCount: transactionIds.length,
+        results 
+      });
+    } catch (error) {
+      console.error("Bulk action error:", error);
+      res.status(500).json({ message: "Failed to perform bulk action" });
+    }
+  });
+
+  // Enhanced transaction update endpoint with transfer detection
+  app.patch("/api/transactions/:id", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { id } = req.params;
+      
+      // Verify transaction belongs to user
+      const existingTransaction = await storage.getTransaction(id);
+      if (!existingTransaction || existingTransaction.userId !== user.id) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      
+      // Prevent editing restricted transaction types
+      if (existingTransaction.isTransfer && req.body.bankConnectionId) {
+        return res.status(400).json({ 
+          message: "Cannot change account for transfer transactions as it would break the transfer relationship" 
+        });
+      }
+
+      const updates = req.body;
+      
+      // If updating category and it was previously AI-suggested, mark as reviewed
+      if (updates.category && existingTransaction.aiCategory && !existingTransaction.category) {
+        updates.isReviewed = true;
+        updates.needsReview = false;
+      }
+
+      const transaction = await storage.updateTransaction(id, updates);
+      res.json(transaction);
+    } catch (error) {
+      console.error("Transaction update error:", error);
+      res.status(500).json({ message: "Failed to update transaction" });
+    }
+  });
+
   // Receipt routes
   app.get("/api/receipts", requireAuth, requireSubscription, async (req, res) => {
     try {

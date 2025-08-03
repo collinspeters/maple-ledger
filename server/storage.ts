@@ -57,6 +57,7 @@ export interface IStorage {
   getTransactionByPlaidId(plaidTransactionId: string): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction>;
+  getTransaction(id: string): Promise<Transaction | null>;
   deleteTransaction(id: string): Promise<void>;
   
   // Receipt methods
@@ -224,6 +225,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(transactions.id, id))
       .returning();
     return transaction;
+  }
+
+  async getTransaction(id: string): Promise<Transaction | null> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, id));
+    return transaction || null;
   }
 
   async deleteTransaction(id: string): Promise<void> {
