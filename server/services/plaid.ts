@@ -17,7 +17,7 @@ import {
 // Validate required environment variables
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET = process.env.PLAID_SECRET;
-const PLAID_ENV = process.env.PLAID_ENVIRONMENT || 'development';
+const PLAID_ENV = 'production'; // Force production for live credentials
 
 if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
   console.error('Missing required Plaid environment variables: PLAID_CLIENT_ID, PLAID_SECRET');
@@ -56,7 +56,9 @@ export const plaidClient = new PlaidApi(configuration);
 console.log('Plaid Configuration:', {
   clientId: PLAID_CLIENT_ID?.substring(0, 10) + '...',
   secret: PLAID_SECRET?.substring(0, 10) + '...',
-  environment: PLAID_ENV
+  environment: PLAID_ENV,
+  envVar: process.env.PLAID_ENVIRONMENT,
+  baseUrl: PLAID_ENV_URL
 });
 
 // Create link token for Plaid Link initialization - following official quickstart pattern
