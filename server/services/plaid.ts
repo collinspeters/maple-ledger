@@ -17,7 +17,7 @@ import {
 // Validate required environment variables
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET = process.env.PLAID_SECRET;
-const PLAID_ENV = process.env.PLAID_ENVIRONMENT || 'sandbox';
+const PLAID_ENV = process.env.PLAID_ENVIRONMENT || 'development';
 
 if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
   console.error('Missing required Plaid environment variables: PLAID_CLIENT_ID, PLAID_SECRET');
