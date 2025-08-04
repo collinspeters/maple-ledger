@@ -15,6 +15,7 @@ import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } f
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
 import { processReceiptOCR, findTransactionMatches } from "./services/ocr";
 import { doubleEntryService } from "./services/double-entry";
+import { getDashboardData } from "./routes/dashboard";
 import { 
   insertUserSchema, 
   insertTransactionSchema, 
@@ -831,43 +832,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const start = startDate ? new Date(startDate as string) : new Date(new Date().getFullYear(), 0, 1);
       const end = endDate ? new Date(endDate as string) : new Date();
       
-      const transactions = await storage.getTransactionsByDateRange(user.id, start, end);
-      
-      // Calculate revenue from non-transfer income transactions
-      const revenue = transactions
-        .filter(t => !t.isTransfer && !t.isExpense)
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-      
-      // Calculate expenses by T2125 category
-      const expensesByCategory = transactions
-        .filter(t => !t.isTransfer && t.isExpense && t.aiCategory)
-        .reduce((acc, t) => {
-          const category = t.aiCategory || 'OTHER_EXPENSES';
-          acc[category] = (acc[category] || 0) + parseFloat(t.amount);
-          return acc;
-        }, {} as Record<string, number>);
-      
-      const totalExpenses = Object.values(expensesByCategory).reduce((sum, amount) => sum + amount, 0);
-      const netProfit = revenue - totalExpenses;
-      
-      // Format for T2125 categories
-      const expenseCategories = Object.entries(expensesByCategory).map(([category, amount]) => ({
-        category,
-        amount,
-        account: category
-      }));
+      const report = await financialReportsService.generateIncomeStatement(user.id, {
+        startDate: start,
+        endDate: end
+      });
       
       res.json({
-        revenue: {
-          total: revenue,
-          categories: [{ category: 'Business Income', amount: revenue }]
-        },
-        expenses: {
-          total: totalExpenses,
-          categories: expenseCategories
-        },
-        grossProfit: revenue,
-        netProfit,
+        ...report,
         period: {
           startDate: start.toISOString(),
           endDate: end.toISOString()
@@ -1721,6 +1692,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate financial summary" });
     }
   });
+
+  // Real-time Dashboard Summary
+  app.get("/api/reports/dashboard", requireAuth, getDashboardData);
 
   const httpServer = createServer(app);
   return httpServer;

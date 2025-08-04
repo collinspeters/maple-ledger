@@ -16,7 +16,8 @@ import {
   FileText,
   Users,
   Calculator,
-  BookOpen
+  BookOpen,
+  TrendingUp
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -31,6 +32,7 @@ export default function Sidebar() {
     { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: "3" },
     { href: "/receipts", icon: Receipt, label: "Receipts", badge: "2" },
     { href: "/chart-of-accounts", icon: BookOpen, label: "Chart of Accounts" },
+    { href: "/real-time-reports", icon: ChartLine, label: "Real-Time Reports", highlight: true },
     { href: "/reports", icon: ChartLine, label: "Reports" },
     { href: "/banking", icon: Building2, label: "🏦 Connect Bank", highlight: true },
     { href: "/ai-assistant", icon: MessageSquare, label: "AI Assistant" },
