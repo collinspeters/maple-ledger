@@ -3,12 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { DateRange } from 'react-day-picker';
 import { CalendarIcon, Filter, X, Search } from 'lucide-react';
-import { format } from 'date-fns';
+
+type DateRange = {
+  from?: Date;
+  to?: Date;
+} | undefined;
 
 export interface TransactionFilters {
   search: string;
@@ -186,38 +187,36 @@ export function TransactionFiltersComponent({
         {/* Date Range Filter */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Date Range</Label>
-          <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.dateRange?.from ? (
-                  filters.dateRange.to ? (
-                    <>
-                      {format(filters.dateRange.from, "LLL dd")} -{" "}
-                      {format(filters.dateRange.to, "LLL dd, y")}
-                    </>
-                  ) : (
-                    format(filters.dateRange.from, "LLL dd, y")
-                  )
-                ) : (
-                  <span>Pick a date range</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={filters.dateRange?.from}
-                selected={filters.dateRange}
-                onSelect={handleDateSelect}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="date"
+              value={filters.dateRange?.from ? filters.dateRange.from.toISOString().split('T')[0] : ''}
+              onChange={(e) => {
+                const date = e.target.value ? new Date(e.target.value) : undefined;
+                onFiltersChange({ 
+                  dateRange: { 
+                    from: date, 
+                    to: filters.dateRange?.to 
+                  } 
+                });
+              }}
+              placeholder="From date"
+            />
+            <Input
+              type="date"
+              value={filters.dateRange?.to ? filters.dateRange.to.toISOString().split('T')[0] : ''}
+              onChange={(e) => {
+                const date = e.target.value ? new Date(e.target.value) : undefined;
+                onFiltersChange({ 
+                  dateRange: { 
+                    from: filters.dateRange?.from, 
+                    to: date 
+                  } 
+                });
+              }}
+              placeholder="To date"
+            />
+          </div>
         </div>
       </div>
 

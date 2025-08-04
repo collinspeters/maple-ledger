@@ -404,8 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const amount = parseFloat(currentTransaction.amount);
               const taxAmount = amount * taxRate;
               const transaction = await storage.updateTransaction(id, { 
-                taxAmount: taxAmount.toString(),
-                taxRate: action.newValue
+                amount: (amount + taxAmount).toString()
               });
               results.push(transaction);
             }
@@ -426,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const id of transactionIds) {
             await storage.deleteTransaction(id);
           }
-          results = { deletedCount: transactionIds.length };
+          results.push({ deletedCount: transactionIds.length });
           break;
 
         default:
@@ -753,14 +752,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const transactionData = {
                 userId: user.id,
                 description: transaction.name,
+                vendor: transaction.merchant_name || transaction.name,
                 amount: Math.abs(transaction.amount).toString(),
                 date: new Date(transaction.date),
                 category: transaction.category?.[0] || 'Other',
                 isExpense: transaction.amount > 0, // Plaid uses positive for outflows
                 bankTransactionId: transaction.transaction_id,
-                accountId: transaction.account_id,
-                confidence: 0.9, // High confidence for Plaid data
-                isVerified: false, // Require user verification
+                bankConnectionId: connection.id,
+                needsReview: false,
+                isReviewed: true,
               };
 
               await storage.createTransaction(transactionData);

@@ -9,7 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { TransactionFiltersComponent, TransactionFilters } from "@/components/transactions/transaction-filters";
 import { BulkActions, BulkAction } from "@/components/transactions/bulk-actions";
 import { TransactionRow, Transaction } from "@/components/transactions/transaction-row";
-import { DateRange } from 'react-day-picker';
+type DateRange = {
+  from?: Date;
+  to?: Date;
+} | undefined;
 import { 
   Plus, 
   Download, 
@@ -46,7 +49,7 @@ export default function Transactions() {
     queryKey: ["/api/transactions"],
   });
 
-  const { data: bankConnections = [] } = useQuery({
+  const { data: bankConnections = [] } = useQuery<any[]>({
     queryKey: ["/api/bank-connections"],
   });
 
