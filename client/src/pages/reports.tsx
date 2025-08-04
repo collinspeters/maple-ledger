@@ -164,23 +164,23 @@ export default function Reports() {
 
   // Fetch reports data
   const { data: profitLoss, isLoading: plLoading } = useQuery<ProfitLossReport>({
-    queryKey: ["/api/reports/profit-loss", dateRange.from.toISOString(), dateRange.to.toISOString()],
+    queryKey: [`/api/reports/profit-loss?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
 
   const { data: balanceSheet, isLoading: bsLoading } = useQuery<BalanceSheetReport>({
-    queryKey: ["/api/reports/balance-sheet", dateRange.to.toISOString()],
+    queryKey: [`/api/reports/balance-sheet?asOf=${dateRange.to.toISOString()}`],
   });
 
   const { data: taxSummary, isLoading: taxLoading } = useQuery<TaxSummaryReport>({
-    queryKey: ["/api/reports/tax-summary", dateRange.from.toISOString(), dateRange.to.toISOString()],
+    queryKey: [`/api/reports/tax-summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
 
   const { data: trialBalance, isLoading: tbLoading } = useQuery<TrialBalanceReport>({
-    queryKey: ["/api/reports/trial-balance", dateRange.to.toISOString()],
+    queryKey: [`/api/reports/trial-balance?asOf=${dateRange.to.toISOString()}`],
   });
 
   const { data: generalLedger, isLoading: glLoading } = useQuery<GeneralLedgerReport>({
-    queryKey: ["/api/reports/general-ledger", dateRange.from.toISOString(), dateRange.to.toISOString()],
+    queryKey: [`/api/reports/general-ledger?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
 
   // Get all transactions for category drill-down
