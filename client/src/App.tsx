@@ -18,6 +18,7 @@ import Receipts from "@/pages/receipts";
 import Reports from "@/pages/reports";
 import Banking from "@/pages/banking";
 import Settings from "@/pages/settings";
+import ChartOfAccountsPage from "@/pages/chart-of-accounts";
 import Subscribe from "@/pages/subscribe";
 import NotFound from "@/pages/not-found";
 
@@ -91,6 +92,7 @@ function Router() {
       <Route path="/receipts" component={() => <ProtectedRoute component={Receipts} />} />
       <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
       <Route path="/banking" component={() => <ProtectedRoute component={Banking} />} />
+      <Route path="/chart-of-accounts" component={() => <ProtectedRoute component={ChartOfAccountsPage} />} />
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route path="/subscribe" component={Subscribe} />
       <Route component={NotFound} />

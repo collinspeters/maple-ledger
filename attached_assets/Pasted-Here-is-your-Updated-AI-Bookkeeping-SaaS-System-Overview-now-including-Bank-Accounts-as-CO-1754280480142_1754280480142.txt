@@ -1,0 +1,148 @@
+Here is your **🔄 Updated AI Bookkeeping SaaS System Overview**, now including **Bank Accounts as COA items**, with clearly defined roles in **transactions, categorization, and reporting**:
+
+---
+
+## ✅ **AI Bookkeeping SaaS System Overview (v2): Transaction Flow, Chart of Accounts, Categorization, and Bank Integration**
+
+---
+
+### 1. 🏦 **Bank Feed & Account Linking**
+
+* **Source**: Transactions and account data are pulled via a bank feed (e.g., **Plaid**).
+* **When user connects bank**:
+
+  * All accounts (Chequing, Savings, Credit Cards, etc.) are imported.
+  * Each is saved in the **Chart of Accounts** under the appropriate type:
+
+    * **Assets** → Chequing, Savings, PayPal
+    * **Liabilities** → Credit Cards, Lines of Credit
+* These become selectable "bank accounts" in your app, and are essential for proper transaction mapping.
+
+---
+
+### 2. 📘 **Chart of Accounts (COA)**
+
+* A centralized list of all accounts used for categorizing money flow.
+* Every COA account includes:
+
+  * `account_id`
+  * `account_name` (e.g., "TD Chequing", "Meals & Entertainment")
+  * `account_type`: Asset, Liability, Revenue, Expense, Equity
+  * `tax_settings` (taxable, exempt, zero-rated)
+  * `is_bank_account` (true/false)
+
+**COA Structure Example:**
+
+```plaintext
+Assets
+  - 1010: TD Chequing
+  - 1020: PayPal
+Liabilities
+  - 2010: Visa Business Card
+Revenue
+  - 4000: Service Income
+Expenses
+  - 5000: Office Supplies
+  - 5040: Meals & Entertainment
+Equity
+  - 3000: Owner Draw
+```
+
+---
+
+### 3. 🔁 **Transaction Lifecycle**
+
+| Step               | Description                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1️⃣ Import         | Transactions are pulled from Plaid with amount, date, description, and originating account.                                                     |
+| 2️⃣ Storage        | Stored in `transactions` table with references to both the **bank account (Asset/Liability)** and **categorization account (Revenue/Expense)**. |
+| 3️⃣ Categorization | AI engine or rules engine suggests a category (e.g., “Software Subscriptions”).                                                                 |
+| 4️⃣ Matching       | If a receipt exists, OCR parsing matches the receipt to a transaction.                                                                          |
+| 5️⃣ Posting        | Once approved, it's recorded as a double-entry transaction.                                                                                     |
+
+---
+
+### 4. 🧮 **Double-Entry Posting Logic**
+
+Example:
+
+> User pays \$75 for lunch using TD Chequing
+
+```plaintext
+DR: Meals & Entertainment (Expense)
+CR: TD Chequing (Asset)
+```
+
+Another example:
+
+> Client pays \$1,000 deposited to PayPal
+
+```plaintext
+DR: PayPal (Asset)
+CR: Service Income (Revenue)
+```
+
+---
+
+### 5. 🧠 **AI-Powered Categorization Engine**
+
+* Uses natural language processing + historical tagging + keyword rules.
+* Looks at:
+
+  * Merchant name
+  * Description text
+  * Amount pattern
+  * Past categorizations by user
+* Predicts best matching account from the COA.
+* If confidence is high, auto-categorizes; if not, flags for review.
+
+---
+
+### 6. 🧾 **Receipt Upload & Matching**
+
+* Users upload receipts.
+* System uses **Mindee OCR** to extract:
+
+  * Date
+  * Amount
+  * Vendor
+* Auto-matches to transactions by date/amount proximity and merchant.
+* Matched receipts are linked and viewable.
+
+---
+
+### 7. 📊 **Reporting & Real-Time Sync**
+
+As transactions are approved:
+
+* ✅ Income Statement updates Revenue - Expenses
+* ✅ Balance Sheet updates Asset, Liability, and Equity accounts
+* ✅ GST/HST Summary updates based on taxable categories
+* ✅ Expense Breakdown shows category totals (with receipts if matched)
+
+---
+
+### 8. 🧩 **User Interaction Flow**
+
+* User sees:
+
+  * **New Transactions** → Suggested categories
+  * **Receipts** → Upload and auto-match
+  * **Reports** → Updated live as transactions are categorized
+* Can override AI suggestions or recategorize any transaction
+
+---
+
+### 🔄 **Automation Summary Table**
+
+| Action         | Trigger                   | Outcome                                     |
+| -------------- | ------------------------- | ------------------------------------------- |
+| Bank sync      | New Plaid data            | Add/update transactions & accounts          |
+| Categorization | New transaction           | AI suggests category from COA               |
+| Receipt match  | Upload receipt            | Auto-link to matching transaction           |
+| Post to ledger | User confirms transaction | Create double-entry journal                 |
+| Report update  | Categorization confirmed  | Recalculate Income Statement, Balance Sheet |
+
+---
+
+Would you like a **relational database schema** version of this system overview next — with tables and foreign key mappings for `transactions`, `accounts`, `users`, and `receipts`?

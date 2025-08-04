@@ -223,26 +223,37 @@ export function categorizePlaidTransaction(transaction: any, userAccounts: strin
     };
   }
   
-  // Map Plaid categories to Canadian business categories
+  // Map Plaid categories to T2125 business categories (like Wave Accounting)
   const categoryMappings: Record<string, string> = {
-    'Food and Drink': 'Meals and Entertainment',
-    'Shops': 'Office Supplies',
-    'Transportation': 'Vehicle Expenses',
-    'Travel': 'Travel Expenses',
-    'Professional Services': 'Professional Fees',
-    'Bank Fees': 'Bank Charges',
-    'Interest': 'Interest Expense',
-    'Telecommunication Services': 'Telephone and Internet',
-    'Rent': 'Rent',
-    'Gas Stations': 'Fuel',
-    'Software': 'Software Subscriptions',
-    'Hardware Stores': 'Equipment and Supplies',
-    'Payment': 'Income',
-    'Deposit': 'Income',
+    'Food and Drink': 'MEALS_ENTERTAINMENT',
+    'Shops': 'OFFICE_EXPENSES',
+    'Transportation': 'VEHICLE_EXPENSES', 
+    'Travel': 'TRAVEL',
+    'Professional Services': 'PROFESSIONAL_FEES',
+    'Bank Fees': 'INTEREST_BANK_CHARGES',
+    'Interest': 'INTEREST_BANK_CHARGES',
+    'Telecommunication Services': 'TELEPHONE_UTILITIES',
+    'Rent': 'RENT',
+    'Gas Stations': 'VEHICLE_EXPENSES',
+    'Software': 'OFFICE_EXPENSES',
+    'Hardware Stores': 'OFFICE_EXPENSES',
+    'Payment': 'BUSINESS_INCOME',
+    'Deposit': 'BUSINESS_INCOME',
+    'Service': 'PROFESSIONAL_FEES',
+    'Entertainment': 'MEALS_ENTERTAINMENT',
+    'Recreation': 'MEALS_ENTERTAINMENT',
+    'Government': 'BUSINESS_TAX',
+    'Insurance': 'INSURANCE',
+    'Utilities': 'TELEPHONE_UTILITIES',
+    'Healthcare': 'OTHER_EXPENSES',
+    'Automotive': 'VEHICLE_EXPENSES',
+    'Home Improvement': 'MAINTENANCE_REPAIRS',
+    'Office Supplies': 'OFFICE_EXPENSES',
+    'Tax': 'BUSINESS_TAX'
   };
 
-  const primaryCategory = category?.[0] || 'Other';
-  const mappedCategory = categoryMappings[primaryCategory] || 'Other Business Expenses';
+  const primaryCategory = category?.[0] || '';
+  const mappedCategory = categoryMappings[primaryCategory] || 'OTHER_EXPENSES';
   
   return {
     category: mappedCategory,
