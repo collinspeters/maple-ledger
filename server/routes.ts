@@ -212,12 +212,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transaction routes
-  app.get("/api/transactions", requireAuth, requireSubscription, async (req, res) => {
+  app.get("/api/transactions", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      console.log(`Fetching transactions for user: ${user.id}`);
       const transactions = await storage.getTransactions(user.id);
+      console.log(`Found ${transactions.length} transactions`);
       res.json(transactions);
     } catch (error) {
+      console.error("Error fetching transactions:", error);
       res.status(500).json({ message: "Failed to fetch transactions" });
     }
   });

@@ -135,7 +135,7 @@ export function TransactionFiltersComponent({
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All types</SelectItem>
+              <SelectItem value="all">All types</SelectItem>
               <SelectItem value="income">Income/Deposit</SelectItem>
               <SelectItem value="expense">Expense</SelectItem>
               <SelectItem value="transfer">Transfer</SelectItem>
@@ -155,7 +155,7 @@ export function TransactionFiltersComponent({
               <SelectValue placeholder="All accounts" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All accounts</SelectItem>
+              <SelectItem value="all">All accounts</SelectItem>
               {accounts.map((account) => (
                 <SelectItem key={account.id} value={account.id}>
                   {account.name}
@@ -176,7 +176,7 @@ export function TransactionFiltersComponent({
               <SelectValue placeholder="All receipts" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All receipts</SelectItem>
+              <SelectItem value="all">All receipts</SelectItem>
               <SelectItem value="from_scan">From scan</SelectItem>
               <SelectItem value="has_receipt">Any receipt attached</SelectItem>
               <SelectItem value="no_receipt">No receipts attached</SelectItem>
