@@ -5,6 +5,7 @@ import {
   aiSuggestions, 
   chatMessages,
   bankConnections,
+  chartOfAccounts,
   clients,
   invoices,
   invoiceItems,
@@ -102,6 +103,11 @@ export interface IStorage {
   updateInvoice(id: string, updates: Partial<Invoice>): Promise<Invoice>;
   deleteInvoice(id: string): Promise<void>;
   markInvoicePaid(id: string): Promise<Invoice>;
+  
+  // Chart of Accounts methods
+  getChartOfAccounts(userId: string): Promise<any[]>;
+  createChartOfAccountsEntry(userId: string, account: any): Promise<any>;
+  getBankAccountsForChartOfAccounts(userId: string): Promise<any[]>;
 
   // Estimate methods
   getEstimates(userId: string): Promise<Estimate[]>;
@@ -592,6 +598,52 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRecurringTransaction(id: string): Promise<void> {
     await db.delete(recurringTransactions).where(eq(recurringTransactions.id, id));
+  }
+
+  // Chart of Accounts methods
+  async getChartOfAccounts(userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(chartOfAccounts)
+      .where(eq(chartOfAccounts.userId, userId));
+  }
+
+  async createChartOfAccountsEntry(userId: string, account: any): Promise<any> {
+    const [created] = await db
+      .insert(chartOfAccounts)
+      .values({
+        ...account,
+        userId
+      })
+      .returning();
+    
+    return created;
+  }
+
+  async getBankAccountsForChartOfAccounts(userId: string): Promise<any[]> {
+    // Get bank connections and convert them to Chart of Accounts entries
+    const connections = await db
+      .select()
+      .from(bankConnections)
+      .where(and(
+        eq(bankConnections.userId, userId),
+        eq(bankConnections.isActive, true)
+      ));
+
+    return connections.map((conn, index) => ({
+      id: `bank-${conn.id}`,
+      name: `${conn.bankName} ${conn.accountName}`,
+      category: conn.accountType === 'credit' ? 'LIABILITY' : 'ASSET',
+      subcategory: conn.accountType === 'credit' ? 'Current Liabilities' : 'Current Assets',
+      code: `${conn.accountType === 'credit' ? '2' : '1'}${String(index + 10).padStart(3, '0')}`,
+      description: `${conn.accountType} account at ${conn.bankName}`,
+      isActive: true,
+      isBankAccount: true,
+      bankConnectionId: conn.id,
+      plaidAccountId: conn.accountId,
+      taxSettings: { taxable: false, exempt: true, zeroRated: false },
+      balance: 0 // Will be updated with real balance later
+    }));
   }
 }
 

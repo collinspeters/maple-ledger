@@ -221,6 +221,31 @@ export const recurringTransactions = pgTable("recurring_transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Chart of Accounts table
+export const chartOfAccounts = pgTable("chart_of_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  category: text("category").notNull(), // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  subcategory: text("subcategory"),
+  description: text("description"),
+  isDeductible: boolean("is_deductible").default(false),
+  deductionRate: decimal("deduction_rate", { precision: 3, scale: 2 }), // 0.50 for 50% meals
+  t2125Category: text("t2125_category"),
+  isActive: boolean("is_active").default(true),
+  parentId: varchar("parent_id"),
+  isBankAccount: boolean("is_bank_account").default(false),
+  bankConnectionId: varchar("bank_connection_id").references(() => bankConnections.id),
+  plaidAccountId: text("plaid_account_id"),
+  taxable: boolean("taxable").default(false),
+  exempt: boolean("exempt").default(true),
+  zeroRated: boolean("zero_rated").default(false),
+  balance: decimal("balance", { precision: 15, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   transactions: many(transactions),

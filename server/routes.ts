@@ -31,7 +31,7 @@ import {
   type Invoice,
   type Estimate 
 } from "@shared/schema";
-import { CHART_OF_ACCOUNTS, getAccountsByCategory, mapT2125CategoryToAccount } from "@shared/chart-of-accounts";
+import { CHART_OF_ACCOUNTS } from "@shared/chart-of-accounts";
 import { z } from "zod";
 
 // Extend Express Request to include authenticated user
@@ -215,21 +215,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chart of Accounts routes
   app.get("/api/chart-of-accounts", requireAuth, async (req, res) => {
     try {
-      res.json(CHART_OF_ACCOUNTS);
+      const user = req.user as User;
+      
+      // Get user's chart of accounts from database
+      const userAccounts = await storage.getChartOfAccounts(user.id);
+      
+      // If user has no custom accounts, return default + their bank accounts
+      if (!userAccounts || userAccounts.length === 0) {
+        const bankAccounts = await storage.getBankAccountsForChartOfAccounts(user.id);
+        const defaultAccounts = CHART_OF_ACCOUNTS.map(account => ({
+          ...account,
+          userId: user.id
+        }));
+        
+        res.json([...defaultAccounts, ...bankAccounts]);
+      } else {
+        res.json(userAccounts);
+      }
     } catch (error) {
       console.error("Error fetching chart of accounts:", error);
       res.status(500).json({ message: "Failed to fetch chart of accounts" });
     }
   });
 
-  app.get("/api/chart-of-accounts/:category", requireAuth, async (req, res) => {
+  app.post("/api/chart-of-accounts", requireAuth, async (req, res) => {
     try {
-      const { category } = req.params;
-      const accounts = getAccountsByCategory(category as any);
-      res.json(accounts);
+      const user = req.user as User;
+      const accountData = req.body;
+      
+      const account = await storage.createChartOfAccountsEntry(user.id, accountData);
+      res.json(account);
     } catch (error) {
-      console.error("Error fetching accounts by category:", error);
-      res.status(500).json({ message: "Failed to fetch accounts" });
+      console.error("Error creating account:", error);
+      res.status(500).json({ message: "Failed to create account" });
     }
   });
 
