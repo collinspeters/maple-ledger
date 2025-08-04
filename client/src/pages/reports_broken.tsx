@@ -38,19 +38,14 @@ type DateRange = {
 
 type ProfitLossReport = {
   revenue: {
-    categories: Array<{
-      category: string;
-      amount: number;
-    }>;
     total: number;
+    categories: Array<{ category: string; amount: number; }>;
   };
   expenses: {
-    categories: Array<{
-      category: string;
-      amount: number;
-    }>;
     total: number;
+    categories: Array<{ category: string; amount: number; }>;
   };
+  grossProfit: number;
   netProfit: number;
   period: {
     startDate: string;
@@ -60,31 +55,19 @@ type ProfitLossReport = {
 
 type BalanceSheetReport = {
   assets: {
-    current: Array<{
-      account: string;
-      amount: number;
-    }>;
-    fixed: Array<{
-      account: string;
-      amount: number;
-    }>;
     total: number;
+    current: Array<{ account: string; amount: number; }>;
+    fixed: Array<{ account: string; amount: number; }>;
   };
   liabilities: {
-    current: Array<{
-      account: string;
-      amount: number;
-    }>;
-    longTerm: Array<{
-      account: string;
-      amount: number;
-    }>;
     total: number;
+    current: Array<{ account: string; amount: number; }>;
+    longTerm: Array<{ account: string; amount: number; }>;
   };
   equity: {
-    retainedEarnings: number;
-    currentEarnings: number;
     total: number;
+    ownersEquity: number;
+    retainedEarnings: number;
   };
   asOfDate: string;
 };
@@ -93,10 +76,6 @@ type TaxSummaryReport = {
   taxCollected: number;
   taxPaid: number;
   netTaxOwing: number;
-  period: {
-    startDate: string;
-    endDate: string;
-  };
   gstHstBreakdown: Array<{
     province: string;
     rate: number;
@@ -104,6 +83,10 @@ type TaxSummaryReport = {
     paid: number;
     net: number;
   }>;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
 };
 
 type TrialBalanceReport = {
@@ -147,7 +130,6 @@ type Transaction = {
   description: string;
   amount: string;
   category: string;
-  aiCategory?: string;
   isExpense: boolean;
   isPosted: boolean;
   receiptAttached: boolean;
@@ -183,38 +165,11 @@ export default function Reports() {
     queryKey: ["/api/reports/general-ledger", dateRange.from.toISOString(), dateRange.to.toISOString()],
   });
 
-  // Get all transactions for category drill-down
-  const { data: transactions } = useQuery<Transaction[]>({
-    queryKey: ['/api/transactions'],
-  });
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
       currency: 'CAD'
     }).format(amount);
-  };
-
-  const formatDateRange = (from: Date, to: Date) => {
-    return `${format(from, 'MMM d, yyyy')} - ${format(to, 'MMM d, yyyy')}`;
-  };
-
-  // Handle category drill-down
-  const handleCategoryClick = (category: string) => {
-    setSelectedCategory(category);
-    setShowTransactionDetail(true);
-  };
-
-  // Get transactions for selected category
-  const getCategoryTransactions = (category: string) => {
-    if (!transactions) return [];
-    
-    return transactions.filter(t => {
-      const transactionDate = new Date(t.date);
-      const inDateRange = transactionDate >= dateRange.from && transactionDate <= dateRange.to;
-      const matchesCategory = t.category === category || t.aiCategory === category;
-      return inDateRange && matchesCategory;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   const handleDatePresetChange = (preset: string) => {
@@ -530,6 +485,17 @@ export default function Reports() {
           </Card>
         </TabsContent>
 
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No data available for selected period</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Balance Sheet Report */}
         <TabsContent value="balance-sheet">
           <Card>
@@ -601,50 +567,46 @@ export default function Reports() {
                     <div>
                       <h4 className="text-md font-semibold text-gray-900 mb-3">Liabilities & Equity</h4>
                       
-                      <div className="mb-4">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Current Liabilities</h5>
-                        {balanceSheet.liabilities.current.map((liability, index) => (
-                          <div key={index} className="flex justify-between py-1 pl-4">
-                            <span className="text-gray-600">{liability.account}</span>
-                            <span>{formatCurrency(liability.amount)}</span>
+                      {balanceSheet.liabilities.total > 0 && (
+                        <>
+                          <div className="mb-4">
+                            <h5 className="text-sm font-medium text-gray-700 mb-2">Current Liabilities</h5>
+                            {balanceSheet.liabilities.current.map((liability, index) => (
+                              <div key={index} className="flex justify-between py-1 pl-4">
+                                <span className="text-gray-600">{liability.account}</span>
+                                <span>{formatCurrency(liability.amount)}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
 
-                      {balanceSheet.liabilities.longTerm.length > 0 && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-700 mb-2">Long-term Liabilities</h5>
-                          {balanceSheet.liabilities.longTerm.map((liability, index) => (
-                            <div key={index} className="flex justify-between py-1 pl-4">
-                              <span className="text-gray-600">{liability.account}</span>
-                              <span>{formatCurrency(liability.amount)}</span>
+                          {balanceSheet.liabilities.longTerm.length > 0 && (
+                            <div className="mb-4">
+                              <h5 className="text-sm font-medium text-gray-700 mb-2">Long-term Liabilities</h5>
+                              {balanceSheet.liabilities.longTerm.map((liability, index) => (
+                                <div key={index} className="flex justify-between py-1 pl-4">
+                                  <span className="text-gray-600">{liability.account}</span>
+                                  <span>{formatCurrency(liability.amount)}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          )}
+
+                          <div className="flex justify-between font-medium border-t pt-2 mb-4">
+                            <span>Total Liabilities</span>
+                            <span>{formatCurrency(balanceSheet.liabilities.total)}</span>
+                          </div>
+                        </>
                       )}
 
-                      <div className="flex justify-between font-semibold border-t pt-2">
-                        <span>Total Liabilities</span>
-                        <span>{formatCurrency(balanceSheet.liabilities.total)}</span>
-                      </div>
-
-                      <div className="mt-6">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Equity</h5>
+                      <div className="mb-4">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Owner's Equity</h5>
                         <div className="flex justify-between py-1 pl-4">
                           <span className="text-gray-600">Retained Earnings</span>
                           <span>{formatCurrency(balanceSheet.equity.retainedEarnings)}</span>
                         </div>
-                        <div className="flex justify-between py-1 pl-4">
-                          <span className="text-gray-600">Current Year Earnings</span>
-                          <span>{formatCurrency(balanceSheet.equity.currentEarnings)}</span>
-                        </div>
-                        <div className="flex justify-between font-semibold border-t pt-2">
-                          <span>Total Equity</span>
-                          <span>{formatCurrency(balanceSheet.equity.total)}</span>
-                        </div>
                       </div>
 
-                      <div className="flex justify-between font-bold text-lg border-t-2 border-gray-300 pt-3 mt-4">
+                      <div className="flex justify-between font-semibold border-t pt-2">
                         <span>Total Liabilities & Equity</span>
                         <span>{formatCurrency(balanceSheet.liabilities.total + balanceSheet.equity.total)}</span>
                       </div>
@@ -654,7 +616,7 @@ export default function Reports() {
               ) : (
                 <div className="text-center py-8">
                   <Scale className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No balance sheet data available</p>
+                  <p className="text-gray-500">No data available for selected date</p>
                 </div>
               )}
             </CardContent>
@@ -667,7 +629,7 @@ export default function Reports() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-blue-600" />
-                Tax Summary
+                GST/HST Tax Summary
               </CardTitle>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => exportReport('tax-summary')}>
@@ -695,8 +657,7 @@ export default function Reports() {
                     </h3>
                   </div>
 
-                  {/* Tax Summary Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card>
                       <CardContent className="p-4 text-center">
                         <div className="text-2xl font-bold text-green-600 mb-2">
@@ -853,12 +814,12 @@ export default function Reports() {
                   {!trialBalance.isBalanced && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                       <div className="flex items-center gap-2 text-red-800 mb-2">
-                        <ArrowUpDown className="h-4 w-4" />
+                        <Calculator className="h-4 w-4" />
                         <span className="font-medium">Trial Balance is Out of Balance</span>
                       </div>
-                      <p className="text-red-700 text-sm">
-                        Total debits ({formatCurrency(trialBalance.totalDebits)}) do not equal total credits ({formatCurrency(trialBalance.totalCredits)}).
-                        Please review your journal entries.
+                      <p className="text-sm text-red-700">
+                        The total debits and credits do not match. This indicates there may be errors in your transaction records.
+                        Difference: {formatCurrency(Math.abs(trialBalance.totalDebits - trialBalance.totalCredits))}
                       </p>
                     </div>
                   )}
@@ -866,7 +827,7 @@ export default function Reports() {
               ) : (
                 <div className="text-center py-8">
                   <Calculator className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No trial balance data available</p>
+                  <p className="text-gray-500">No data available for trial balance</p>
                 </div>
               )}
             </CardContent>
@@ -910,16 +871,10 @@ export default function Reports() {
                   {generalLedger.accounts.map((account, accountIndex) => (
                     <div key={accountIndex} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h4 className="text-lg font-semibold">{account.accountName}</h4>
-                          <Badge variant="outline" className="text-xs mt-1 capitalize">
-                            {account.accountType}
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600">Beginning Balance</div>
-                          <div className="font-medium">{formatCurrency(account.beginningBalance)}</div>
-                        </div>
+                        <h4 className="text-lg font-semibold">{account.accountName}</h4>
+                        <Badge variant="outline" className="capitalize">
+                          {account.accountType}
+                        </Badge>
                       </div>
 
                       <div className="overflow-x-auto">
