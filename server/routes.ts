@@ -14,6 +14,7 @@ import { categorizeTransaction, processFinancialQuery, extractReceiptData, parse
 import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } from "./services/merchant-enrichment";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
 import { processReceiptOCR, findTransactionMatches } from "./services/ocr";
+import { doubleEntryService } from "./services/double-entry";
 import { 
   insertUserSchema, 
   insertTransactionSchema, 
@@ -248,6 +249,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating account:", error);
       res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  // Double-entry posting endpoint
+  app.post("/api/transactions/:id/post", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { id } = req.params;
+      
+      // Verify transaction belongs to user
+      const transaction = await storage.getTransaction(id);
+      if (!transaction || transaction.userId !== user.id) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      if (transaction.isPosted) {
+        return res.status(400).json({ message: "Transaction already posted" });
+      }
+
+      // Process for double-entry posting
+      const journalEntryId = await doubleEntryService.processTransactionForPosting(id);
+      
+      res.json({ 
+        message: "Transaction posted successfully",
+        journalEntryId,
+        transactionId: id 
+      });
+    } catch (error) {
+      console.error("Error posting transaction:", error);
+      res.status(500).json({ message: "Failed to post transaction" });
     }
   });
 
@@ -823,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expenseCategories = Object.entries(expensesByCategory).map(([category, amount]) => ({
         category,
         amount,
-        account: mapT2125CategoryToAccount(category)?.name || category
+        account: category
       }));
       
       res.json({

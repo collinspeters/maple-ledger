@@ -6,6 +6,8 @@ import {
   chatMessages,
   bankConnections,
   chartOfAccounts,
+  journalEntries,
+  journalEntryLines,
   clients,
   invoices,
   invoiceItems,

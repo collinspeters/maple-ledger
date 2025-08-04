@@ -46,6 +46,9 @@ export const transactions = pgTable("transactions", {
   extractedTaxData: jsonb("extracted_tax_data"), // GST/HST/PST breakdown
   auditReady: boolean("audit_ready").default(false),
   notes: text("notes"),
+  // Double-entry accounting fields
+  journalEntryId: varchar("journal_entry_id").references(() => journalEntries.id),
+  isPosted: boolean("is_posted").default(false), // Whether double-entry posting is complete
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -244,6 +247,32 @@ export const chartOfAccounts = pgTable("chart_of_accounts", {
   balance: decimal("balance", { precision: 15, scale: 2 }).default("0"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Journal Entries for double-entry accounting
+export const journalEntries = pgTable("journal_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  transactionId: varchar("transaction_id").references(() => transactions.id),
+  entryNumber: text("entry_number").notNull(), // JE-001, JE-002, etc.
+  date: timestamp("date").notNull(),
+  description: text("description").notNull(),
+  reference: text("reference"), // Check number, invoice number, etc.
+  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }).notNull(),
+  isReversed: boolean("is_reversed").default(false),
+  reversalEntryId: varchar("reversal_entry_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Journal Entry Lines for double-entry details
+export const journalEntryLines = pgTable("journal_entry_lines", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  journalEntryId: varchar("journal_entry_id").notNull().references(() => journalEntries.id),
+  accountId: varchar("account_id").notNull().references(() => chartOfAccounts.id),
+  debitAmount: decimal("debit_amount", { precision: 15, scale: 2 }).default("0"),
+  creditAmount: decimal("credit_amount", { precision: 15, scale: 2 }).default("0"),
+  description: text("description"),
+  lineNumber: integer("line_number").notNull(),
 });
 
 // Relations
