@@ -31,6 +31,7 @@ import {
   type Invoice,
   type Estimate 
 } from "@shared/schema";
+import { CHART_OF_ACCOUNTS, getAccountsByCategory, mapT2125CategoryToAccount } from "@shared/chart-of-accounts";
 import { z } from "zod";
 
 // Extend Express Request to include authenticated user
@@ -211,6 +212,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Chart of Accounts routes
+  app.get("/api/chart-of-accounts", requireAuth, async (req, res) => {
+    try {
+      res.json(CHART_OF_ACCOUNTS);
+    } catch (error) {
+      console.error("Error fetching chart of accounts:", error);
+      res.status(500).json({ message: "Failed to fetch chart of accounts" });
+    }
+  });
+
+  app.get("/api/chart-of-accounts/:category", requireAuth, async (req, res) => {
+    try {
+      const { category } = req.params;
+      const accounts = getAccountsByCategory(category as any);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching accounts by category:", error);
+      res.status(500).json({ message: "Failed to fetch accounts" });
+    }
+  });
+
   // Transaction routes
   app.get("/api/transactions", requireAuth, async (req, res) => {
     try {
@@ -222,6 +244,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching transactions:", error);
       res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  // Bulk AI categorization for existing transactions
+  app.post("/api/transactions/bulk-categorize", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { transactionIds, force = false } = req.body;
+      
+      let transactions;
+      if (transactionIds && Array.isArray(transactionIds)) {
+        // Categorize specific transactions - filter by user for security
+        const allTransactions = await storage.getTransactions(user.id);
+        transactions = allTransactions.filter(t => transactionIds.includes(t.id));
+      } else {
+        // Categorize all uncategorized transactions
+        const allTransactions = await storage.getTransactions(user.id);
+        transactions = allTransactions.filter(t => 
+          !t.aiCategory && !t.isTransfer && t.isExpense && (t.vendor || t.description)
+        );
+      }
+      
+      console.log(`Starting bulk categorization for ${transactions.length} transactions`);
+      
+      const results = [];
+      for (const transaction of transactions) {
+        try {
+          if (transaction.aiCategory && !force) {
+            results.push({ id: transaction.id, status: 'skipped', reason: 'already categorized' });
+            continue;
+          }
+          
+          const aiResult = await categorizeTransaction(
+            transaction.vendor || transaction.description,
+            parseFloat(transaction.amount),
+            transaction.description
+          );
+          
+          await storage.updateTransaction(transaction.id, {
+            aiCategory: aiResult.category,
+            aiConfidence: aiResult.confidence.toString(),
+            aiExplanation: aiResult.explanation,
+            needsReview: aiResult.confidence < 0.7
+          });
+          
+          results.push({ 
+            id: transaction.id, 
+            status: 'success', 
+            category: aiResult.category,
+            confidence: aiResult.confidence 
+          });
+          
+          // Add delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error(`Failed to categorize transaction ${transaction.id}:`, error);
+          results.push({ 
+            id: transaction.id, 
+            status: 'error', 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          });
+        }
+      }
+      
+      res.json({ 
+        message: `Processed ${results.length} transactions`,
+        results: results,
+        summary: {
+          total: results.length,
+          success: results.filter(r => r.status === 'success').length,
+          errors: results.filter(r => r.status === 'error').length,
+          skipped: results.filter(r => r.status === 'skipped').length
+        }
+      });
+    } catch (error) {
+      console.error("Error in bulk categorization:", error);
+      res.status(500).json({ message: "Failed to bulk categorize transactions" });
     }
   });
 
@@ -671,6 +770,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error.message,
         details: "Please check your Stripe configuration and ensure all API keys and price IDs are correct."
       });
+    }
+  });
+
+  // Financial Reports routes
+  app.get("/api/reports/profit-loss", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : new Date(new Date().getFullYear(), 0, 1);
+      const end = endDate ? new Date(endDate as string) : new Date();
+      
+      const transactions = await storage.getTransactionsByDateRange(user.id, start, end);
+      
+      // Calculate revenue from non-transfer income transactions
+      const revenue = transactions
+        .filter(t => !t.isTransfer && !t.isExpense)
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      // Calculate expenses by T2125 category
+      const expensesByCategory = transactions
+        .filter(t => !t.isTransfer && t.isExpense && t.aiCategory)
+        .reduce((acc, t) => {
+          const category = t.aiCategory || 'OTHER_EXPENSES';
+          acc[category] = (acc[category] || 0) + parseFloat(t.amount);
+          return acc;
+        }, {} as Record<string, number>);
+      
+      const totalExpenses = Object.values(expensesByCategory).reduce((sum, amount) => sum + amount, 0);
+      const netProfit = revenue - totalExpenses;
+      
+      // Format for T2125 categories
+      const expenseCategories = Object.entries(expensesByCategory).map(([category, amount]) => ({
+        category,
+        amount,
+        account: mapT2125CategoryToAccount(category)?.name || category
+      }));
+      
+      res.json({
+        revenue: {
+          total: revenue,
+          categories: [{ category: 'Business Income', amount: revenue }]
+        },
+        expenses: {
+          total: totalExpenses,
+          categories: expenseCategories
+        },
+        grossProfit: revenue,
+        netProfit,
+        period: {
+          startDate: start.toISOString(),
+          endDate: end.toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("Error generating P&L report:", error);
+      res.status(500).json({ message: "Failed to generate P&L report" });
+    }
+  });
+
+  app.get("/api/reports/balance-sheet", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { asOfDate } = req.query;
+      
+      const asOf = asOfDate ? new Date(asOfDate as string) : new Date();
+      const transactions = await storage.getTransactionsByDateRange(user.id, new Date(2020, 0, 1), asOf);
+      
+      // Calculate cash position from all non-transfer transactions
+      const cashPosition = transactions
+        .filter(t => !t.isTransfer)
+        .reduce((sum, t) => {
+          return t.isExpense ? sum - parseFloat(t.amount) : sum + parseFloat(t.amount);
+        }, 0);
+      
+      // Simple balance sheet structure
+      const assets = {
+        total: Math.max(cashPosition, 0),
+        current: [
+          { account: 'Cash and Bank Accounts', amount: Math.max(cashPosition, 0) }
+        ],
+        fixed: []
+      };
+      
+      const liabilities = {
+        total: Math.max(-cashPosition, 0),
+        current: cashPosition < 0 ? [
+          { account: 'Accounts Payable', amount: Math.max(-cashPosition, 0) }
+        ] : [],
+        longTerm: []
+      };
+      
+      const equity = {
+        total: Math.max(cashPosition, 0),
+        ownersEquity: Math.max(cashPosition, 0),
+        retainedEarnings: 0
+      };
+      
+      res.json({
+        assets,
+        liabilities,
+        equity,
+        asOfDate: asOf.toISOString()
+      });
+    } catch (error) {
+      console.error("Error generating balance sheet:", error);
+      res.status(500).json({ message: "Failed to generate balance sheet" });
+    }
+  });
+
+  app.get("/api/reports/tax-summary", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : new Date(new Date().getFullYear(), 0, 1);
+      const end = endDate ? new Date(endDate as string) : new Date();
+      
+      const transactions = await storage.getTransactionsByDateRange(user.id, start, end);
+      
+      // Estimate GST/HST from transaction data
+      const gstHstRate = 0.13; // Ontario HST rate - should be dynamic based on province
+      const taxableRevenue = transactions
+        .filter(t => !t.isTransfer && !t.isExpense)
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const taxableExpenses = transactions
+        .filter(t => !t.isTransfer && t.isExpense)
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      
+      const taxCollected = taxableRevenue * gstHstRate;
+      const taxPaid = taxableExpenses * gstHstRate;
+      const netTaxOwing = taxCollected - taxPaid;
+      
+      res.json({
+        taxCollected,
+        taxPaid,
+        netTaxOwing,
+        gstHstBreakdown: [
+          {
+            province: 'Ontario',
+            rate: gstHstRate,
+            collected: taxCollected,
+            paid: taxPaid
+          }
+        ],
+        period: {
+          startDate: start.toISOString(),
+          endDate: end.toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("Error generating tax summary:", error);
+      res.status(500).json({ message: "Failed to generate tax summary" });
     }
   });
 

@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { TransactionFiltersComponent, TransactionFilters } from "@/components/transactions/transaction-filters";
 import { BulkActions, BulkAction } from "@/components/transactions/bulk-actions";
 import { TransactionRow, Transaction } from "@/components/transactions/transaction-row";
+import BulkCategorizeButton from "@/components/transactions/bulk-categorize-button";
 type DateRange = {
   from?: Date;
   to?: Date;
@@ -299,6 +300,9 @@ export default function Transactions() {
           </Button>
         </div>
       </div>
+
+      {/* AI Categorization Section */}
+      <BulkCategorizeButton />
 
       {/* Filters Toggle */}
       <div className="flex items-center justify-between">

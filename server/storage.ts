@@ -179,7 +179,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getTransactions(userId: string, limit = 50): Promise<Transaction[]> {
+  async getTransactions(userId: string, limit = 1000): Promise<Transaction[]> {
     return await db
       .select()
       .from(transactions)
