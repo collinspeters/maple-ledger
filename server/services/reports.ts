@@ -93,15 +93,21 @@ export async function generateProfitLossReport(
   startDate: Date, 
   endDate: Date
 ): Promise<ProfitLossReport> {
+  console.log(`Generating P&L report for user ${userId} from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+  
   const transactions = await storage.getTransactionsByDateRange(userId, startDate, endDate);
+  console.log(`Found ${transactions.length} transactions for P&L report`);
   
   // Separate revenue and expenses
-  const revenue = transactions
-    .filter(t => !t.isExpense)
+  const revenueTransactions = transactions.filter(t => !t.isExpense);
+  const expenseTransactions = transactions.filter(t => t.isExpense);
+  
+  console.log(`Revenue transactions: ${revenueTransactions.length}, Expense transactions: ${expenseTransactions.length}`);
+  
+  const revenue = revenueTransactions
     .reduce((acc, t) => acc + parseFloat(t.amount), 0);
     
-  const expenses = transactions
-    .filter(t => t.isExpense)
+  const expenses = expenseTransactions
     .reduce((acc, t) => acc + parseFloat(t.amount), 0);
 
   // Group by categories
@@ -109,7 +115,8 @@ export async function generateProfitLossReport(
   const expenseCategories = new Map<string, number>();
 
   transactions.forEach(t => {
-    const category = t.category || 'Uncategorized';
+    // Use aiCategory if available, fallback to category
+    const category = t.aiCategory || t.category || 'Uncategorized';
     const amount = parseFloat(t.amount);
     
     if (t.isExpense) {
@@ -119,7 +126,7 @@ export async function generateProfitLossReport(
     }
   });
 
-  return {
+  const report = {
     revenue: {
       total: revenue,
       categories: Array.from(revenueCategories.entries()).map(([category, amount]) => ({
@@ -141,6 +148,16 @@ export async function generateProfitLossReport(
       endDate: endDate.toISOString().split('T')[0]
     }
   };
+  
+  console.log(`P&L Report generated:`, {
+    revenue: revenue,
+    expenses: expenses,
+    netProfit: revenue - expenses,
+    revenueCategories: revenueCategories.size,
+    expenseCategories: expenseCategories.size
+  });
+  
+  return report;
 }
 
 export async function generateBalanceSheetReport(
