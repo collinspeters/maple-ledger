@@ -199,7 +199,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -261,7 +261,7 @@ export default function Reports() {
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="shadow-card border-0 rounded-xl bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
@@ -277,7 +277,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-card border-0 rounded-xl bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
@@ -293,7 +293,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-card border-0 rounded-xl bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${profitLoss && profitLoss.netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
@@ -309,7 +309,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-card border-0 rounded-xl bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">

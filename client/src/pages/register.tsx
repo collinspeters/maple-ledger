@@ -43,8 +43,8 @@ export default function Register() {
                   formData.password === formData.confirmPassword;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-alt p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md shadow-card-lg border-0 rounded-xl">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">

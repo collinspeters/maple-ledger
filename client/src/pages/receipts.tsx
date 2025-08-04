@@ -194,7 +194,7 @@ export default function Receipts() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

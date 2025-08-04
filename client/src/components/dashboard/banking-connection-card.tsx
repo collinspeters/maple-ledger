@@ -37,7 +37,7 @@ export default function BankingConnectionCard() {
   }
 
   return (
-    <Card className={`border-2 transition-all duration-200 hover:shadow-lg ${
+    <Card className={`border-2 transition-all duration-200 hover:shadow-card-lg rounded-xl ${
       hasConnections 
         ? "border-green-200 bg-gradient-to-r from-green-50 to-emerald-50" 
         : "border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 border-dashed"

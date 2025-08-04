@@ -63,15 +63,15 @@ export default function Clients() {
 
   return (
     <>
-      <div className="p-6">
+      <div className="p-6 bg-gray-50 min-h-screen">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Clients</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
             <p className="text-gray-600">Manage your client relationships and contact information</p>
           </div>
           <Button 
             onClick={() => setShowClientModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-md"
+            className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
             style={{ visibility: 'visible', display: 'flex', alignItems: 'center' }}
           >
             <Plus className="mr-2 h-4 w-4" />

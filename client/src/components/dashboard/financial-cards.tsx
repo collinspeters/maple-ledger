@@ -72,9 +72,9 @@ export default function FinancialCards() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {cards.map((card, index) => (
-        <Card key={index} className="shadow-card hover:shadow-card-hover transition-shadow">
+        <Card key={index} className="shadow-card hover:shadow-card-lg border-0 bg-white rounded-xl">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>

@@ -88,9 +88,9 @@ export default function ReceiptUpload() {
   const recentReceipts = receipts?.slice(0, 2) || [];
 
   return (
-    <Card className="shadow-card">
-      <CardHeader className="border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Quick Receipt Upload</h3>
+    <Card className="shadow-card border-0 rounded-xl bg-white">
+      <CardHeader className="border-b border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900">Upload Receipt</h3>
         <p className="text-sm text-gray-600">Snap a photo or upload a PDF</p>
       </CardHeader>
       

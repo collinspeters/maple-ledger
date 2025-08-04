@@ -38,7 +38,7 @@ export default function Banking() {
 
   // Create Plaid Link Token
   const createLinkToken = useMutation({
-    mutationFn: () => apiRequest<PlaidLinkConfig>("/api/plaid/create-link-token", {
+    mutationFn: () => apiRequest("/api/plaid/create-link-token", {
       method: "POST",
     }),
     onSuccess: (data) => {

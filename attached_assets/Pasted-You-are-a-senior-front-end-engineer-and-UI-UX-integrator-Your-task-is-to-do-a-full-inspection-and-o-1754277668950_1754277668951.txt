@@ -1,0 +1,38 @@
+You are a senior front-end engineer and UI/UX integrator. Your task is to do a full inspection and optimization of the frontend of this SaaS project built on Replit.
+
+🔎 Objective:
+Go through all front-end components, views, and pages. Ensure that everything:
+- Looks visually polished
+- Uses consistent colors, fonts, and layout spacing
+- Shows all expected data, buttons, forms, and components correctly
+- Has intuitive, clean, and accessible UI/UX
+- Matches a modern SaaS aesthetic (clean, minimal, professional)
+
+🛠️ Tasks:
+1. Fix any broken, invisible, or misaligned elements.
+2. Ensure all components render fully with no missing props/data.
+3. Clean up any unused styles, redundant inline CSS, or messy class logic.
+4. Unify colors, button styles, margins, spacing, and typography.
+5. Ensure every button, input, dropdown, or tab is **functional and responsive**.
+6. Confirm that pages auto-update based on real-time or backend data (where applicable).
+7. Label all actions clearly (e.g., don’t leave buttons as “Submit” — rename to “Upload Receipt” or “Categorize Transaction”).
+8. Ensure mobile responsiveness (if layout supports it) or clean desktop spacing.
+9. Fix or remove any placeholder/empty components still in the UI.
+10. Audit the DOM and console for hidden frontend errors or unhandled warnings.
+
+🎨 Style Preferences:
+- Soft neutral color palette (white/gray backgrounds, clear blue CTA buttons, green for success, red for errors).
+- Rounded corners (radius: 6–12px), no harsh edges.
+- Consistent padding/margin grid (8px, 16px, 24px scale).
+- Avoid overcrowded screens — balance whitespace and information density.
+
+🚫 Do not:
+- Change backend logic or config files.
+- Add new pages or features unless needed to fix broken flow.
+- Remove working components unless explicitly marked as deprecated.
+
+✅ Deliverables:
+- Fully rendered, styled, and connected frontend for every existing feature.
+- Polished and visually cohesive UI.
+- All data and actions are visible and usable.
+- Log changes made and components adjusted.

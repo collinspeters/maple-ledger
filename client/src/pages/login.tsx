@@ -20,8 +20,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-alt p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md shadow-card-lg border-0 rounded-xl">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -68,7 +68,7 @@ export default function Login() {
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg"
+              className="w-full btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
               disabled={isLoginLoading}
             >
               {isLoginLoading ? "Signing In..." : "Sign In"}
