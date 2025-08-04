@@ -17,7 +17,7 @@ import {
 // Validate required environment variables
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET = process.env.PLAID_SECRET;
-const PLAID_ENV = 'production'; // Force production for live credentials
+const PLAID_ENV = process.env.PLAID_ENV || 'production'; // Use environment variable or default to production
 
 if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
   console.error('Missing required Plaid environment variables: PLAID_CLIENT_ID, PLAID_SECRET');

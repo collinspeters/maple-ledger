@@ -1,7 +1,7 @@
 import { Transaction } from 'plaid';
-import { db } from './db';
-import { transactions } from '../../shared/schema';
-import { eq, and, gte, lte, ne } from 'drizzle-orm';
+import { db } from '../db';
+import { transactions } from '@shared/schema';
+import { eq, and, gte, lte, ne, isNull } from 'drizzle-orm';
 
 // Service for matching and linking transfer transactions between accounts
 export class TransferMatchingService {
@@ -179,7 +179,7 @@ export class TransferMatchingService {
         and(
           eq(transactions.userId, userId),
           eq(transactions.isTransfer, true),
-          ne(transactions.transferPairId, null)
+          ne(transactions.transferPairId, null as any)
         )
       );
     

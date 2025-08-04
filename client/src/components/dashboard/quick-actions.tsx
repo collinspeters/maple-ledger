@@ -1,19 +1,78 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, RefreshCw, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import TransactionModal from "@/components/transaction-modal";
 
 export default function QuickActions() {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Sync bank account mutation
+  const syncBankMutation = useMutation({
+    mutationFn: () => apiRequest("/api/plaid/sync-transactions", {
+      method: "POST",
+    }),
+    onSuccess: (data: { syncedCount: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial-summary"] });
+      toast({
+        title: "Transactions Synced",
+        description: `Successfully imported ${data.syncedCount} new transactions.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync transactions. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Generate P&L report mutation
+  const generateReportMutation = useMutation({
+    mutationFn: () => apiRequest("/api/reports/profit-loss", {
+      method: "GET",
+    }),
+    onSuccess: () => {
+      toast({
+        title: "Report Generated",
+        description: "P&L report has been generated successfully.",
+      });
+      // Redirect to reports page or open report in new tab
+      window.open('/reports', '_blank');
+    },
+    onError: () => {
+      toast({
+        title: "Report Generation Failed",
+        description: "Failed to generate P&L report. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleAction = (actionName: string) => {
     setLoadingAction(actionName);
-    // Simulate action
-    setTimeout(() => {
-      setLoadingAction(null);
-    }, 1500);
+    
+    switch (actionName) {
+      case "sync-bank":
+        syncBankMutation.mutate();
+        break;
+      case "generate-report":
+        generateReportMutation.mutate();
+        break;
+      default:
+        // For any other actions, just reset loading state
+        setTimeout(() => {
+          setLoadingAction(null);
+        }, 1500);
+    }
   };
 
   const actions = [
@@ -53,7 +112,9 @@ export default function QuickActions() {
         <CardContent className="p-6">
           <div className="space-y-3">
             {actions.map((action) => {
-              const isLoading = loadingAction === action.id;
+              const isLoading = loadingAction === action.id || 
+                (action.id === "sync-bank" && syncBankMutation.isPending) ||
+                (action.id === "generate-report" && generateReportMutation.isPending);
               const Icon = isLoading ? Check : action.icon;
               
               return (
