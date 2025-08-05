@@ -104,13 +104,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth middleware
   const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-    console.log('Auth check:', { 
-      isAuthenticated: req.isAuthenticated(),
-      user: req.user ? 'Present' : 'Not present',
-      sessionID: req.sessionID,
-      session: req.session
-    });
-    
     if (req.isAuthenticated() && req.user) {
       return next();
     }
