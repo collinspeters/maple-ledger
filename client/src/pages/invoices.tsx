@@ -166,7 +166,11 @@ export default function Invoices() {
         {invoices && invoices.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {invoices.map((invoice) => (
-              <Card key={invoice.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card 
+                key={invoice.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{invoice.invoiceNumber}</CardTitle>
