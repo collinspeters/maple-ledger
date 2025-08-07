@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ErrorBoundary from "@/components/ui/error-boundary";
-card";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, RefreshCw, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
