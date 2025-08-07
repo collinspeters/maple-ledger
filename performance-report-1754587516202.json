@@ -1,0 +1,170 @@
+{
+  "timestamp": "2025-08-07T17:25:16.202Z",
+  "performanceScore": {
+    "overall": 62,
+    "breakdown": {
+      "pageLoad": 25,
+      "errorRate": 25,
+      "networkHealth": 99,
+      "memoryEfficiency": 100
+    },
+    "grade": "C"
+  },
+  "insights": [
+    "Page load times are slower than optimal. Consider optimizing bundle size or implementing lazy loading.",
+    "Error rate is high. Review console errors and implement better error handling.",
+    "5 critical issues detected. Immediate attention required."
+  ],
+  "metrics": {
+    "totalPageLoads": 7,
+    "totalUserActions": 0,
+    "totalErrors": 7,
+    "totalNetworkRequests": 1010,
+    "averageMemoryUsage": "23.8"
+  },
+  "alerts": [
+    {
+      "type": "slow_page_load",
+      "message": "Page load took 4111ms",
+      "timestamp": 1754587494245,
+      "severity": "warning"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587495378,
+      "severity": "error"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587495387,
+      "severity": "error"
+    },
+    {
+      "type": "slow_page_load",
+      "message": "Page load took 4125ms",
+      "timestamp": 1754587498370,
+      "severity": "warning"
+    },
+    {
+      "type": "consecutive_errors",
+      "message": "3 errors in 8281ms",
+      "timestamp": 1754587498457,
+      "severity": "critical"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587499497,
+      "severity": "error"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587499508,
+      "severity": "error"
+    },
+    {
+      "type": "slow_page_load",
+      "message": "Page load took 3760ms",
+      "timestamp": 1754587502130,
+      "severity": "warning"
+    },
+    {
+      "type": "consecutive_errors",
+      "message": "3 errors in 7865ms",
+      "timestamp": 1754587502173,
+      "severity": "critical"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587503161,
+      "severity": "error"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587503164,
+      "severity": "error"
+    },
+    {
+      "type": "slow_page_load",
+      "message": "Page load took 3817ms",
+      "timestamp": 1754587505947,
+      "severity": "warning"
+    },
+    {
+      "type": "consecutive_errors",
+      "message": "3 errors in 7527ms",
+      "timestamp": 1754587505984,
+      "severity": "critical"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587507058,
+      "severity": "error"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587507065,
+      "severity": "error"
+    },
+    {
+      "type": "slow_page_load",
+      "message": "Page load took 3760ms",
+      "timestamp": 1754587509707,
+      "severity": "warning"
+    },
+    {
+      "type": "consecutive_errors",
+      "message": "3 errors in 7647ms",
+      "timestamp": 1754587509820,
+      "severity": "critical"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587510903,
+      "severity": "error"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587510906,
+      "severity": "error"
+    },
+    {
+      "type": "slow_page_load",
+      "message": "Page load took 3315ms",
+      "timestamp": 1754587513022,
+      "severity": "warning"
+    },
+    {
+      "type": "consecutive_errors",
+      "message": "3 errors in 7078ms",
+      "timestamp": 1754587513062,
+      "severity": "critical"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587514026,
+      "severity": "error"
+    },
+    {
+      "type": "network_error",
+      "message": "HTTP 400 for https://r.stripe.com/b",
+      "timestamp": 1754587514029,
+      "severity": "error"
+    }
+  ],
+  "recommendations": [
+    "Overall performance needs improvement. Focus on the lowest scoring areas.",
+    "High alert volume. Implement monitoring dashboards for real-time tracking.",
+    "Consider implementing error boundaries and better error reporting."
+  ]
+}

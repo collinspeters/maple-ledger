@@ -59,6 +59,7 @@ export function TransactionFiltersComponent({
             value={filters.search}
             onChange={(e) => onFiltersChange({ search: e.target.value })}
             className="pl-10"
+            aria-label="Search transactions by description, vendor, or amount"
           />
         </div>
         

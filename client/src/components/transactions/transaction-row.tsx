@@ -173,10 +173,20 @@ export function TransactionRow({
                   className="h-8"
                   autoFocus
                 />
-                <Button size="sm" variant="ghost" onClick={() => saveField('description')}>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => saveField('description')}
+                  aria-label="Save description"
+                >
                   <Check className="h-3 w-3" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => cancelEditing('description')}>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => cancelEditing('description')}
+                  aria-label="Cancel editing description"
+                >
                   <X className="h-3 w-3" />
                 </Button>
               </div>
@@ -184,6 +194,15 @@ export function TransactionRow({
               <div 
                 className="cursor-pointer hover:bg-muted p-1 rounded truncate"
                 onClick={() => startEditing('description', transaction.description)}
+                role="button"
+                tabIndex={0}
+                aria-label="Edit transaction description"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    startEditing('description', transaction.description);
+                  }
+                }}
               >
                 <div className="font-medium truncate">
                   {transaction.vendor || transaction.description || 'No description'}
@@ -228,10 +247,20 @@ export function TransactionRow({
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')}>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => saveField('bankConnectionId')}
+              aria-label="Save account"
+            >
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')}>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => cancelEditing('bankConnectionId')}
+              aria-label="Cancel editing account"
+            >
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -239,6 +268,15 @@ export function TransactionRow({
           <div 
             className="cursor-pointer hover:bg-muted p-1 rounded text-sm"
             onClick={() => startEditing('bankConnectionId', transaction.bankConnectionId || '')}
+            role="button"
+            tabIndex={0}
+            aria-label="Edit account"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                startEditing('bankConnectionId', transaction.bankConnectionId || '');
+              }
+            }}
           >
             {getAccountName()}
           </div>
@@ -265,10 +303,20 @@ export function TransactionRow({
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="ghost" onClick={() => saveField('category')}>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => saveField('category')}
+                aria-label="Save category"
+              >
                 <Check className="h-3 w-3" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => cancelEditing('category')}>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => cancelEditing('category')}
+                aria-label="Cancel editing category"
+              >
                 <X className="h-3 w-3" />
               </Button>
             </div>
@@ -276,6 +324,15 @@ export function TransactionRow({
             <div 
               className="cursor-pointer hover:bg-muted p-1 rounded"
               onClick={() => startEditing('category', transaction.category || transaction.aiCategory || '')}
+              role="button"
+              tabIndex={0}
+              aria-label="Edit category"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  startEditing('category', transaction.category || transaction.aiCategory || '');
+                }
+              }}
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm">
@@ -313,10 +370,20 @@ export function TransactionRow({
               className="h-8 w-24 text-right"
               autoFocus
             />
-            <Button size="sm" variant="ghost" onClick={() => saveField('amount')}>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => saveField('amount')}
+              aria-label="Save amount"
+            >
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('amount')}>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => cancelEditing('amount')}
+              aria-label="Cancel editing amount"
+            >
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -324,6 +391,15 @@ export function TransactionRow({
           <div 
             className={`cursor-pointer hover:bg-muted p-1 rounded font-medium ${getAmountColor()}`}
             onClick={() => startEditing('amount', transaction.amount)}
+            role="button"
+            tabIndex={0}
+            aria-label="Edit amount"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                startEditing('amount', transaction.amount);
+              }
+            }}
           >
             {formatAmount(transaction.amount, transaction.isExpense, transaction.isTransfer || false)}
           </div>
@@ -339,8 +415,9 @@ export function TransactionRow({
               variant="outline"
               onClick={handleMarkReviewed}
               className="text-xs"
+              aria-label="Mark transaction as reviewed"
             >
-              Review
+              Mark Reviewed
             </Button>
           )}
           

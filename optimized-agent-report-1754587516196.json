@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-08-07T17:25:16.196Z",
+  "sessionInfo": {
+    "cookies": [
+      {
+        "name": "connect.sid",
+        "value": "s%3AjBkJgdX0pPSq8XD7W1KZXUEef8JS6iR-.MkP0go6PD5Vy2qZoDN%2BNLP5wjo%2BpbNgKUIVakcxT%2F7A",
+        "domain": "localhost",
+        "path": "/",
+        "httpOnly": true,
+        "sameSite": "Lax"
+      }
+    ],
+    "authenticated": true,
+    "sessionId": "s%3AjBkJgdX0pPSq8XD7W1KZXUEef8JS6iR-.MkP0go6PD5Vy2qZoDN%2BNLP5wjo%2BpbNgKUIVakcxT%2F7A"
+  },
+  "performance": {
+    "totalDuration": 33801,
+    "averageLoadTime": 215.57460416666677,
+    "totalActions": 28,
+    "errorRate": 0.25
+  },
+  "errors": [
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587490176
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587494308
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587498456
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587502172
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587505984
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587509819
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED",
+      "timestamp": 1754587513062
+    }
+  ],
+  "screenshots": [],
+  "recommendations": [
+    "High error rate detected - review error handling"
+  ]
+}

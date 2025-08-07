@@ -34,6 +34,8 @@ export default function Transactions() {
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [filters, setFilters] = useState<TransactionFilters>({
     search: '',
     category: 'all',
@@ -182,6 +184,18 @@ export default function Transactions() {
     return filtered;
   }, [transactions, filters, sortBy, sortOrder]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTransactions = filteredAndSortedTransactions.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const handleFiltersChange = (newFilters: Partial<TransactionFilters>) => {
+    setFilters({ ...filters, ...newFilters });
+    setCurrentPage(1);
+  };
+
 
 
   // Mutations
@@ -251,21 +265,77 @@ export default function Transactions() {
     });
   };
 
-  const handleFiltersChange = (newFilters: Partial<TransactionFilters>) => {
-    setFilters({ ...filters, ...newFilters });
-  };
+
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="space-y-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+            </div>
+            <div className="flex gap-2">
+              <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+              <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+              <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+              <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+            </div>
           </div>
+          
+          {/* Table Skeleton */}
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b">
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="w-12 p-4">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4"></div>
+                      </th>
+                      {['Date', 'Description', 'Account', 'Category', 'Amount', 'Status'].map((header, i) => (
+                        <th key={i} className="text-left p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(8)].map((_, i) => (
+                      <tr key={i} className="border-b">
+                        <td className="w-12 p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4"></div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -297,12 +367,8 @@ export default function Transactions() {
         <div>
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground mt-1">
-            {filteredAndSortedTransactions.length} of {transactions.length} transactions
-            {process.env.NODE_ENV === 'development' && (
-              <span className="text-xs block text-red-500">
-                Debug: filters={JSON.stringify(filters)} activeFilters={activeFilterCount}
-              </span>
-            )}
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length} transactions
+            {filteredAndSortedTransactions.length !== transactions.length && ` (${transactions.length} total)`}
           </p>
         </div>
         
@@ -390,14 +456,41 @@ export default function Transactions() {
         <CardHeader className="transaction-list border-b">
           <div className="flex items-center justify-between">
             <CardTitle>All Transactions</CardTitle>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedTransactions.size === filteredAndSortedTransactions.length && filteredAndSortedTransactions.length > 0}
-                onCheckedChange={handleSelectAll}
-              />
-              <span className="text-sm text-muted-foreground">
-                Select all
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedTransactions.size === paginatedTransactions.length && paginatedTransactions.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedTransactions(new Set(paginatedTransactions.map(t => t.id)));
+                    } else {
+                      setSelectedTransactions(new Set());
+                    }
+                  }}
+                  aria-label="Select all transactions on this page"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Select all on page
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Show:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                  setItemsPerPage(parseInt(value));
+                  setCurrentPage(1);
+                }}>
+                  <SelectTrigger className="w-20 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="200">200</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span>per page</span>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -417,7 +510,7 @@ export default function Transactions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAndSortedTransactions.map((transaction) => (
+                  {paginatedTransactions.map((transaction) => (
                     <TransactionRow
                       key={transaction.id}
                       transaction={transaction}
@@ -454,6 +547,68 @@ export default function Transactions() {
             </div>
           )}
         </CardContent>
+        
+        {/* Pagination Controls */}
+        {filteredAndSortedTransactions.length > 0 && totalPages > 1 && (
+          <div className="border-t p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length} transactions
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  aria-label="Previous page"
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {/* Show page numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                        aria-label={`Go to page ${pageNum}`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  aria-label="Next page"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Bulk Actions */}
