@@ -87,6 +87,7 @@ function Router() {
       <Route path="/login" component={() => <AuthRoute component={Login} />} />
       <Route path="/register" component={() => <AuthRoute component={Register} />} />
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/clients" component={() => <ProtectedRoute component={Clients} />} />
       <Route path="/invoices" component={() => <ProtectedRoute component={Invoices} />} />
       <Route path="/estimates" component={() => <ProtectedRoute component={Estimates} />} />
