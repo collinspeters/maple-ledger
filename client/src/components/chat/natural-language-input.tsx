@@ -3,9 +3,8 @@ import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Send, Loader2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/
+import { Button } from "@/components/ui/button";
 import ErrorBoundary from "@/components/ui/error-boundary";
-button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -117,10 +116,6 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
   ];
 
   return (
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
     <div className="space-y-4">
       <ErrorBoundary>
         <Card>
@@ -163,13 +158,13 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
                   className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
                 >
                   {example}
-      </ErrorBoundary>
-    </motion.button>
+                </motion.button>
               ))}
             </div>
           </form>
         </CardContent>
       </Card>
+      </ErrorBoundary>
 
       {/* Confirmation UI */}
       {lastParsed && (lastParsed.action === 'add_transaction' || lastParsed.action === 'add_expense') && (
