@@ -141,12 +141,12 @@ export const T2125_CATEGORIES: T2125Category[] = [
     isFullyDeductible: true
   },
   {
-    code: "OTHER_EXPENSES", 
+    code: "OTHER_EXPENSES",
     name: "Other Expenses",
-    description: "Other business expenses not listed elsewhere (EXPENSE ONLY)",
+    description: "Other business expenses not listed elsewhere",
     lineNumber: "8018",
     isFullyDeductible: true,
-    notes: "Must be reasonable and for business purposes - NEVER use for income"
+    notes: "Must be reasonable and for business purposes"
   },
   // Income categories
   {

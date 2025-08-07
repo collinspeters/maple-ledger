@@ -297,26 +297,11 @@ export function TransactionRow({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories
-                    .filter((category) => {
-                      // Filter categories based on transaction type
-                      const isIncomeTransaction = !transaction.isExpense;
-                      const isIncomeCategory = category.includes('INCOME');
-                      
-                      if (isIncomeTransaction) {
-                        // For income transactions, only show income categories
-                        return isIncomeCategory;
-                      } else {
-                        // For expense transactions, only show expense categories
-                        return !isIncomeCategory;
-                      }
-                    })
-                    .map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))
-                  }
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button 
