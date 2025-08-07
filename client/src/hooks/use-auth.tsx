@@ -10,10 +10,10 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/me"],
     retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     refetchInterval: false,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000, // 5 minutes instead of Infinity
     queryFn: async () => {
       try {
         const response = await fetch("/api/auth/me", {

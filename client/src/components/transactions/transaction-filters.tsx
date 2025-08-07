@@ -233,7 +233,7 @@ export function TransactionFiltersComponent({
               <SelectValue placeholder="All auto-updates" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All auto-updates</SelectItem>
+              <SelectItem value="all">All auto-updates</SelectItem>
               <SelectItem value="categorizations">Categorizations</SelectItem>
               <SelectItem value="merges">Merges</SelectItem>
               <SelectItem value="scanned_receipts">Scanned receipts</SelectItem>

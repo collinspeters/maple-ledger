@@ -163,7 +163,7 @@ export default function TransactionModal({ open, onOpenChange }: TransactionModa
                 <SelectValue placeholder="Let AI categorize this transaction" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Let AI categorize this transaction</SelectItem>
+                <SelectItem value="ai-auto">Let AI categorize this transaction</SelectItem>
                 <SelectItem value="Office Supplies">Office Supplies</SelectItem>
                 <SelectItem value="Meals & Entertainment">Meals & Entertainment</SelectItem>
                 <SelectItem value="Travel & Transportation">Travel & Transportation</SelectItem>

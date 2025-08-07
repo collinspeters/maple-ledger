@@ -75,6 +75,12 @@ export default function Transactions() {
 
   // Filter and sort transactions
   const filteredAndSortedTransactions = useMemo(() => {
+    console.log('🔍 Filtering transactions:', { 
+      totalTransactions: transactions.length, 
+      filters, 
+      activeFilterCount 
+    });
+    
     let filtered = transactions.filter(transaction => {
       // Search filter
       if (filters.search) {
@@ -278,6 +284,11 @@ export default function Transactions() {
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground mt-1">
             {filteredAndSortedTransactions.length} of {transactions.length} transactions
+            {process.env.NODE_ENV === 'development' && (
+              <span className="text-xs block text-red-500">
+                Debug: filters={JSON.stringify(filters)} activeFilters={activeFilterCount}
+              </span>
+            )}
           </p>
         </div>
         
