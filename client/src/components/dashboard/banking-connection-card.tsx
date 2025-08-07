@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Building2, Plus, CheckCircle, ArrowRight } from "lucide-react";
 
@@ -23,6 +25,7 @@ export default function BankingConnectionCard() {
   if (isLoading) {
     return (
       <Card className="border-2 border-dashed border-gray-200">
+      <ErrorBoundary>
         <CardContent className="p-6">
           <div className="animate-pulse flex space-x-4">
             <div className="rounded-full bg-gray-200 h-12 w-12"></div>
@@ -32,7 +35,8 @@ export default function BankingConnectionCard() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </ErrorBoundary>
+    </Card>
     );
   }
 
@@ -102,13 +106,13 @@ export default function BankingConnectionCard() {
             </div>
             <div className="flex space-x-3">
               <Link href="/banking">
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm" className="flex-1">
                   <Building2 className="w-4 h-4 mr-2" />
                   Manage Banks
                 </Button>
               </Link>
               <Link href="/banking">
-                <Button size="sm" className="flex-1">
+                <Button o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" size="sm" className="flex-1">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Bank
                 </Button>
@@ -134,7 +138,7 @@ export default function BankingConnectionCard() {
               </div>
             </div>
             <Link href="/banking">
-              <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
+              <Button o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Button action" className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
                 <Building2 className="w-4 h-4 mr-2" />
                 Connect Bank Account
                 <ArrowRight className="w-4 h-4 ml-2" />

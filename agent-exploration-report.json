@@ -1,33 +1,33 @@
 {
-  "timestamp": "2025-08-07T05:05:32.409Z",
-  "totalActions": 49,
-  "screenshots": 21,
+  "timestamp": "2025-08-07T14:17:32.692Z",
+  "totalActions": 53,
+  "screenshots": 23,
   "actions": [
     {
-      "timestamp": "2025-08-07T05:04:21.461Z",
+      "timestamp": "2025-08-07T14:16:13.586Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-001-2025-08-07T05-04-21-353Z.png",
+        "filename": "agent-screenshot-001-2025-08-07T14-16-13-450Z.png",
         "description": "Navigate to http://localhost:5000/"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:21.461Z",
+      "timestamp": "2025-08-07T14:16:13.586Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:21.814Z",
+      "timestamp": "2025-08-07T14:16:14.034Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-002-2025-08-07T05-04-21-706Z.png",
+        "filename": "agent-screenshot-002-2025-08-07T14-16-13-899Z.png",
         "description": "Type into Email field"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:21.814Z",
+      "timestamp": "2025-08-07T14:16:14.034Z",
       "type": "type",
       "data": {
         "selector": "input[type=\"email\"]",
@@ -36,15 +36,15 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:22.050Z",
+      "timestamp": "2025-08-07T14:16:14.290Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-003-2025-08-07T05-04-21-952Z.png",
+        "filename": "agent-screenshot-003-2025-08-07T14-16-14-187Z.png",
         "description": "Type into Password field"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:22.050Z",
+      "timestamp": "2025-08-07T14:16:14.290Z",
       "type": "type",
       "data": {
         "selector": "input[type=\"password\"]",
@@ -53,15 +53,15 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:23.385Z",
+      "timestamp": "2025-08-07T14:16:15.501Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-004-2025-08-07T05-04-23-154Z.png",
+        "filename": "agent-screenshot-004-2025-08-07T14-16-15-344Z.png",
         "description": "Click Login button"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:23.385Z",
+      "timestamp": "2025-08-07T14:16:15.501Z",
       "type": "click",
       "data": {
         "selector": "button[type=\"submit\"]",
@@ -69,30 +69,30 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:26.593Z",
+      "timestamp": "2025-08-07T14:16:18.728Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-005-2025-08-07T05-04-26-385Z.png",
+        "filename": "agent-screenshot-005-2025-08-07T14-16-18-501Z.png",
         "description": "After login attempt"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:29.938Z",
+      "timestamp": "2025-08-07T14:16:21.635Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-006-2025-08-07T05-04-29-730Z.png",
+        "filename": "agent-screenshot-006-2025-08-07T14-16-21-437Z.png",
         "description": "Navigate to http://localhost:5000/dashboard"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:29.938Z",
+      "timestamp": "2025-08-07T14:16:21.635Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/dashboard"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:29.942Z",
+      "timestamp": "2025-08-07T14:16:21.656Z",
       "type": "pageInfo",
       "data": {
         "title": "",
@@ -105,50 +105,50 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:34.755Z",
+      "timestamp": "2025-08-07T14:16:26.776Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-007-2025-08-07T05-04-34-647Z.png",
+        "filename": "agent-screenshot-007-2025-08-07T14-16-26-602Z.png",
         "description": "Navigate to http://localhost:5000/transactions"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:34.755Z",
+      "timestamp": "2025-08-07T14:16:26.776Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/transactions"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:34.760Z",
+      "timestamp": "2025-08-07T14:16:28.078Z",
       "type": "pageInfo",
       "data": {
         "title": "",
         "url": "http://localhost:5000/transactions",
-        "visibleText": "",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nTransactions\n\nReview and categorize your business transactions.\n\nAI Ready\nAdd Transaction\nTransactions\n\n615 of 615 transactions\n\nImport\nExport\nReports\nAdd Transaction\nAI Transaction Categorization\nAutomatically categorize uncategorized transactions using ",
         "forms": 0,
-        "buttons": 0,
-        "links": 0,
-        "inputs": 0
+        "buttons": 628,
+        "links": 12,
+        "inputs": 1
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:39.488Z",
+      "timestamp": "2025-08-07T14:16:32.913Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-008-2025-08-07T05-04-39-297Z.png",
+        "filename": "agent-screenshot-008-2025-08-07T14-16-32-601Z.png",
         "description": "Navigate to http://localhost:5000/banking"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:39.488Z",
+      "timestamp": "2025-08-07T14:16:32.913Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/banking"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:39.503Z",
+      "timestamp": "2025-08-07T14:16:32.927Z",
       "type": "pageInfo",
       "data": {
         "title": "",
@@ -161,27 +161,27 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:44.238Z",
+      "timestamp": "2025-08-07T14:16:36.940Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-009-2025-08-07T05-04-44-062Z.png",
+        "filename": "agent-screenshot-009-2025-08-07T14-16-36-773Z.png",
         "description": "Navigate to http://localhost:5000/ai-assistant"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:44.238Z",
+      "timestamp": "2025-08-07T14:16:36.940Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/ai-assistant"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:44.242Z",
+      "timestamp": "2025-08-07T14:16:36.945Z",
       "type": "pageInfo",
       "data": {
         "title": "",
         "url": "http://localhost:5000/ai-assistant",
-        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nBookkeepAI\n\nAI-Powered Bookkeeping\n\nAI Ready\nAdd Transaction\nAI Assistant\n\nAsk questions about your finances, transactions, and business insights\n\nWhat are my total expenses for office supplies?\nJul 26, 08:02 p.m.\nJul 26, 08:02 p.m.\nI'm experiencing techn",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nBookkeepAI\n\nAI-Powered Bookkeeping\n\nAI Ready\nAdd Transaction\nAI Assistant\n\nAsk questions about your finances, transactions, and business insights\n\nWhat are my total expenses this month?\nAug 7, 03:35 a.m.\nAug 7, 03:35 a.m.\nBased on the available data, your",
         "forms": 1,
         "buttons": 5,
         "links": 12,
@@ -189,22 +189,22 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:49.046Z",
+      "timestamp": "2025-08-07T14:16:41.436Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-010-2025-08-07T05-04-48-862Z.png",
+        "filename": "agent-screenshot-010-2025-08-07T14-16-41-267Z.png",
         "description": "Navigate to http://localhost:5000/receipts"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:49.046Z",
+      "timestamp": "2025-08-07T14:16:41.436Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/receipts"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:49.049Z",
+      "timestamp": "2025-08-07T14:16:41.442Z",
       "type": "pageInfo",
       "data": {
         "title": "",
@@ -217,22 +217,22 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:54.242Z",
+      "timestamp": "2025-08-07T14:16:46.441Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-011-2025-08-07T05-04-54-058Z.png",
+        "filename": "agent-screenshot-011-2025-08-07T14-16-46-250Z.png",
         "description": "Navigate to http://localhost:5000/reports"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:54.242Z",
+      "timestamp": "2025-08-07T14:16:46.441Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/reports"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:54.248Z",
+      "timestamp": "2025-08-07T14:16:46.446Z",
       "type": "pageInfo",
       "data": {
         "title": "",
@@ -245,22 +245,22 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:58.909Z",
+      "timestamp": "2025-08-07T14:16:50.886Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-012-2025-08-07T05-04-58-728Z.png",
+        "filename": "agent-screenshot-012-2025-08-07T14-16-50-684Z.png",
         "description": "Navigate to http://localhost:5000/clients"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:58.909Z",
+      "timestamp": "2025-08-07T14:16:50.886Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/clients"
       }
     },
     {
-      "timestamp": "2025-08-07T05:04:58.914Z",
+      "timestamp": "2025-08-07T14:16:50.889Z",
       "type": "pageInfo",
       "data": {
         "title": "",
@@ -273,22 +273,22 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:03.652Z",
+      "timestamp": "2025-08-07T14:16:56.445Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-013-2025-08-07T05-05-03-477Z.png",
+        "filename": "agent-screenshot-013-2025-08-07T14-16-56-201Z.png",
         "description": "Navigate to http://localhost:5000/invoices"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:03.652Z",
+      "timestamp": "2025-08-07T14:16:56.445Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/invoices"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:03.656Z",
+      "timestamp": "2025-08-07T14:16:56.464Z",
       "type": "pageInfo",
       "data": {
         "title": "",
@@ -301,45 +301,77 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:08.474Z",
+      "timestamp": "2025-08-07T14:17:02.013Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-014-2025-08-07T05-05-08-339Z.png",
+        "filename": "agent-screenshot-014-2025-08-07T14-17-01-733Z.png",
         "description": "Navigate to http://localhost:5000/transactions"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:08.474Z",
+      "timestamp": "2025-08-07T14:17:02.013Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/transactions"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:21.355Z",
+      "timestamp": "2025-08-07T14:17:07.758Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-015-2025-08-07T05-05-21-162Z.png",
+        "filename": "agent-screenshot-015-2025-08-07T14-17-06-852Z.png",
+        "description": "Click Transaction filters"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T14:17:07.758Z",
+      "type": "click",
+      "data": {
+        "selector": "[data-testid=\"filters\"]",
+        "description": "Transaction filters"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T14:17:10.404Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-016-2025-08-07T14-17-09-496Z.png",
+        "description": "Click Add transaction"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T14:17:10.404Z",
+      "type": "click",
+      "data": {
+        "selector": "[data-testid=\"add-transaction\"]",
+        "description": "Add transaction"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T14:17:14.153Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-017-2025-08-07T14-17-13-784Z.png",
         "description": "Navigate to http://localhost:5000/ai-assistant"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:21.355Z",
+      "timestamp": "2025-08-07T14:17:14.153Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/ai-assistant"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:22.479Z",
+      "timestamp": "2025-08-07T14:17:16.858Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-016-2025-08-07T05-05-22-244Z.png",
+        "filename": "agent-screenshot-018-2025-08-07T14-17-16-431Z.png",
         "description": "Type into AI message input"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:22.479Z",
+      "timestamp": "2025-08-07T14:17:16.858Z",
       "type": "type",
       "data": {
         "selector": "#message-input",
@@ -348,15 +380,15 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:23.731Z",
+      "timestamp": "2025-08-07T14:17:18.675Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-017-2025-08-07T05-05-23-572Z.png",
+        "filename": "agent-screenshot-019-2025-08-07T14-17-18-243Z.png",
         "description": "Click Send message to AI"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:23.731Z",
+      "timestamp": "2025-08-07T14:17:18.675Z",
       "type": "click",
       "data": {
         "selector": "button[type=\"submit\"]",
@@ -364,30 +396,30 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:26.578Z",
+      "timestamp": "2025-08-07T14:17:22.914Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-018-2025-08-07T05-05-26-377Z.png",
+        "filename": "agent-screenshot-020-2025-08-07T14-17-22-490Z.png",
         "description": "Navigate to http://localhost:5000/banking"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:26.578Z",
+      "timestamp": "2025-08-07T14:17:22.914Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/banking"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:27.999Z",
+      "timestamp": "2025-08-07T14:17:25.760Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-019-2025-08-07T05-05-27-678Z.png",
+        "filename": "agent-screenshot-021-2025-08-07T14-17-24-571Z.png",
         "description": "Click Connect bank"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:27.999Z",
+      "timestamp": "2025-08-07T14:17:25.760Z",
       "type": "click",
       "data": {
         "selector": "[data-testid=\"connect-bank\"]",
@@ -395,30 +427,30 @@
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:31.254Z",
+      "timestamp": "2025-08-07T14:17:31.364Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-020-2025-08-07T05-05-31-088Z.png",
+        "filename": "agent-screenshot-022-2025-08-07T14-17-31-100Z.png",
         "description": "Navigate to http://localhost:5000/receipts"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:31.254Z",
+      "timestamp": "2025-08-07T14:17:31.364Z",
       "type": "navigate",
       "data": {
         "url": "http://localhost:5000/receipts"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:32.404Z",
+      "timestamp": "2025-08-07T14:17:32.640Z",
       "type": "screenshot",
       "data": {
-        "filename": "agent-screenshot-021-2025-08-07T05-05-32-260Z.png",
+        "filename": "agent-screenshot-023-2025-08-07T14-17-32-374Z.png",
         "description": "Scroll to Receipt upload area"
       }
     },
     {
-      "timestamp": "2025-08-07T05:05:32.404Z",
+      "timestamp": "2025-08-07T14:17:32.640Z",
       "type": "scroll",
       "data": {
         "selector": "[data-testid=\"upload\"]",

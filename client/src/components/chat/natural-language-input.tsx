@@ -1,8 +1,11 @@
 import { useState } from "react";
+import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Send, Loader2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -114,8 +117,13 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
   ];
 
   return (
+    if (isLoading) {
+      return <div className="animate-pulse">Loading...</div>;
+    }
+
     <div className="space-y-4">
-      <Card>
+      <ErrorBoundary>
+        <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2 mb-3">
             <Sparkles className="h-5 w-5 text-blue-600" />
@@ -131,7 +139,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
                 className="flex-1"
                 disabled={parseInputMutation.isPending}
               />
-              <Button 
+              <Button aria-label="Button action" 
                 type="submit" 
                 disabled={!input.trim() || parseInputMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -155,7 +163,8 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
                   className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
                 >
                   {example}
-                </motion.button>
+      </ErrorBoundary>
+    </motion.button>
               ))}
             </div>
           </form>
@@ -198,7 +207,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
           </div>
           
           <div className="flex space-x-2">
-            <Button 
+            <Button aria-label="Small action button" 
               onClick={handleConfirm}
               disabled={confirmTransactionMutation.isPending}
               size="sm"
@@ -209,7 +218,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
               ) : null}
               Confirm & Add
             </Button>
-            <Button 
+            <Button aria-label="Small action button" 
               onClick={handleReject}
               variant="outline"
               size="sm"

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +63,7 @@ const SubscribeForm = () => {
           }}
         />
       </div>
-      <Button 
+      <Button aria-label="Button action" 
         type="submit" 
         disabled={!stripe || !elements || isProcessing}
         className="w-full bg-primary hover:bg-primary-dark text-white py-3 text-lg font-semibold"
@@ -145,7 +146,7 @@ export default function Subscribe() {
             <p className="text-gray-600 mb-4">
               We couldn't set up your payment. Please try again or contact support.
             </p>
-            <Button 
+            <Button aria-label="Button action" 
               onClick={() => window.location.reload()}
               className="bg-primary hover:bg-primary-dark"
             >

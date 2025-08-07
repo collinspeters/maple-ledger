@@ -186,7 +186,7 @@ const TransactionRow = React.memo(({
             ) : (
               <div 
                 className="cursor-pointer hover:bg-muted p-1 rounded truncate"
-                onClick={() => startEditing('description', transaction.description)}
+                role="button" onClick={() => startEditing('description', transaction.description)}
               >
                 <div className="font-medium truncate">
                   {transaction.vendor || transaction.description || 'No description'}
@@ -241,7 +241,7 @@ const TransactionRow = React.memo(({
         ) : (
           <div 
             className="cursor-pointer hover:bg-muted p-1 rounded text-sm"
-            onClick={() => startEditing('bankConnectionId', transaction.bankConnectionId || '')}
+            role="button" onClick={() => startEditing('bankConnectionId', transaction.bankConnectionId || '')}
           >
             {getAccountName()}
           </div>
@@ -278,7 +278,7 @@ const TransactionRow = React.memo(({
           ) : (
             <div 
               className="cursor-pointer hover:bg-muted p-1 rounded"
-              onClick={() => startEditing('category', transaction.category || transaction.aiCategory || '')}
+              role="button" onClick={() => startEditing('category', transaction.category || transaction.aiCategory || '')}
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm">
@@ -326,7 +326,7 @@ const TransactionRow = React.memo(({
         ) : (
           <div 
             className={`cursor-pointer hover:bg-muted p-1 rounded font-medium ${getAmountColor()}`}
-            onClick={() => startEditing('amount', transaction.amount)}
+            role="button" onClick={() => startEditing('amount', transaction.amount)}
           >
             {formatAmount(transaction.amount, transaction.isExpense, transaction.isTransfer || false)}
           </div>

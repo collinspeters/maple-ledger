@@ -1,6 +1,9 @@
 import { useState } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, User, Mail, Phone, MapPin, Building, FileText } from "lucide-react";
@@ -49,11 +52,14 @@ export default function Clients() {
   if (isLoading) {
     return (
       <div className="p-6">
+      <ErrorBoundary>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+              <div key={i} className="h-64 bg-gray-200 rounded-lg">
+      </ErrorBoundary>
+    </div>
             ))}
           </div>
         </div>
@@ -69,7 +75,7 @@ export default function Clients() {
             <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
             <p className="text-gray-600">Manage your client relationships and contact information</p>
           </div>
-          <Button 
+          <Button aria-label="Button action" 
             onClick={() => setShowClientModal(true)}
             className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
             style={{ visibility: 'visible', display: 'flex', alignItems: 'center' }}
@@ -171,7 +177,7 @@ export default function Clients() {
                     </div>
                     
                     <div className="flex space-x-2 pt-3">
-                      <Button 
+                      <Button aria-label="Small action button" 
                         size="sm" 
                         variant="outline"
                         onClick={() => handleEditClient(client)}
@@ -179,7 +185,7 @@ export default function Clients() {
                       >
                         Edit
                       </Button>
-                      <Button 
+                      <Button aria-label="Small action button" 
                         size="sm" 
                         variant="outline"
                         onClick={() => deleteClientMutation.mutate(client.id)}
@@ -202,7 +208,7 @@ export default function Clients() {
               <p className="text-gray-600 mb-4">
                 Add your first client to start creating invoices and managing relationships
               </p>
-              <Button onClick={() => setShowClientModal(true)}>
+              <Button aria-label="Button action" onClick={() => setShowClientModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Your First Client
               </Button>

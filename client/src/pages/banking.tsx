@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePlaidLink } from "react-plaid-link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -174,11 +177,13 @@ export default function Banking() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
+      <ErrorBoundary>
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
         </div>
-      </div>
+      </ErrorBoundary>
+    </div>
     );
   }
 
@@ -193,7 +198,7 @@ export default function Banking() {
         </div>
         <div className="flex gap-2">
           {connections.length > 0 && (
-            <Button
+            <Button aria-label="Button action"
               onClick={handleSyncTransactions}
               disabled={isSyncing}
               variant="outline"
@@ -202,7 +207,7 @@ export default function Banking() {
               {isSyncing ? "Syncing..." : "Sync Transactions"}
             </Button>
           )}
-          <Button
+          <Button aria-label="Button action"
             onClick={handleConnectBank}
             disabled={isLinking}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md"
@@ -244,7 +249,7 @@ export default function Banking() {
                   Securely connect your Canadian bank account using Plaid's bank-level security to automatically import and categorize your business transactions.
                 </p>
                 
-                <Button 
+                <Button aria-label="Button action" 
                   onClick={handleConnectBank} 
                   disabled={isLinking}
                   size="lg"
@@ -326,7 +331,7 @@ export default function Banking() {
                     <Badge variant={connection.isActive ? "default" : "secondary"}>
                       {connection.isActive ? "Active" : "Inactive"}
                     </Badge>
-                    <Button
+                    <Button aria-label="Small action button"
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteConnection(connection.id)}

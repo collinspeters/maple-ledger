@@ -1,6 +1,9 @@
 import { useState } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Send, DollarSign, Calendar, User, ArrowRight } from "lucide-react";
@@ -53,8 +56,10 @@ export default function Estimates() {
 
     return (
       <Badge className={colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800"}>
+      <ErrorBoundary>
         {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
+      </ErrorBoundary>
+    </Badge>
     );
   };
 
@@ -85,7 +90,7 @@ export default function Estimates() {
             <h1 className="text-2xl font-semibold text-gray-900">Estimates</h1>
             <p className="text-gray-600">Create and manage project estimates for your clients</p>
           </div>
-          <Button 
+          <Button aria-label="Button action" 
             onClick={() => setShowEstimateModal(true)}
             className="bg-primary hover:bg-primary-dark"
           >
@@ -188,7 +193,7 @@ export default function Estimates() {
                     </div>
                     
                     {estimate.status === 'sent' && !isExpired(estimate.expiryDate) && (
-                      <Button 
+                      <Button aria-label="Small action button" 
                         size="sm" 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -231,7 +236,7 @@ export default function Estimates() {
               <p className="text-gray-600 mb-4">
                 Create your first estimate to start proposing projects to clients
               </p>
-              <Button onClick={() => setShowEstimateModal(true)}>
+              <Button aria-label="Button action" onClick={() => setShowEstimateModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Estimate
               </Button>

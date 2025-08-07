@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -161,7 +162,7 @@ export default function ReceiptViewer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium text-gray-900">Receipt Preview</h3>
-                <Button
+                <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
                   variant="outline"
                   size="sm"
                   onClick={handleDownload}
@@ -174,7 +175,7 @@ export default function ReceiptViewer({
 
               {isImageFile(receipt.mimeType) ? (
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <img
+                  <img a a a a a alt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image"
                     src={`/api/receipts/${receipt.id}/preview`}
                     alt={receipt.fileName}
                     className="w-full h-auto max-h-96 object-contain rounded"
@@ -292,7 +293,7 @@ export default function ReceiptViewer({
                           </p>
                         </div>
                         {onUnmatchTransaction && (
-                          <Button
+                          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
                             variant="ghost"
                             size="sm"
                             onClick={() => onUnmatchTransaction(receipt.id)}
@@ -309,7 +310,7 @@ export default function ReceiptViewer({
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">No transaction linked</span>
                       {suggestedTransactions.length > 0 && (
-                        <Button
+                        <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
                           variant="outline"
                           size="sm"
                           onClick={() => setShowSuggestions(!showSuggestions)}
@@ -340,7 +341,7 @@ export default function ReceiptViewer({
                                   {formatDate(transaction.date)}
                                 </p>
                               </div>
-                              <Button size="sm" variant="ghost">
+                              <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" size="sm" variant="ghost">
                                 <LinkIcon className="h-4 w-4" />
                               </Button>
                             </div>
@@ -388,7 +389,7 @@ export default function ReceiptViewer({
         {/* Action Buttons */}
         <Separator />
         <div className="flex justify-between">
-          <Button
+          <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
             variant="outline"
             onClick={onClose}
           >
@@ -396,7 +397,7 @@ export default function ReceiptViewer({
           </Button>
           
           {onDelete && (
-            <Button
+            <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
               variant="destructive"
               onClick={() => {
                 onDelete(receipt.id);

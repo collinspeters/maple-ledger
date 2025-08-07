@@ -72,7 +72,7 @@ export default function Sidebar() {
             </div>
           </div>
           <Link href="/subscribe">
-            <Button className="w-full mt-2 px-3 py-1.5 bg-accent text-white text-xs font-medium rounded hover:bg-orange-600 transition-colors">
+            <Button onClick={() => console.log('Button clicked')} aria-label="Button action" className="w-full mt-2 px-3 py-1.5 bg-accent text-white text-xs font-medium rounded hover:bg-orange-600 transition-colors">
               Upgrade Now
             </Button>
           </Link>

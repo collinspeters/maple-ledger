@@ -1,6 +1,9 @@
 import { useState } from "react";
+import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Loader2, Brain } from "lucide-react";
@@ -71,7 +74,8 @@ export default function QuickAddTransaction() {
 
   return (
     <Card className="shadow-card">
-      <CardHeader>
+      <ErrorBoundary>
+        <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Plus className="h-5 w-5" />
           <span>Quick Add Transaction</span>
@@ -106,7 +110,7 @@ export default function QuickAddTransaction() {
             onChange={(e) => setDescription(e.target.value)}
             required
           />
-          <Button
+          <Button aria-label="Button action"
             type="submit"
             className="w-full"
             disabled={createTransactionMutation.isPending || !amount || !vendor || !description || !date}
@@ -128,6 +132,7 @@ export default function QuickAddTransaction() {
           AI will categorize using official T2125 tax codes
         </p>
       </CardContent>
+      </ErrorBoundary>
     </Card>
   );
 }

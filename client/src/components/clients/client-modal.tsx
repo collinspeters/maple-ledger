@@ -3,7 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -109,13 +111,18 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
   const isPending = createClientMutation.isPending || updateClientMutation.isPending;
 
   return (
+    if (isLoading) {
+      return <div className="animate-pulse">Loading...</div>;
+    }
+
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <ErrorBoundary>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
             {client ? "Edit Client" : "Add New Client"}
           </h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button aria-label="Small action button" variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -131,7 +138,8 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
               {form.formState.errors.businessName && (
                 <p className="text-sm text-red-600 mt-1">
                   {form.formState.errors.businessName.message}
-                </p>
+      </ErrorBoundary>
+    </p>
               )}
             </div>
 
@@ -260,10 +268,10 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button aria-label="Button action" type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button 
+            <Button aria-label="Button action" 
               type="submit" 
               disabled={isPending}
               className="bg-primary hover:bg-primary-dark"

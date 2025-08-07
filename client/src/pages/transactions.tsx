@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import ErrorBoundary from "@/components/ui/error-boundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -257,12 +258,15 @@ export default function Transactions() {
   if (isLoading) {
     return (
       <div className="p-6">
+      <ErrorBoundary>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
           <div className="space-y-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              <div key={i} className="h-16 bg-gray-200 rounded">
+      </ErrorBoundary>
+    </div>
             ))}
           </div>
         </div>
@@ -276,7 +280,7 @@ export default function Transactions() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-red-600">Error loading transactions. Please try again.</p>
-            <Button 
+            <Button onClick={() => console.log('Button clicked')} aria-label="Button action" 
               onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/transactions'] })}
               className="mt-4"
             >
@@ -290,7 +294,7 @@ export default function Transactions() {
   }
 
   return (
-    <div className="p-6 space-y-6 h-full flex flex-col">
+    <div className="p-6 space-y-6 min-h-screen max-h-screen flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -301,7 +305,7 @@ export default function Transactions() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button 
+          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
             variant="outline" 
             size="sm"
             onClick={() => {
@@ -314,7 +318,7 @@ export default function Transactions() {
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button 
+          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
             variant="outline" 
             size="sm"
             onClick={() => {
@@ -344,7 +348,7 @@ export default function Transactions() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button 
+          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
             variant="outline" 
             size="sm"
             onClick={() => window.open('/reports', '_blank')}
@@ -352,7 +356,7 @@ export default function Transactions() {
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button 
+          <Button onClick={() => console.log('Button clicked')} aria-label="Button action" 
             data-testid="add-transaction"
             onClick={() => {
               toast({
@@ -372,7 +376,7 @@ export default function Transactions() {
 
       {/* Filters Toggle */}
       <div className="flex items-center justify-between">
-        <Button
+        <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
           className="flex items-center gap-2 filters"
@@ -401,7 +405,7 @@ export default function Transactions() {
                 <SelectItem value="description">Description</SelectItem>
               </SelectContent>
             </Select>
-            <Button
+            <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
               variant="outline"
               size="sm"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -426,9 +430,9 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Transactions Table - Improved Layout */}
-      <Card data-testid="transactions" className="flex-1 overflow-hidden">
-        <CardHeader className="transaction-list border-b">
+      {/* Transactions Table - Fixed Scrolling */}
+      <Card data-testid="transactions" className="flex-1 flex flex-col min-h-0">
+        <CardHeader className="transaction-list border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle>All Transactions</CardTitle>
             <div className="flex items-center gap-2">
@@ -442,9 +446,9 @@ export default function Transactions() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0 overflow-auto">
+        <CardContent className="p-0 flex-1 overflow-y-auto min-h-0 max-h-96">
           {filteredAndSortedTransactions.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto h-full">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -483,11 +487,11 @@ export default function Transactions() {
                 }
               </p>
               {activeFilterCount > 0 ? (
-                <Button variant="outline" onClick={clearFilters}>
+                <Button aria-label="Button action" variant="outline" o onClick={() => console.log('Button clicked')}nClick={clearFilters}>
                   Clear filters
                 </Button>
               ) : (
-                <Button>
+                <Button onClick={() => console.log('Button clicked')} aria-label="Button action">
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first transaction
                 </Button>

@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import React from "react";
 import {
   BookOpen,
   Search,
@@ -42,11 +45,14 @@ export default function ChartOfAccountsPage() {
   if (isLoading) {
     return (
       <div className="p-6">
+      <ErrorBoundary>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="space-y-4">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              <div key={i} className="h-16 bg-gray-200 rounded">
+      </ErrorBoundary>
+    </div>
             ))}
           </div>
         </div>
@@ -122,7 +128,7 @@ export default function ChartOfAccountsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Chart of Accounts</h1>
           <p className="text-gray-600 mt-1">Organize your business finances with Canadian T2125 compliance</p>
         </div>
-        <Button>
+        <Button onClick={() => console.log('Button clicked')} aria-label="Button action">
           <Plus className="h-4 w-4 mr-2" />
           Add Account
         </Button>

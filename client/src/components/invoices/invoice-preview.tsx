@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Download, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -154,7 +155,7 @@ export default function InvoicePreview({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Button 
+                  <Button aria-label="Small action button" 
                     onClick={onSend}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700"

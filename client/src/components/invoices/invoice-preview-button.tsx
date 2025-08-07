@@ -14,7 +14,7 @@ export default function InvoicePreviewButton({ onClick, disabled }: InvoicePrevi
       whileTap={disabled ? {} : { scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
-      <Button 
+      <Button aria-label="Button action" 
         type="button" 
         variant="outline" 
         onClick={onClick}

@@ -1,7 +1,10 @@
 import { useState } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Brain, Send } from "lucide-react";
@@ -12,7 +15,7 @@ export default function AiAssistant() {
   const [message, setMessage] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: chatHistory } = useQuery<ChatMessage[]>({
+  const { data: chatHistory, isLoading } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/history"],
   });
 
@@ -41,8 +44,13 @@ export default function AiAssistant() {
 
   return (
     <Card className="shadow-card border-0 rounded-xl bg-white">
-      <CardHeader className="border-b border-gray-200">
-        <div className="flex items-center space-x-3">
+      <ErrorBoundary>
+        <CardHeader className="border-b border-gray-200">
+    if (isLoading) {
+      return <div className="animate-pulse">Loading...</div>;
+    }
+
+    <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
             <Brain className="text-primary h-4 w-4" />
           </div>
@@ -73,7 +81,8 @@ export default function AiAssistant() {
                   }`}
                 >
                   <p className="text-sm text-gray-700">{msg.message}</p>
-                </div>
+      </ErrorBoundary>
+    </div>
               ))}
             </div>
           ) : (
@@ -93,7 +102,7 @@ export default function AiAssistant() {
               disabled={sendMessageMutation.isPending}
               className="flex-1"
             />
-            <Button 
+            <Button aria-label="Button action" 
               type="submit" 
               disabled={sendMessageMutation.isPending || !message.trim()}
               className="bg-primary hover:bg-primary-dark"

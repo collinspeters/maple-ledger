@@ -1,6 +1,9 @@
 import { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -265,7 +268,8 @@ export default function Reports() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      {/* Header */}
+      <ErrorBoundary>
+        {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Financial Reports</h1>
@@ -293,7 +297,7 @@ export default function Reports() {
           {datePreset === "custom" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-60 justify-start text-left font-normal">
+                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Button action" variant="outline" className="w-60 justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange?.from ? (
                     dateRange.to ? (
@@ -305,7 +309,9 @@ export default function Reports() {
                       format(dateRange.from, "LLL dd, y")
                     )
                   ) : (
-                    <span>Pick a date range</span>
+                    <span>Pick a date range
+      </ErrorBoundary>
+    </span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -425,11 +431,11 @@ export default function Reports() {
                 Profit & Loss Statement
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportReport('profit-loss')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('profit-loss')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -539,11 +545,11 @@ export default function Reports() {
                 Balance Sheet
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportReport('balance-sheet')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('balance-sheet')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -670,11 +676,11 @@ export default function Reports() {
                 Tax Summary
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportReport('tax-summary')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('tax-summary')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -787,11 +793,11 @@ export default function Reports() {
                 )}
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportReport('trial-balance')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('trial-balance')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -882,11 +888,11 @@ export default function Reports() {
                 General Ledger
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportReport('general-ledger')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('general-ledger')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>

@@ -54,7 +54,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 <pre className="mt-1 whitespace-pre-wrap text-xs">{this.state.error.stack}</pre>
               </details>
             )}
-            <Button
+            <Button aria-label="Button action"
               onClick={() => this.setState({ hasError: false })}
               variant="outline"
               size="sm"

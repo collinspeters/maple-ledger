@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -183,8 +185,13 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
   }
 
   return (
+    if (isLoading) {
+      return <div className="animate-pulse">Loading...</div>;
+    }
+
     <div className="space-y-6">
-      {/* Receipts with Suggestions */}
+      <ErrorBoundary>
+        {/* Receipts with Suggestions */}
       {withSuggestions.length > 0 && (
         <Card>
           <CardHeader>
@@ -204,7 +211,8 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                         <span className="flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
                           {receipt.extractedVendor}
-                        </span>
+      </ErrorBoundary>
+    </span>
                       )}
                       {receipt.extractedAmount && (
                         <span className="flex items-center gap-1">
@@ -265,7 +273,7 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                         </div>
 
                         <div className="flex items-center gap-2 ml-4">
-                          <Button
+                          <Button aria-label="Small action button"
                             size="sm"
                             onClick={() => handleMatch(receipt.id, transaction.id, 'confirm')}
                             disabled={isProcessing}
@@ -275,7 +283,7 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Match
                           </Button>
-                          <Button
+                          <Button aria-label="Small action button"
                             variant="outline"
                             size="sm"
                             onClick={() => handleMatch(receipt.id, transaction.id, 'reject')}

@@ -142,7 +142,7 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Connected Bank Accounts</h3>
-          <Button
+          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
             variant="outline"
             size="sm"
             onClick={() => setShowBalances(!showBalances)}
@@ -173,7 +173,7 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     Connected
                   </Badge>
-                  <Button
+                  <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
                     variant="outline"
                     size="sm"
                     onClick={(e) => {
@@ -233,7 +233,7 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
                           </div>
                         )}
                         
-                        <Button
+                        <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
                           variant="destructive"
                           size="sm"
                           onClick={() => onDisconnectAccount(account.id)}
@@ -278,7 +278,7 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
             <p className="text-muted-foreground mb-4">
               Connect your bank accounts to start tracking transactions and transfers automatically.
             </p>
-            <Button>Connect Your First Bank Account</Button>
+            <Button onClick={() => console.log('Button clicked')} aria-label="Button action">Connect Your First Bank Account</Button>
           </CardContent>
         </Card>
       )}

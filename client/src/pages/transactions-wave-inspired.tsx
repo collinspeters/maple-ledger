@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -178,12 +180,15 @@ export default function TransactionsWaveInspired() {
   if (isLoading) {
     return (
       <div className="p-6">
+      <ErrorBoundary>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
           <div className="space-y-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              <div key={i} className="h-16 bg-gray-200 rounded">
+      </ErrorBoundary>
+    </div>
             ))}
           </div>
         </div>
@@ -197,7 +202,7 @@ export default function TransactionsWaveInspired() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-red-600">Error loading transactions. Please try again.</p>
-            <Button 
+            <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Button action" 
               onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/transactions'] })}
               className="mt-4"
             >
@@ -223,15 +228,15 @@ export default function TransactionsWaveInspired() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="bg-white dark:bg-gray-800">
+            <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm" className="bg-white dark:bg-gray-800">
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
-            <Button variant="outline" size="sm" className="bg-white dark:bg-gray-800">
+            <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm" className="bg-white dark:bg-gray-800">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Button action" className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Transaction
             </Button>
@@ -279,7 +284,7 @@ export default function TransactionsWaveInspired() {
           </Select>
 
           {activeFilterCount > 0 && (
-            <Button variant="outline" size="sm" onClick={clearFilters}>
+            <Button aria-label="Small action button" variant="outline" size="sm" o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={clearFilters}>
               Clear ({activeFilterCount})
             </Button>
           )}
@@ -297,7 +302,7 @@ export default function TransactionsWaveInspired() {
                     <Checkbox />
                   </th>
                   <th className="text-left p-4 font-medium text-gray-900 dark:text-white">
-                    <Button 
+                    <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => {
@@ -318,7 +323,7 @@ export default function TransactionsWaveInspired() {
                   <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Account</th>
                   <th className="text-left p-4 font-medium text-gray-900 dark:text-white">Category</th>
                   <th className="text-right p-4 font-medium text-gray-900 dark:text-white">
-                    <Button 
+                    <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => {
@@ -422,11 +427,11 @@ export default function TransactionsWaveInspired() {
                   }
                 </p>
                 {activeFilterCount > 0 ? (
-                  <Button variant="outline" onClick={clearFilters}>
+                  <Button aria-label="Button action" variant="outline" o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={clearFilters}>
                     Clear filters
                   </Button>
                 ) : (
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Button action" className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Transaction
                   </Button>

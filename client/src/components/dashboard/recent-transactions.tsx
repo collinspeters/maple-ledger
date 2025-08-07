@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { T2125_CATEGORIES } from "@shared/t2125-categories";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/
+import ErrorBoundary from "@/components/ui/error-boundary";
+card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Transaction } from "@shared/schema";
@@ -17,6 +19,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
   if (isLoading || !recentTransactions) {
     return (
       <Card className="shadow-card border-0 rounded-xl bg-white recent-transactions" data-testid="recent-transactions">
+      <ErrorBoundary>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -37,7 +40,8 @@ const RecentTransactions = React.memo(function RecentTransactions() {
                   </div>
                 </div>
                 <div className="h-4 bg-gray-200 rounded w-20"></div>
-              </div>
+      </ErrorBoundary>
+    </div>
             ))}
           </div>
         </CardContent>
@@ -98,7 +102,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
             <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
           </div>
           <Link href="/transactions">
-            <Button variant="ghost" className="text-primary hover:text-primary-dark font-medium text-sm">
+            <Button onClick={() => console.log('Button clicked')} aria-label="Ghost button" variant="ghost" className="text-primary hover:text-primary-dark font-medium text-sm">
               View All
             </Button>
           </Link>
@@ -141,7 +145,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
                     }`}>
                       {transaction.isExpense ? "-" : "+"}${parseFloat(transaction.amount).toLocaleString()}
                     </span>
-                    <Button 
+                    <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
                       variant="ghost" 
                       size="sm" 
                       className="text-gray-400 hover:text-gray-600 p-1"
