@@ -3,9 +3,8 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader } from "@/components/ui/
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ErrorBoundary from "@/components/ui/error-boundary";
-card";
 import { Button } from "@/components/ui/button";
 import { Camera, FileText, Image } from "lucide-react";
 import { Receipt } from "@shared/schema";
@@ -90,21 +89,21 @@ export default function ReceiptUpload() {
 
   const recentReceipts = receipts?.slice(0, 2) || [];
 
+  if (isLoading) {
+    return <div className="animate-pulse">Loading...</div>;
+  }
+
   return (
     <Card className="shadow-card border-0 rounded-xl bg-white">
       <ErrorBoundary>
         <CardHeader className="border-b border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900">Upload Receipt</h3>
-        <p className="text-sm text-gray-600">Snap a photo or upload a PDF</p>
-      </CardHeader>
-      
-      <CardContent className="p-6">
-        {/* Upload area */}
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
-    <div
+          <h3 className="text-lg font-semibold text-gray-900">Upload Receipt</h3>
+          <p className="text-sm text-gray-600">Snap a photo or upload a PDF</p>
+        </CardHeader>
+        
+        <CardContent className="p-6">
+          {/* Upload area */}
+          <div
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
             isDragOver
               ? "border-primary bg-primary/5"
@@ -167,13 +166,13 @@ export default function ReceiptUpload() {
                      receipt.status === "processed" ? "Processed" :
                      receipt.status === "processing" ? "Processing" : "Error"}
                   </span>
-      </ErrorBoundary>
-    </div>
+                </div>
               ))}
             </div>
           </div>
         )}
-      </CardContent>
+        </CardContent>
+      </ErrorBoundary>
     </Card>
   );
 }
