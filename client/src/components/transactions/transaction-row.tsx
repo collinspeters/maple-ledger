@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -49,7 +49,7 @@ interface TransactionRowProps {
   onEditToggle?: () => void;
 }
 
-const TransactionRow = React.memo(({
+export function TransactionRow({
   transaction,
   isSelected,
   onSelect,
@@ -173,10 +173,10 @@ const TransactionRow = React.memo(({
                   className="h-8"
                   autoFocus
                 />
-                <Button size="sm" variant="ghost" onClick={() => saveField('description')} aria-label="Save description changes">
+                <Button size="sm" variant="ghost" onClick={() => saveField('description')}>
                   <Check className="h-3 w-3" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => cancelEditing('description')} aria-label="Cancel description editing">
+                <Button size="sm" variant="ghost" onClick={() => cancelEditing('description')}>
                   <X className="h-3 w-3" />
                 </Button>
               </div>
@@ -228,10 +228,10 @@ const TransactionRow = React.memo(({
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')} aria-label="Save account changes">
+            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')}>
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')} aria-label="Cancel account editing">
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')}>
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -265,10 +265,10 @@ const TransactionRow = React.memo(({
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="ghost" onClick={() => saveField('category')} aria-label="Save category changes">
+              <Button size="sm" variant="ghost" onClick={() => saveField('category')}>
                 <Check className="h-3 w-3" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => cancelEditing('category')} aria-label="Cancel category editing">
+              <Button size="sm" variant="ghost" onClick={() => cancelEditing('category')}>
                 <X className="h-3 w-3" />
               </Button>
             </div>
@@ -313,10 +313,10 @@ const TransactionRow = React.memo(({
               className="h-8 w-24 text-right"
               autoFocus
             />
-            <Button size="sm" variant="ghost" onClick={() => saveField('amount')} aria-label="Save amount changes">
+            <Button size="sm" variant="ghost" onClick={() => saveField('amount')}>
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('amount')} aria-label="Cancel amount editing">
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('amount')}>
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -369,6 +369,4 @@ const TransactionRow = React.memo(({
       </tr>
     );
   }
-});
-
-export { TransactionRow };
+}

@@ -7,9 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import TransactionModal from "@/components/transaction-modal";
 
-import React from "react";
-
-const QuickActions = React.memo(function QuickActions() {
+export default function QuickActions() {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const { toast } = useToast();
@@ -147,6 +145,4 @@ const QuickActions = React.memo(function QuickActions() {
       />
     </>
   );
-});
-
-export default QuickActions;
+}

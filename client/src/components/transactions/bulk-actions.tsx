@@ -116,7 +116,6 @@ export function BulkActions({
             size="sm"
             onClick={onClearSelection}
             className="text-gray-500 hover:text-gray-700"
-            aria-label="Clear transaction selection"
           >
             <X className="h-4 w-4 mr-1" />
             Clear selection
@@ -131,7 +130,6 @@ export function BulkActions({
             onClick={handleBulkReview}
             disabled={isLoading}
             className="flex items-center gap-2"
-            aria-label="Mark all selected transactions as reviewed"
           >
             <Check className="h-4 w-4" />
             Mark as Reviewed
@@ -171,7 +169,6 @@ export function BulkActions({
                     size="sm"
                     onClick={() => addBulkEdit('category')}
                     className="flex items-center gap-2"
-                    aria-label="Add category change to bulk edit"
                   >
                     <Tag className="h-4 w-4" />
                     Add Category Change
@@ -181,7 +178,6 @@ export function BulkActions({
                     size="sm"
                     onClick={() => addBulkEdit('account')}
                     className="flex items-center gap-2"
-                    aria-label="Add account change to bulk edit"
                   >
                     <CreditCard className="h-4 w-4" />
                     Add Account Change
@@ -191,7 +187,6 @@ export function BulkActions({
                     size="sm"
                     onClick={() => addBulkEdit('salesTax')}
                     className="flex items-center gap-2"
-                    aria-label="Add sales tax change to bulk edit"
                   >
                     <Calculator className="h-4 w-4" />
                     Add Sales Tax Change
@@ -210,7 +205,6 @@ export function BulkActions({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeBulkEdit(index)}
-                          aria-label="Remove this bulk edit operation"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -306,7 +300,6 @@ export function BulkActions({
                 size="sm"
                 disabled={isLoading}
                 className="flex items-center gap-2"
-                aria-label="Delete all selected transactions"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete

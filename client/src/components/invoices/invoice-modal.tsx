@@ -176,7 +176,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
             <div>
               <Label htmlFor="clientId">Client</Label>
               <Select onValueChange={(value) => form.setValue("clientId", value)}>
-                <SelectTrigger aria-label="Select client">
+                <SelectTrigger>
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
                 <SelectContent>
@@ -344,7 +344,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
               paymentTerms: 30,
               isActive: true,
               createdAt: new Date().toISOString()
-            } as any,
+            },
             issueDate: form.getValues("issueDate"),
             dueDate: form.getValues("dueDate"),
             items: items.map(item => ({

@@ -1,4 +1,3 @@
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, Receipt, TrendingUp, FileText, ArrowUp } from "lucide-react";
@@ -10,7 +9,7 @@ interface FinancialSummary {
   gstOwing: number;
 }
 
-const FinancialCards = React.memo(function FinancialCards() {
+export default function FinancialCards() {
   const { data: summary, isLoading } = useQuery<FinancialSummary>({
     queryKey: ["/api/financial-summary"],
   });
@@ -101,6 +100,4 @@ const FinancialCards = React.memo(function FinancialCards() {
       ))}
     </div>
   );
-});
-
-export default FinancialCards;
+}
