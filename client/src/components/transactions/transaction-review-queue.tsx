@@ -2,9 +2,8 @@ import { useState } from "react";
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ErrorBoundary from "@/components/ui/error-boundary";
-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -115,23 +114,23 @@ export default function TransactionReviewQueue() {
   if (isLoading) {
     return (
       <Card>
-      <ErrorBoundary>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="h-5 w-5" />
-            <span>Review Queue</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse">
-                <div className="h-20 bg-gray-200 rounded-lg"></div>
-      </ErrorBoundary>
-    </div>
-            ))}
-          </div>
-        </CardContent>
+        <ErrorBoundary>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Clock className="h-5 w-5" />
+              <span>Review Queue</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-20 bg-gray-200 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </ErrorBoundary>
       </Card>
     );
   }
