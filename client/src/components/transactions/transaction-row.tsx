@@ -146,6 +146,7 @@ export function TransactionRow({
         <Checkbox
           checked={isSelected}
           onCheckedChange={onSelect}
+          aria-label={`Select transaction from ${transaction.vendor || transaction.description || 'Unknown'}`}
         />
       </td>
 

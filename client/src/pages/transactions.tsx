@@ -361,7 +361,7 @@ export default function Transactions() {
   }
 
   return (
-    <div className="p-6 space-y-6 h-full flex flex-col">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 h-full flex flex-col min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -451,12 +451,12 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Transactions Table - Improved Layout */}
-      <Card data-testid="transactions" className="flex-1 overflow-hidden">
-        <CardHeader className="transaction-list border-b">
-          <div className="flex items-center justify-between">
+      {/* Transactions Table - Mobile-Optimized Layout */}
+      <Card data-testid="transactions" className="flex-1 flex flex-col min-h-0">
+        <CardHeader className="transaction-list border-b flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle>All Transactions</CardTitle>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={selectedTransactions.size === paginatedTransactions.length && paginatedTransactions.length > 0}
@@ -494,11 +494,11 @@ export default function Transactions() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0 overflow-auto">
+        <CardContent className="p-0 flex-1 overflow-auto min-h-0">
           {filteredAndSortedTransactions.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-full">
               <table className="w-full min-w-[800px]">
-                <thead className="bg-muted/50 sticky top-0">
+                <thead className="bg-muted/50 sticky top-0 z-10">
                   <tr>
                     <th className="w-12 p-4"></th>
                     <th className="text-left p-4 font-medium">Date</th>
@@ -550,13 +550,13 @@ export default function Transactions() {
         
         {/* Pagination Controls */}
         {filteredAndSortedTransactions.length > 0 && totalPages > 1 && (
-          <div className="border-t p-4">
-            <div className="flex items-center justify-between">
+          <div className="border-t p-4 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
                 Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length} transactions
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
