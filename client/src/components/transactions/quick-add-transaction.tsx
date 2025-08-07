@@ -65,7 +65,7 @@ export default function QuickAddTransaction() {
       });
       return;
     }
-    console.log("Submitting transaction:", { amount, vendor, description, date });
+
     createTransactionMutation.mutate();
   };
 

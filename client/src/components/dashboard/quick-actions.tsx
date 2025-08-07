@@ -120,7 +120,7 @@ const QuickActions = React.memo(function QuickActions() {
               const Icon = isLoading ? Check : action.icon;
               
               return (
-                <Button
+                <Button aria-label="Button action"
                   key={action.id}
                   variant="ghost"
                   onClick={action.onClick}

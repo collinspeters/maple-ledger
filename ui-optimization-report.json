@@ -1,0 +1,1574 @@
+{
+  "summary": {
+    "totalIssues": 257,
+    "totalFixes": 0,
+    "issuesByType": {
+      "accessibility": 150,
+      "functionality": 33,
+      "performance": 31,
+      "reliability": 30,
+      "user_experience": 13
+    },
+    "issuesBySeverity": {
+      "medium": 224,
+      "high": 33
+    }
+  },
+  "issues": [
+    {
+      "file": "client/src/components/banking/multi-account-display.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/banking/multi-account-display.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/banking/multi-account-display.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/banking/multi-account-display.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/banking/multi-account-display.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/chat/natural-language-input.tsx",
+      "type": "performance",
+      "issue": "Component NaturalLanguageInput should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/chat/natural-language-input.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/chat/natural-language-input.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/chat/natural-language-input.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/chat/natural-language-input.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/chat/natural-language-input.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/clients/client-modal.tsx",
+      "type": "performance",
+      "issue": "Component ClientModal should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/clients/client-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/clients/client-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/clients/client-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/clients/client-modal.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/clients/client-modal.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/ai-assistant.tsx",
+      "type": "performance",
+      "issue": "Component AiAssistant should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/ai-assistant.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/ai-assistant.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/ai-assistant.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "performance",
+      "issue": "Component BankingConnectionCard should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/dashboard/banking-connection-card.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/financial-cards.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/quick-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/quick-actions.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/receipt-upload.tsx",
+      "type": "performance",
+      "issue": "Component ReceiptUpload should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/receipt-upload.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/receipt-upload.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/dashboard/receipt-upload.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/receipt-upload.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/recent-transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/recent-transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/dashboard/recent-transactions.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/dashboard/recent-transactions.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "performance",
+      "issue": "Component EstimateModal should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/estimates/estimate-modal.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "performance",
+      "issue": "Component InvoiceModal should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-modal.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-preview-button.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-preview.tsx",
+      "type": "performance",
+      "issue": "Component InvoicePreview should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/invoices/invoice-preview.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/layout/sidebar.tsx",
+      "type": "performance",
+      "issue": "Component Sidebar should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/layout/sidebar.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/layout/sidebar.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/layout/sidebar.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/layout/topbar.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/layout/topbar.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-match-suggestions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-match-suggestions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-match-suggestions.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-match-suggestions.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "performance",
+      "issue": "Component ReceiptUpload should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-upload.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "performance",
+      "issue": "Component ReceiptViewer should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/receipts/receipt-viewer.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/reports/financial-reports.tsx",
+      "type": "performance",
+      "issue": "Component FinancialReports should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/reports/financial-reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/reports/financial-reports.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transaction-modal.tsx",
+      "type": "performance",
+      "issue": "Component TransactionModal should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transaction-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transaction-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transaction-modal.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transaction-modal.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transaction-modal.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/add-transaction-form.tsx",
+      "type": "performance",
+      "issue": "Component AddTransactionForm should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/add-transaction-form.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/add-transaction-form.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/add-transaction-form.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/add-transaction-form.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/add-transaction-form.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "performance",
+      "issue": "Component BulkActions should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-actions.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-categorize-button.tsx",
+      "type": "performance",
+      "issue": "Component BulkCategorizeButton should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-categorize-button.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-categorize-button.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/bulk-categorize-button.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/double-entry-status.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/quick-add-transaction.tsx",
+      "type": "performance",
+      "issue": "Component QuickAddTransaction should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/quick-add-transaction.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/quick-add-transaction.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/quick-add-transaction.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-filters.tsx",
+      "type": "performance",
+      "issue": "Component TransactionFiltersComponent should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-filters.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-review-queue.tsx",
+      "type": "performance",
+      "issue": "Component TransactionReviewQueue should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-review-queue.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-review-queue.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-review-queue.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-review-queue.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/transactions/transaction-row.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/ui/carousel.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/ui/carousel.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/ui/error-boundary.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/ui/pagination.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/ui/pagination.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/components/ui/sidebar.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/components/ui/toaster.tsx",
+      "type": "performance",
+      "issue": "Component Toaster should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "performance",
+      "issue": "Component AIAssistant should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/ai-assistant.tsx",
+      "type": "user_experience",
+      "issue": "Query component missing loading state handling",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/banking.tsx",
+      "type": "performance",
+      "issue": "Component Banking should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/banking.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/banking.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/banking.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/banking.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/banking.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/chart-of-accounts.tsx",
+      "type": "performance",
+      "issue": "Component ChartOfAccountsPage should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/chart-of-accounts.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/chart-of-accounts.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/chart-of-accounts.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/clients.tsx",
+      "type": "performance",
+      "issue": "Component Clients should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/clients.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/clients.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/clients.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/clients.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/clients.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/estimates.tsx",
+      "type": "performance",
+      "issue": "Component Estimates should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/estimates.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/estimates.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/estimates.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/estimates.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/invoices.tsx",
+      "type": "performance",
+      "issue": "Component Invoices should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/invoices.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/invoices.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/invoices.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/invoices.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/login.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/real-time-reports.tsx",
+      "type": "performance",
+      "issue": "Component RealTimeReports should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/real-time-reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/real-time-reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/real-time-reports.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/receipts.tsx",
+      "type": "performance",
+      "issue": "Component Receipts should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/receipts.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/receipts.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/receipts.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/register.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "performance",
+      "issue": "Component Reports should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "performance",
+      "issue": "Component Reports should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/reports_broken.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/settings.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/settings.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/settings.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/settings.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/subscribe.tsx",
+      "type": "performance",
+      "issue": "Component Subscribe should be memoized for better performance",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/subscribe.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/subscribe.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/transactions-wave-inspired.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "accessibility",
+      "issue": "Button without accessible label",
+      "severity": "medium"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "functionality",
+      "issue": "Button without click handler",
+      "severity": "high"
+    },
+    {
+      "file": "client/src/pages/transactions.tsx",
+      "type": "reliability",
+      "issue": "Component with API calls should be wrapped in ErrorBoundary",
+      "severity": "medium"
+    }
+  ],
+  "fixes": [],
+  "recommendations": [
+    "Consider implementing React.memo for components that render frequently",
+    "Use useMemo and useCallback for expensive calculations and functions",
+    "Add proper ARIA labels and alt text for better accessibility",
+    "Ensure all interactive elements are keyboard navigable",
+    "Add click handlers to all interactive buttons",
+    "Ensure all Select components have proper value props",
+    "Wrap components making API calls in ErrorBoundary components",
+    "Implement proper error handling for all mutations",
+    "Add loading states for all async operations",
+    "Provide feedback for user actions with toast notifications"
+  ]
+}

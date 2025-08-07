@@ -337,7 +337,7 @@ const TransactionRow = React.memo(({
       <td className="p-4">
         <div className="flex items-center gap-2">
           {transaction.needsReview && !transaction.isReviewed && (
-            <Button
+            <Button aria-label="Button action"
               size="sm"
               variant="outline"
               onClick={handleMarkReviewed}

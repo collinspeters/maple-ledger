@@ -25,9 +25,11 @@ import {
   FileText
 } from 'lucide-react';
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // State management
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
@@ -153,10 +155,7 @@ export default function Transactions() {
       return true;
     });
 
-    console.log('🎯 After filtering:', { 
-      filtered: filtered.length, 
-      sampleTransaction: filtered[0] || 'No filtered transactions' 
-    });
+
 
     // Sort transactions
     filtered.sort((a, b) => {
@@ -298,28 +297,70 @@ export default function Transactions() {
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground mt-1">
             {filteredAndSortedTransactions.length} of {transactions.length} transactions
-            {process.env.NODE_ENV === 'development' && (
-              <span className="text-xs block text-red-500">
-                Debug: filters={JSON.stringify(filters)} activeFilters={activeFilterCount}
-              </span>
-            )}
           </p>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Import functionality is in development",
+              });
+            }}
+          >
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              const csv = filteredAndSortedTransactions.map(t => ({
+                Date: new Date(t.date).toLocaleDateString(),
+                Description: t.description,
+                Vendor: t.vendor || '',
+                Amount: t.amount,
+                Category: t.category || t.aiCategory || 'Uncategorized',
+                Type: t.isTransfer ? 'Transfer' : (t.isExpense ? 'Expense' : 'Income')
+              }));
+              
+              const csvContent = [
+                Object.keys(csv[0]).join(','),
+                ...csv.map(row => Object.values(row).join(','))
+              ].join('\n');
+              
+              const blob = new Blob([csvContent], { type: 'text/csv' });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
+              a.click();
+              window.URL.revokeObjectURL(url);
+            }}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.open('/reports', '_blank')}
+          >
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button data-testid="add-transaction">
+          <Button 
+            data-testid="add-transaction"
+            onClick={() => {
+              toast({
+                title: "Coming Soon",
+                description: "Transaction form modal is in development. Use the Quick Add form in the dashboard.",
+              });
+            }}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Transaction
           </Button>

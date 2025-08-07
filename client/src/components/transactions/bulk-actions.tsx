@@ -166,7 +166,7 @@ export function BulkActions({
               <div className="space-y-4">
                 {/* Add Bulk Edit Buttons */}
                 <div className="flex flex-wrap gap-2">
-                  <Button
+                  <Button aria-label="Button action"
                     variant="outline"
                     size="sm"
                     onClick={() => addBulkEdit('category')}
@@ -176,7 +176,7 @@ export function BulkActions({
                     <Tag className="h-4 w-4" />
                     Add Category Change
                   </Button>
-                  <Button
+                  <Button aria-label="Button action"
                     variant="outline"
                     size="sm"
                     onClick={() => addBulkEdit('account')}
@@ -186,7 +186,7 @@ export function BulkActions({
                     <CreditCard className="h-4 w-4" />
                     Add Account Change
                   </Button>
-                  <Button
+                  <Button aria-label="Button action"
                     variant="outline"
                     size="sm"
                     onClick={() => addBulkEdit('salesTax')}
@@ -206,7 +206,7 @@ export function BulkActions({
                         <h4 className="font-medium capitalize">
                           Change {edit.type === 'salesTax' ? 'Sales Tax' : edit.type}
                         </h4>
-                        <Button
+                        <Button aria-label="Button action"
                           variant="ghost"
                           size="sm"
                           onClick={() => removeBulkEdit(index)}
@@ -285,10 +285,10 @@ export function BulkActions({
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setBulkEditOpen(false)}>
+                <Button aria-label="Button action" variant="outline" onClick={() => setBulkEditOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
+                <Button aria-label="Button action" 
                   onClick={applyBulkEdits}
                   disabled={bulkEdits.length === 0 || bulkEdits.some(e => !e.newValue)}
                 >

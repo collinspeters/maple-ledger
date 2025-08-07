@@ -141,7 +141,13 @@ const RecentTransactions = React.memo(function RecentTransactions() {
                     }`}>
                       {transaction.isExpense ? "-" : "+"}${parseFloat(transaction.amount).toLocaleString()}
                     </span>
-                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 p-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-gray-400 hover:text-gray-600 p-1"
+                      onClick={() => window.open(`/transactions?selected=${transaction.id}`, '_blank')}
+                      title="View in transactions page"
+                    >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
