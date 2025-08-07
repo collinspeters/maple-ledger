@@ -92,7 +92,8 @@ export default function Transactions() {
     console.log('🔍 Filtering transactions:', { 
       totalTransactions: transactions.length, 
       filters, 
-      activeFilterCount 
+      activeFilterCount,
+      firstTransaction: transactions[0] || 'No transactions'
     });
     
     let filtered = transactions.filter(transaction => {
@@ -145,7 +146,19 @@ export default function Transactions() {
         if (filters.dateRange.to && transactionDate > filters.dateRange.to) return false;
       }
 
+      // Auto Updates filter (AI categorization) - fixed logic to match UI options
+      if (filters.autoUpdates && filters.autoUpdates !== 'all') {
+        if (filters.autoUpdates === 'categorizations' && !transaction.aiCategory) return false;
+        if (filters.autoUpdates === 'merges' && !transaction.isMerged) return false;
+        if (filters.autoUpdates === 'scanned_receipts' && transaction.receiptSource !== 'scan') return false;
+      }
+
       return true;
+    });
+
+    console.log('🎯 After filtering:', { 
+      filtered: filtered.length, 
+      sampleTransaction: filtered[0] || 'No filtered transactions' 
     });
 
     // Sort transactions
