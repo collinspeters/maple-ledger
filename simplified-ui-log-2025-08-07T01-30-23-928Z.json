@@ -1,0 +1,50 @@
+[
+  {
+    "timestamp": "2025-08-07T01:30:23.605Z",
+    "action": "navigate",
+    "target": "/",
+    "description": "Landing page",
+    "status": 200,
+    "accessible": true
+  },
+  {
+    "timestamp": "2025-08-07T01:30:23.667Z",
+    "action": "navigate",
+    "target": "/dashboard",
+    "description": "Dashboard",
+    "status": 200,
+    "accessible": true
+  },
+  {
+    "timestamp": "2025-08-07T01:30:23.728Z",
+    "action": "navigate",
+    "target": "/transactions",
+    "description": "Transactions page",
+    "status": 200,
+    "accessible": true
+  },
+  {
+    "timestamp": "2025-08-07T01:30:23.793Z",
+    "action": "navigate",
+    "target": "/banking",
+    "description": "Banking page",
+    "status": 200,
+    "accessible": true
+  },
+  {
+    "timestamp": "2025-08-07T01:30:23.862Z",
+    "action": "navigate",
+    "target": "/receipts",
+    "description": "Receipts page",
+    "status": 200,
+    "accessible": true
+  },
+  {
+    "timestamp": "2025-08-07T01:30:23.923Z",
+    "action": "navigate",
+    "target": "/ai-assistant",
+    "description": "AI Assistant",
+    "status": 200,
+    "accessible": true
+  }
+]

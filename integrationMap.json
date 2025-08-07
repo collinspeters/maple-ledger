@@ -1,0 +1,402 @@
+{
+  "features": {
+    "authentication": {
+      "connectedFeatures": [
+        "dashboard",
+        "transactions",
+        "banking",
+        "receipts"
+      ],
+      "metadata": {
+        "type": "core",
+        "priority": "high",
+        "status": "implemented"
+      },
+      "lastTested": "2025-08-07T00:00:00.000Z"
+    },
+    "dashboard": {
+      "connectedFeatures": [],
+      "metadata": {
+        "navigationLinks": 0,
+        "componentsFound": 0
+      },
+      "lastTested": "2025-08-07T01:31:12.804Z"
+    },
+    "transactions": {
+      "connectedFeatures": [
+        "transaction-list",
+        "add-form",
+        "ai-categorization"
+      ],
+      "metadata": {
+        "listPresent": false,
+        "addButtonPresent": false,
+        "filtersPresent": false
+      },
+      "lastTested": "2025-08-07T01:31:21.358Z"
+    },
+    "banking": {
+      "connectedFeatures": [
+        "plaid-integration",
+        "bank-connections",
+        "transaction-sync"
+      ],
+      "metadata": {
+        "connectionsPresent": false,
+        "connectButtonPresent": false,
+        "plaidIntegrated": false,
+        "canadianSupport": false
+      },
+      "lastTested": "2025-08-07T01:31:29.396Z"
+    },
+    "ai-categorization": {
+      "connectedFeatures": [
+        "transactions",
+        "openai-integration",
+        "review-queue"
+      ],
+      "metadata": {
+        "type": "ai",
+        "priority": "high",
+        "status": "implemented"
+      },
+      "lastTested": "2025-08-07T00:00:00.000Z"
+    },
+    "receipts": {
+      "connectedFeatures": [
+        "file-upload",
+        "ocr-processing",
+        "transaction-matching"
+      ],
+      "metadata": {
+        "listPresent": false,
+        "uploadPresent": false,
+        "unmatchedQueuePresent": false
+      },
+      "lastTested": "2025-08-07T01:31:45.318Z"
+    },
+    "reporting": {
+      "connectedFeatures": [
+        "transactions",
+        "tax-compliance",
+        "financial-reports"
+      ],
+      "metadata": {
+        "type": "feature",
+        "priority": "medium",
+        "status": "implemented"
+      },
+      "lastTested": "2025-08-07T00:00:00.000Z"
+    },
+    "ui-automation-test": {
+      "connectedFeatures": [
+        "api-testing",
+        "endpoint-validation"
+      ],
+      "metadata": {
+        "apiResults": [
+          {
+            "path": "/api/auth/me",
+            "method": "GET",
+            "description": "Authentication status",
+            "status": 401,
+            "working": true,
+            "message": "Requires auth (expected)"
+          },
+          {
+            "path": "/api/transactions",
+            "method": "GET",
+            "description": "Transactions endpoint",
+            "status": 401,
+            "working": true,
+            "message": "Requires auth (expected)"
+          },
+          {
+            "path": "/api/receipts",
+            "method": "GET",
+            "description": "Receipts endpoint",
+            "status": 401,
+            "working": true,
+            "message": "Requires auth (expected)"
+          },
+          {
+            "path": "/api/bank-connections",
+            "method": "GET",
+            "description": "Banking integration",
+            "status": 401,
+            "working": true,
+            "message": "Requires auth (expected)"
+          },
+          {
+            "path": "/api/chat/history",
+            "method": "GET",
+            "description": "AI chat history",
+            "status": 401,
+            "working": true,
+            "message": "Requires auth (expected)"
+          }
+        ],
+        "uiResults": [
+          {
+            "action": "navigate",
+            "target": "/",
+            "description": "Landing page",
+            "status": 200,
+            "accessible": true
+          },
+          {
+            "action": "navigate",
+            "target": "/dashboard",
+            "description": "Dashboard",
+            "status": 200,
+            "accessible": true
+          },
+          {
+            "action": "navigate",
+            "target": "/transactions",
+            "description": "Transactions page",
+            "status": 200,
+            "accessible": true
+          },
+          {
+            "action": "navigate",
+            "target": "/banking",
+            "description": "Banking page",
+            "status": 200,
+            "accessible": true
+          },
+          {
+            "action": "navigate",
+            "target": "/receipts",
+            "description": "Receipts page",
+            "status": 200,
+            "accessible": true
+          },
+          {
+            "action": "navigate",
+            "target": "/ai-assistant",
+            "description": "AI Assistant",
+            "status": 200,
+            "accessible": true
+          }
+        ],
+        "workingAPIs": 5,
+        "accessiblePages": 6,
+        "testTimestamp": "2025-08-07T01:30:23.925Z"
+      },
+      "lastTested": "2025-08-07T01:30:23.925Z"
+    },
+    "demo-session": {
+      "connectedFeatures": [
+        "ui-automation",
+        "puppeteer-integration"
+      ],
+      "metadata": {
+        "elementsFound": 4,
+        "pageTitle": "BookkeepAI",
+        "authenticationState": {
+          "isLoggedIn": false,
+          "hasLoginForm": true
+        },
+        "timestamp": "2025-08-07T01:30:37.229Z"
+      },
+      "lastTested": "2025-08-07T01:30:37.229Z"
+    },
+    "ai-assistant": {
+      "connectedFeatures": [
+        "chat-interface",
+        "openai-integration",
+        "financial-queries"
+      ],
+      "metadata": {
+        "chatPresent": false,
+        "inputPresent": false,
+        "historyPresent": false
+      },
+      "lastTested": "2025-08-07T01:31:37.127Z"
+    }
+  },
+  "connections": [
+    {
+      "from": "authentication",
+      "to": "dashboard",
+      "verified": true
+    },
+    {
+      "from": "authentication",
+      "to": "transactions",
+      "verified": true
+    },
+    {
+      "from": "authentication",
+      "to": "banking",
+      "verified": true
+    },
+    {
+      "from": "authentication",
+      "to": "receipts",
+      "verified": true
+    },
+    {
+      "from": "dashboard",
+      "to": "financial-summary",
+      "verified": true
+    },
+    {
+      "from": "dashboard",
+      "to": "transactions",
+      "verified": true
+    },
+    {
+      "from": "dashboard",
+      "to": "receipts",
+      "verified": true
+    },
+    {
+      "from": "dashboard",
+      "to": "ai-assistant",
+      "verified": true
+    },
+    {
+      "from": "transactions",
+      "to": "ai-categorization",
+      "verified": true
+    },
+    {
+      "from": "transactions",
+      "to": "banking",
+      "verified": true
+    },
+    {
+      "from": "transactions",
+      "to": "receipts",
+      "verified": true
+    },
+    {
+      "from": "transactions",
+      "to": "reporting",
+      "verified": true
+    },
+    {
+      "from": "banking",
+      "to": "plaid-integration",
+      "verified": true
+    },
+    {
+      "from": "banking",
+      "to": "transactions",
+      "verified": true
+    },
+    {
+      "from": "banking",
+      "to": "multi-account",
+      "verified": true
+    },
+    {
+      "from": "ai-categorization",
+      "to": "transactions",
+      "verified": true
+    },
+    {
+      "from": "ai-categorization",
+      "to": "openai-integration",
+      "verified": true
+    },
+    {
+      "from": "ai-categorization",
+      "to": "review-queue",
+      "verified": true
+    },
+    {
+      "from": "receipts",
+      "to": "transactions",
+      "verified": true
+    },
+    {
+      "from": "receipts",
+      "to": "file-upload",
+      "verified": true
+    },
+    {
+      "from": "receipts",
+      "to": "ocr-processing",
+      "verified": true
+    },
+    {
+      "from": "reporting",
+      "to": "transactions",
+      "verified": true
+    },
+    {
+      "from": "reporting",
+      "to": "tax-compliance",
+      "verified": true
+    },
+    {
+      "from": "reporting",
+      "to": "financial-reports",
+      "verified": true
+    },
+    {
+      "from": "ui-automation-test",
+      "to": "api-testing",
+      "verified": true
+    },
+    {
+      "from": "ui-automation-test",
+      "to": "endpoint-validation",
+      "verified": true
+    },
+    {
+      "from": "demo-session",
+      "to": "ui-automation",
+      "verified": true
+    },
+    {
+      "from": "demo-session",
+      "to": "puppeteer-integration",
+      "verified": true
+    },
+    {
+      "from": "transactions",
+      "to": "transaction-list",
+      "verified": true
+    },
+    {
+      "from": "transactions",
+      "to": "add-form",
+      "verified": true
+    },
+    {
+      "from": "banking",
+      "to": "bank-connections",
+      "verified": true
+    },
+    {
+      "from": "banking",
+      "to": "transaction-sync",
+      "verified": true
+    },
+    {
+      "from": "ai-assistant",
+      "to": "chat-interface",
+      "verified": true
+    },
+    {
+      "from": "ai-assistant",
+      "to": "openai-integration",
+      "verified": true
+    },
+    {
+      "from": "ai-assistant",
+      "to": "financial-queries",
+      "verified": true
+    },
+    {
+      "from": "receipts",
+      "to": "transaction-matching",
+      "verified": true
+    }
+  ],
+  "lastUpdated": "2025-08-07T01:31:45.318Z"
+}

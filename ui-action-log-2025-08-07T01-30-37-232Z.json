@@ -1,0 +1,29 @@
+[
+  {
+    "timestamp": "2025-08-07T01:30:35.062Z",
+    "action": "navigate",
+    "route": "/",
+    "url": "http://localhost:5000/"
+  },
+  {
+    "timestamp": "2025-08-07T01:30:35.208Z",
+    "action": "getText",
+    "selector": "title, h1, [data-testid=\"page-title\"]",
+    "text": "BookkeepAI...",
+    "description": "Page title"
+  },
+  {
+    "timestamp": "2025-08-07T01:30:37.212Z",
+    "action": "exists",
+    "selector": "[data-testid=\"user-menu\"], .user-menu, .logout",
+    "exists": false,
+    "description": "User menu"
+  },
+  {
+    "timestamp": "2025-08-07T01:30:37.229Z",
+    "action": "exists",
+    "selector": "form input[type=\"password\"]",
+    "exists": true,
+    "description": "Login form"
+  }
+]
