@@ -271,7 +271,7 @@ export default function Transactions() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -360,9 +360,9 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Transactions Table */}
-      <Card data-testid="transactions">
-        <CardHeader className="transaction-list">
+      {/* Transactions Table - Improved Layout */}
+      <Card data-testid="transactions" className="flex-1 overflow-hidden">
+        <CardHeader className="transaction-list border-b">
           <div className="flex items-center justify-between">
             <CardTitle>All Transactions</CardTitle>
             <div className="flex items-center gap-2">
@@ -376,11 +376,11 @@ export default function Transactions() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-auto">
           {filteredAndSortedTransactions.length > 0 ? (
-            <div className="relative">
-              <table className="w-full">
-                <thead className="bg-muted/50">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-muted/50 sticky top-0">
                   <tr>
                     <th className="w-12 p-4"></th>
                     <th className="text-left p-4 font-medium">Date</th>

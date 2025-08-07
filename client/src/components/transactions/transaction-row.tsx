@@ -122,6 +122,13 @@ export function TransactionRow({
     return `${isExpense ? '-' : '+'}$${formatted}`;
   };
 
+  // Get account name from bankConnectionId
+  const getAccountName = () => {
+    if (!transaction.bankConnectionId) return 'Manual Entry';
+    const account = accounts.find(acc => acc.id === transaction.bankConnectionId);
+    return account ? account.name : 'Unknown Account';
+  };
+
   return (
     <tr className={`
       border-b transition-colors hover:bg-muted/50
@@ -198,11 +205,11 @@ export function TransactionRow({
 
       {/* Account */}
       <td className="p-4">
-        {editingFields.accountId ? (
+        {editingFields.bankConnectionId ? (
           <div className="flex items-center gap-2">
             <Select
-              value={tempValues.accountId}
-              onValueChange={(value) => setTempValues({ ...tempValues, accountId: value })}
+              value={tempValues.bankConnectionId}
+              onValueChange={(value) => setTempValues({ ...tempValues, bankConnectionId: value })}
             >
               <SelectTrigger className="h-8">
                 <SelectValue />
@@ -215,19 +222,19 @@ export function TransactionRow({
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="ghost" onClick={() => saveField('accountId')}>
+            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')}>
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('accountId')}>
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')}>
               <X className="h-3 w-3" />
             </Button>
           </div>
         ) : (
           <div 
             className="cursor-pointer hover:bg-muted p-1 rounded text-sm"
-            onClick={() => startEditing('accountId', transaction.accountId || '')}
+            onClick={() => startEditing('bankConnectionId', transaction.bankConnectionId || '')}
           >
-            {accounts.find(a => a.id === transaction.accountId)?.name || 'No account'}
+            {getAccountName()}
           </div>
         )}
       </td>

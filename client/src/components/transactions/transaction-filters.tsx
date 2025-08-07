@@ -73,6 +73,7 @@ export function TransactionFiltersComponent({
                 size="sm"
                 onClick={onClearFilters}
                 className="flex items-center gap-1"
+                data-testid="clear-filters"
               >
                 <X className="h-3 w-3" />
                 Clear All
