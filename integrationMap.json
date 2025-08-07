@@ -20,7 +20,7 @@
         "navigationLinks": 0,
         "componentsFound": 0
       },
-      "lastTested": "2025-08-07T02:48:14.513Z"
+      "lastTested": "2025-08-07T03:22:00.416Z"
     },
     "transactions": {
       "connectedFeatures": [
@@ -33,7 +33,7 @@
         "addButtonPresent": false,
         "filtersPresent": true
       },
-      "lastTested": "2025-08-07T02:48:20.583Z"
+      "lastTested": "2025-08-07T03:22:06.566Z"
     },
     "banking": {
       "connectedFeatures": [
@@ -47,7 +47,7 @@
         "plaidIntegrated": false,
         "canadianSupport": true
       },
-      "lastTested": "2025-08-07T02:48:27.523Z"
+      "lastTested": "2025-08-07T03:22:13.817Z"
     },
     "ai-categorization": {
       "connectedFeatures": [
@@ -73,7 +73,7 @@
         "uploadPresent": true,
         "unmatchedQueuePresent": true
       },
-      "lastTested": "2025-08-07T02:48:35.371Z"
+      "lastTested": "2025-08-07T03:22:21.594Z"
     },
     "reporting": {
       "connectedFeatures": [
@@ -213,7 +213,7 @@
         "inputPresent": false,
         "historyPresent": true
       },
-      "lastTested": "2025-08-07T02:48:32.464Z"
+      "lastTested": "2025-08-07T03:22:18.752Z"
     }
   },
   "connections": [
@@ -398,5 +398,5 @@
       "verified": true
     }
   ],
-  "lastUpdated": "2025-08-07T02:48:35.371Z"
+  "lastUpdated": "2025-08-07T03:22:21.594Z"
 }

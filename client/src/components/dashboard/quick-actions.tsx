@@ -104,8 +104,8 @@ export default function QuickActions() {
 
   return (
     <>
-      <Card className="shadow-card border-0 rounded-xl bg-white" data-testid="quick-actions">
-        <CardHeader className="border-b border-gray-200 quick-actions">
+      <Card className="shadow-card border-0 rounded-xl bg-white quick-actions" data-testid="quick-actions">
+        <CardHeader className="border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
         </CardHeader>
         

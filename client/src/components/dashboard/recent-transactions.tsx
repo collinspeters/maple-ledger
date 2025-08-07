@@ -13,7 +13,7 @@ export default function RecentTransactions() {
 
   if (isLoading) {
     return (
-      <Card className="shadow-card border-0 rounded-xl bg-white">
+      <Card className="shadow-card border-0 rounded-xl bg-white recent-transactions" data-testid="recent-transactions">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -87,7 +87,7 @@ export default function RecentTransactions() {
   };
 
   return (
-    <Card className="shadow-card" data-testid="recent-transactions">
+    <Card className="shadow-card recent-transactions" data-testid="recent-transactions">
       <CardHeader className="border-b border-gray-200 recent-transactions">
         <div className="flex items-center justify-between">
           <div>
