@@ -72,7 +72,7 @@ export function TransactionFiltersComponent({
               <Button aria-label="Small action button"
                 variant="outline"
                 size="sm"
-                onClick={onClearFilters}
+                o
                 className="flex items-center gap-1"
                 data-testid="clear-filters"
               >

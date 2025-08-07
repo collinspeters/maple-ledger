@@ -112,7 +112,7 @@ export default function ReceiptUpload() {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onClick={handleClick}
+          o
         >
           <input
             ref={fileInputRef}

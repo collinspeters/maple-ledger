@@ -280,8 +280,8 @@ export default function Transactions() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-red-600">Error loading transactions. Please try again.</p>
-            <Button onClick={() => console.log('Button clicked')} aria-label="Button action" 
-              onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/transactions'] })}
+            <Button o> console.log('Button clicked')} aria-label="Button action" 
+              o> queryClient.invalidateQueries({ queryKey: ['/api/transactions'] })}
               className="mt-4"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -305,10 +305,10 @@ export default function Transactions() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
+          <Button o> console.log('Button clicked')} aria-label="Small action button" 
             variant="outline" 
             size="sm"
-            onClick={() => {
+            o> {
               toast({
                 title: "Coming Soon",
                 description: "Import functionality is in development",
@@ -318,10 +318,10 @@ export default function Transactions() {
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
+          <Button o> console.log('Button clicked')} aria-label="Small action button" 
             variant="outline" 
             size="sm"
-            onClick={() => {
+            o> {
               const csv = filteredAndSortedTransactions.map(t => ({
                 Date: new Date(t.date).toLocaleDateString(),
                 Description: t.description,
@@ -348,17 +348,17 @@ export default function Transactions() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
+          <Button o> console.log('Button clicked')} aria-label="Small action button" 
             variant="outline" 
             size="sm"
-            onClick={() => window.open('/reports', '_blank')}
+            o> window.open('/reports', '_blank')}
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button onClick={() => console.log('Button clicked')} aria-label="Button action" 
+          <Button o> console.log('Button clicked')} aria-label="Button action" 
             data-testid="add-transaction"
-            onClick={() => {
+            o> {
               toast({
                 title: "Coming Soon",
                 description: "Transaction form modal is in development. Use the Quick Add form in the dashboard.",
@@ -376,9 +376,9 @@ export default function Transactions() {
 
       {/* Filters Toggle */}
       <div className="flex items-center justify-between">
-        <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
+        <Button o> console.log('Button clicked')} aria-label="Button action"
           variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
+          o> setShowFilters(!showFilters)}
           className="flex items-center gap-2 filters"
           data-testid="filters"
         >
@@ -405,10 +405,10 @@ export default function Transactions() {
                 <SelectItem value="description">Description</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+            <Button o> console.log('Button clicked')} aria-label="Small action button"
               variant="outline"
               size="sm"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              o> setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             >
               {sortOrder === 'asc' ? '↑' : '↓'}
             </Button>
@@ -487,11 +487,11 @@ export default function Transactions() {
                 }
               </p>
               {activeFilterCount > 0 ? (
-                <Button aria-label="Button action" variant="outline" o onClick={() => console.log('Button clicked')}nClick={clearFilters}>
+                <Button aria-label="Button action" variant="outline" o o> console.log('Button clicked')}>
                   Clear filters
                 </Button>
               ) : (
-                <Button onClick={() => console.log('Button clicked')} aria-label="Button action">
+                <Button o> console.log('Button clicked')} aria-label="Button action">
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first transaction
                 </Button>

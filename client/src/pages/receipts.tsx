@@ -1,9 +1,8 @@
 import { useState } from "react";
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ErrorBoundary from "@/components/ui/error-boundary";
-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -502,7 +501,7 @@ function ReceiptList({
                   <Button aria-label="Small action button"
                     variant="outline"
                     size="sm"
-                    onClick={() => onReceiptClick(receipt)}
+                    o> onReceiptClick(receipt)}
                     className="text-blue-600 hover:text-blue-700"
                   >
                     <Eye className="h-4 w-4 mr-1" />
@@ -511,7 +510,7 @@ function ReceiptList({
                   <Button aria-label="Small action button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => onDelete(receipt.id)}
+                    o> onDelete(receipt.id)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <X className="h-4 w-4" />

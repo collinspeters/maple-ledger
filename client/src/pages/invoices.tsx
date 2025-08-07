@@ -94,7 +94,7 @@ export default function Invoices() {
             <p className="text-gray-600">Manage your client invoices and payments</p>
           </div>
           <Button aria-label="Button action" 
-            onClick={() => setShowInvoiceModal(true)}
+            o> setShowInvoiceModal(true)}
             className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
             style={{ visibility: 'visible', display: 'flex', alignItems: 'center' }}
           >
@@ -174,7 +174,7 @@ export default function Invoices() {
               <Card 
                 key={invoice.id} 
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
+                o> window.open(`/invoices/${invoice.id}`, '_blank')}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -208,7 +208,7 @@ export default function Invoices() {
                     {invoice.status === 'sent' && (
                       <Button aria-label="Small action button" 
                         size="sm" 
-                        onClick={(e) => {
+                        o> {
                           e.stopPropagation();
                           markPaidMutation.mutate(invoice.id);
                         }}
@@ -237,7 +237,7 @@ export default function Invoices() {
               <p className="text-gray-600 mb-4">
                 Create your first invoice to start tracking payments
               </p>
-              <Button aria-label="Button action" onClick={() => setShowInvoiceModal(true)}>
+              <Button aria-label="Button action" o> setShowInvoiceModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Invoice
               </Button>

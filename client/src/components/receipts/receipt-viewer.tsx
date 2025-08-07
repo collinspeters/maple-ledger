@@ -162,10 +162,10 @@ export default function ReceiptViewer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium text-gray-900">Receipt Preview</h3>
-                <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+                <Button o> console.log('Button clicked')} aria-label="Small action button"
                   variant="outline"
                   size="sm"
-                  onClick={handleDownload}
+                  o
                   className="text-blue-600 hover:text-blue-700"
                 >
                   <Download className="h-4 w-4 mr-1" />
@@ -293,10 +293,10 @@ export default function ReceiptViewer({
                           </p>
                         </div>
                         {onUnmatchTransaction && (
-                          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+                          <Button o> console.log('Button clicked')} aria-label="Small action button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => onUnmatchTransaction(receipt.id)}
+                            o> onUnmatchTransaction(receipt.id)}
                             className="text-red-600 hover:text-red-700"
                           >
                             <X className="h-4 w-4" />
@@ -310,10 +310,10 @@ export default function ReceiptViewer({
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">No transaction linked</span>
                       {suggestedTransactions.length > 0 && (
-                        <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+                        <Button o> console.log('Button clicked')} aria-label="Small action button"
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowSuggestions(!showSuggestions)}
+                          o> setShowSuggestions(!showSuggestions)}
                         >
                           View Suggestions ({suggestedTransactions.length})
                         </Button>
@@ -327,7 +327,7 @@ export default function ReceiptViewer({
                           <div
                             key={transaction.id}
                             className="p-3 bg-gray-50 border rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                            onClick={() => onMatchTransaction?.(receipt.id, transaction.id)}
+                            o> onMatchTransaction?.(receipt.id, transaction.id)}
                           >
                             <div className="flex justify-between items-start">
                               <div>
@@ -341,7 +341,7 @@ export default function ReceiptViewer({
                                   {formatDate(transaction.date)}
                                 </p>
                               </div>
-                              <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" size="sm" variant="ghost">
+                              <Button o> console.log('Button clicked')} aria-label="Small action button" size="sm" variant="ghost">
                                 <LinkIcon className="h-4 w-4" />
                               </Button>
                             </div>
@@ -389,17 +389,17 @@ export default function ReceiptViewer({
         {/* Action Buttons */}
         <Separator />
         <div className="flex justify-between">
-          <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
+          <Button o> console.log('Button clicked')} aria-label="Button action"
             variant="outline"
-            onClick={onClose}
+            o
           >
             Close
           </Button>
           
           {onDelete && (
-            <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
+            <Button o> console.log('Button clicked')} aria-label="Button action"
               variant="destructive"
-              onClick={() => {
+              o> {
                 onDelete(receipt.id);
                 onClose();
               }}

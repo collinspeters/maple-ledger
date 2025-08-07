@@ -118,7 +118,7 @@ export default function BulkCategorizeButton() {
         
         <CardContent className="space-y-4">
           <Button aria-label="Button action"
-            onClick={handleBulkCategorize}
+            o
             disabled={bulkCategorizeMutation.isPending}
             className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
           >

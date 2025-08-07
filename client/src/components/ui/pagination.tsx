@@ -36,7 +36,7 @@ PaginationItem.displayName = "PaginationItem"
 
 type PaginationLinkProps = {
   isActive?: boolean
-} & Pick<Button onClick={() => console.log('Button clicked')} aria-label="Button action"Props, "size"> &
+} & Pick<Button o> console.log('Button clicked')} aria-label="Button action"Props, "size"> &
   React.ComponentProps<"a">
 
 const PaginationLink = ({

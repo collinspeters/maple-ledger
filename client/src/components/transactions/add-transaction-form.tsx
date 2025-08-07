@@ -96,7 +96,7 @@ export default function AddTransactionForm() {
         </CardHeader>
         <CardContent>
           <Button aria-label="Button action" 
-            onClick={() => setShowForm(true)}
+            o> setShowForm(true)}
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -277,7 +277,7 @@ export default function AddTransactionForm() {
               <Button aria-label="Button action"
                 type="button"
                 variant="outline"
-                onClick={() => setShowForm(false)}
+                o> setShowForm(false)}
                 disabled={createTransactionMutation.isPending}
               >
                 Cancel

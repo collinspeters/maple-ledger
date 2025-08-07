@@ -85,7 +85,7 @@ const QuickActions = React.memo(function QuickActions() {
       label: "Add Manual Transaction",
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
-      onClick: () => setShowTransactionModal(true),
+      o> setShowTransactionModal(true),
     },
     {
       id: "generate-report",
@@ -93,7 +93,7 @@ const QuickActions = React.memo(function QuickActions() {
       label: "Generate P&L Report",
       iconBg: "bg-secondary/10",
       iconColor: "text-secondary",
-      onClick: () => handleAction("generate-report"),
+      o> handleAction("generate-report"),
     },
     {
       id: "sync-bank",
@@ -101,7 +101,7 @@ const QuickActions = React.memo(function QuickActions() {
       label: "Sync Bank Account",
       iconBg: "bg-accent/10",
       iconColor: "text-accent",
-      onClick: () => handleAction("sync-bank"),
+      o> handleAction("sync-bank"),
     },
   ];
 
@@ -123,7 +123,7 @@ const QuickActions = React.memo(function QuickActions() {
               return (
                 <Button aria-label="Ghost button" key={action.id}
                   variant="ghost"
-                  onClick={action.onClick}
+                  o
                   disabled={isLoading}
                   className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors justify-start h-auto"
                   data-testid={`quick-action-${action.id}`}

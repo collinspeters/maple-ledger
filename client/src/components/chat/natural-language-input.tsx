@@ -154,7 +154,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
                   type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setInput(example)}
+                  o> setInput(example)}
                   className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
                 >
                   {example}
@@ -203,7 +203,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
           
           <div className="flex space-x-2">
             <Button aria-label="Small action button" 
-              onClick={handleConfirm}
+              o
               disabled={confirmTransactionMutation.isPending}
               size="sm"
               className="bg-green-600 hover:bg-green-700"
@@ -214,7 +214,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
               Confirm & Add
             </Button>
             <Button aria-label="Small action button" 
-              onClick={handleReject}
+              o
               variant="outline"
               size="sm"
             >

@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/
+import { Button } from "@/components/ui/button";
 import ErrorBoundary from "@/components/ui/error-boundary";
-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -130,7 +129,7 @@ export default function AIAssistant() {
                     <Button aria-label="Button action" 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      onClick={() => setMessage("What were my biggest expenses this month?")}
+                      o> setMessage("What were my biggest expenses this month?")}
                     >
                       <span className="text-primary mr-2">💰</span>
                       What were my biggest expenses this month?
@@ -138,7 +137,7 @@ export default function AIAssistant() {
                     <Button aria-label="Button action" 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      onClick={() => setMessage("Show me my profit and loss summary")}
+                      o> setMessage("Show me my profit and loss summary")}
                     >
                       <span className="text-primary mr-2">📊</span>
                       Show me my profit and loss summary
@@ -146,7 +145,7 @@ export default function AIAssistant() {
                     <Button aria-label="Button action" 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      onClick={() => setMessage("Which transactions need review?")}
+                      o> setMessage("Which transactions need review?")}
                     >
                       <span className="text-primary mr-2">🔍</span>
                       Which transactions need review?
@@ -154,7 +153,7 @@ export default function AIAssistant() {
                     <Button aria-label="Button action" 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      onClick={() => setMessage("Help me categorize my expenses")}
+                      o> setMessage("Help me categorize my expenses")}
                     >
                       <span className="text-primary mr-2">📋</span>
                       Help me categorize my expenses

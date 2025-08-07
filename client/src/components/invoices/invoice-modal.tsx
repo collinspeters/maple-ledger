@@ -174,7 +174,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
           <h2 className="text-xl font-semibold">
             {invoice ? "Edit Invoice" : "Create New Invoice"}
           </h2>
-          <Button aria-label="Small action button" variant="ghost" size="sm" onClick={onClose}>
+          <Button aria-label="Small action button" variant="ghost" size="sm" o>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -219,7 +219,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label className="text-lg font-medium">Invoice Items</Label>
-              <Button aria-label="Small action button" type="button" onClick={addItem} size="sm">
+              <Button aria-label="Small action button" type="button" o>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
@@ -266,7 +266,7 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeItem(index)}
+                      o> removeItem(index)}
                       disabled={items.length === 1}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -307,11 +307,11 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button aria-label="Button action" type="button" variant="outline" onClick={onClose}>
+            <Button aria-label="Button action" type="button" variant="outline" o>
               Cancel
             </Button>
             <InvoicePreviewButton
-              onClick={() => setShowPreview(true)}
+              o> setShowPreview(true)}
               disabled={!form.getValues("clientId") || items.length === 0}
             />
             <Button aria-label="Button action" 

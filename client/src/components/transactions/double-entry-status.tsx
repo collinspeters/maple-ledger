@@ -58,7 +58,7 @@ export function DoubleEntryStatus({ transaction, onPost, isPosting }: DoubleEntr
         <Button aria-label="Small action button"
           size="sm"
           variant="outline"
-          onClick={() => onPost(transaction.id)}
+          o> onPost(transaction.id)}
           disabled={isPosting}
           className="h-6 px-2 text-xs"
         >

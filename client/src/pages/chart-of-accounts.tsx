@@ -128,7 +128,7 @@ export default function ChartOfAccountsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">Chart of Accounts</h1>
           <p className="text-gray-600 mt-1">Organize your business finances with Canadian T2125 compliance</p>
         </div>
-        <Button onClick={() => console.log('Button clicked')} aria-label="Button action">
+        <Button o> console.log('Button clicked')} aria-label="Button action">
           <Plus className="h-4 w-4 mr-2" />
           Add Account
         </Button>
@@ -138,7 +138,7 @@ export default function ChartOfAccountsPage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {categoryStats.map(({ category, count, color, icon }) => (
           <Card key={category} className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setActiveCategory(activeCategory === category ? 'all' : category)}>
+                o> setActiveCategory(activeCategory === category ? 'all' : category)}>
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
                 {icon}

@@ -76,7 +76,7 @@ export default function Clients() {
             <p className="text-gray-600">Manage your client relationships and contact information</p>
           </div>
           <Button aria-label="Button action" 
-            onClick={() => setShowClientModal(true)}
+            o> setShowClientModal(true)}
             className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
             style={{ visibility: 'visible', display: 'flex', alignItems: 'center' }}
           >
@@ -180,7 +180,7 @@ export default function Clients() {
                       <Button aria-label="Small action button" 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleEditClient(client)}
+                        o> handleEditClient(client)}
                         className="flex-1"
                       >
                         Edit
@@ -188,7 +188,7 @@ export default function Clients() {
                       <Button aria-label="Small action button" 
                         size="sm" 
                         variant="outline"
-                        onClick={() => deleteClientMutation.mutate(client.id)}
+                        o> deleteClientMutation.mutate(client.id)}
                         disabled={deleteClientMutation.isPending}
                         className="flex-1 text-red-600 hover:text-red-700"
                       >
@@ -208,7 +208,7 @@ export default function Clients() {
               <p className="text-gray-600 mb-4">
                 Add your first client to start creating invoices and managing relationships
               </p>
-              <Button aria-label="Button action" onClick={() => setShowClientModal(true)}>
+              <Button aria-label="Button action" o> setShowClientModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Your First Client
               </Button>

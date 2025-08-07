@@ -275,7 +275,7 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                         <div className="flex items-center gap-2 ml-4">
                           <Button aria-label="Small action button"
                             size="sm"
-                            onClick={() => handleMatch(receipt.id, transaction.id, 'confirm')}
+                            o> handleMatch(receipt.id, transaction.id, 'confirm')}
                             disabled={isProcessing}
                             className="bg-green-600 hover:bg-green-700 text-white"
                             aria-label="Match receipt to this transaction"
@@ -286,7 +286,7 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                           <Button aria-label="Small action button"
                             variant="outline"
                             size="sm"
-                            onClick={() => handleMatch(receipt.id, transaction.id, 'reject')}
+                            o> handleMatch(receipt.id, transaction.id, 'reject')}
                             disabled={isProcessing}
                             aria-label="Reject this receipt match"
                           >

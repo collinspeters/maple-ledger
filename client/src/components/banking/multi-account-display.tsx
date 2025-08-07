@@ -142,10 +142,10 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Connected Bank Accounts</h3>
-          <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+          <Button o> console.log('Button clicked')} aria-label="Small action button"
             variant="outline"
             size="sm"
-            onClick={() => setShowBalances(!showBalances)}
+            o> setShowBalances(!showBalances)}
             className="flex items-center gap-2"
           >
             {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -157,7 +157,7 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
           <Card key={bank.itemId} className="overflow-hidden">
             <CardHeader 
               className="cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => toggleBankExpansion(bank.itemId)}
+              o> toggleBankExpansion(bank.itemId)}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -173,10 +173,10 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     Connected
                   </Badge>
-                  <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+                  <Button o> console.log('Button clicked')} aria-label="Small action button"
                     variant="outline"
                     size="sm"
-                    onClick={(e) => {
+                    o> {
                       e.stopPropagation();
                       onViewTransfers(bank.bankName);
                     }}
@@ -233,10 +233,10 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
                           </div>
                         )}
                         
-                        <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+                        <Button o> console.log('Button clicked')} aria-label="Small action button"
                           variant="destructive"
                           size="sm"
-                          onClick={() => onDisconnectAccount(account.id)}
+                          o> onDisconnectAccount(account.id)}
                         >
                           Disconnect
                         </Button>
@@ -278,7 +278,7 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
             <p className="text-muted-foreground mb-4">
               Connect your bank accounts to start tracking transactions and transfers automatically.
             </p>
-            <Button onClick={() => console.log('Button clicked')} aria-label="Button action">Connect Your First Bank Account</Button>
+            <Button o> console.log('Button clicked')} aria-label="Button action">Connect Your First Bank Account</Button>
           </CardContent>
         </Card>
       )}

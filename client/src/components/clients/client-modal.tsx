@@ -122,7 +122,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
           <h2 className="text-xl font-semibold">
             {client ? "Edit Client" : "Add New Client"}
           </h2>
-          <Button aria-label="Small action button" variant="ghost" size="sm" onClick={onClose}>
+          <Button aria-label="Small action button" variant="ghost" size="sm" o>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -268,7 +268,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button aria-label="Button action" type="button" variant="outline" onClick={onClose}>
+            <Button aria-label="Button action" type="button" variant="outline" o>
               Cancel
             </Button>
             <Button aria-label="Button action" 

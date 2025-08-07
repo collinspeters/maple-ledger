@@ -112,7 +112,7 @@ export default function FinancialReports({ period = "current-month" }: ReportsPr
             </SelectContent>
           </Select>
           
-          <Button aria-label="Button action" onClick={handleExportPDF} variant="outline">
+          <Button aria-label="Button action" o>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
@@ -135,7 +135,7 @@ export default function FinancialReports({ period = "current-month" }: ReportsPr
                 className={`cursor-pointer transition-all ${
                   isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'
                 }`}
-                onClick={() => setReportType(type.id as any)}
+                o> setReportType(type.id as any)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-3">

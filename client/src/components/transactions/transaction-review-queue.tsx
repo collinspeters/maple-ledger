@@ -175,7 +175,7 @@ export default function TransactionReviewQueue() {
             <Button aria-label="Small action button"
               variant="outline"
               size="sm"
-              onClick={selectAll}
+              o
             >
               {selectedTransactions.length === reviewTransactions.length ? 'None' : 'All'}
             </Button>
@@ -183,7 +183,7 @@ export default function TransactionReviewQueue() {
             {selectedTransactions.length > 0 && (
               <Button aria-label="Small action button"
                 size="sm"
-                onClick={() => approveMutation.mutate(selectedTransactions)}
+                o> approveMutation.mutate(selectedTransactions)}
                 disabled={approveMutation.isPending}
                 className="bg-green-600 hover:bg-green-700"
               >
@@ -294,7 +294,7 @@ export default function TransactionReviewQueue() {
                         <Button aria-label="Small action button"
                           variant="outline"
                           size="sm"
-                          onClick={() => approveMutation.mutate([transaction.id])}
+                          o> approveMutation.mutate([transaction.id])}
                           disabled={approveMutation.isPending}
                         >
                           <Check className="h-4 w-4" />

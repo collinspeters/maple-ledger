@@ -164,7 +164,7 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <ErrorBoundary>
         <DialogTrigger asChild>
-        <Button onClick={() => console.log('Button clicked')} aria-label="Button action" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+        <Button o> console.log('Button clicked')} aria-label="Button action" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
           <Upload className="h-4 w-4 mr-2" />
           Upload Receipt
         </Button>
@@ -243,10 +243,10 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
                         </p>
                       </div>
                       
-                      <Button onClick={() => console.log('Button clicked')} aria-label="Small action button"
+                      <Button o> console.log('Button clicked')} aria-label="Small action button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeFile(index)}
+                        o> removeFile(index)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-4 w-4" />
@@ -293,7 +293,7 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <Button aria-label="Button action"
-              onClick={handleUpload}
+              o
               disabled={files.length === 0 || uploadMutation.isPending}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -310,9 +310,9 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
               )}
             </Button>
             
-            <Button onClick={() => console.log('Button clicked')} aria-label="Button action"
+            <Button o> console.log('Button clicked')} aria-label="Button action"
               variant="outline"
-              onClick={() => setIsOpen(false)}
+              o> setIsOpen(false)}
               disabled={uploadMutation.isPending}
             >
               Cancel

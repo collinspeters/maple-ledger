@@ -91,7 +91,7 @@ export default function Estimates() {
             <p className="text-gray-600">Create and manage project estimates for your clients</p>
           </div>
           <Button aria-label="Button action" 
-            onClick={() => setShowEstimateModal(true)}
+            o> setShowEstimateModal(true)}
             className="bg-primary hover:bg-primary-dark"
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -195,7 +195,7 @@ export default function Estimates() {
                     {estimate.status === 'sent' && !isExpired(estimate.expiryDate) && (
                       <Button aria-label="Small action button" 
                         size="sm" 
-                        onClick={(e) => {
+                        o> {
                           e.stopPropagation();
                           convertToInvoiceMutation.mutate(estimate.id);
                         }}
@@ -236,7 +236,7 @@ export default function Estimates() {
               <p className="text-gray-600 mb-4">
                 Create your first estimate to start proposing projects to clients
               </p>
-              <Button aria-label="Button action" onClick={() => setShowEstimateModal(true)}>
+              <Button aria-label="Button action" o> setShowEstimateModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Estimate
               </Button>

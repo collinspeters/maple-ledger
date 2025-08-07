@@ -252,7 +252,7 @@ export default function Reports() {
           {datePreset === "custom" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Button action" variant="outline" className="w-60 justify-start text-left font-normal">
+                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Button action" variant="outline" className="w-60 justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange?.from ? (
                     dateRange.to ? (
@@ -386,11 +386,11 @@ export default function Reports() {
                 Profit & Loss Statement
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('profit-loss')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('profit-loss')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -425,7 +425,7 @@ export default function Reports() {
                         <TableCell></TableCell>
                       </TableRow>
                       {profitLoss.revenue.categories.map((category, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
+                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" o> handleCategoryClick(category.category)}>
                           <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
                             {category.category.replace(/_/g, ' ')}
                             <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -451,7 +451,7 @@ export default function Reports() {
                         <TableCell></TableCell>
                       </TableRow>
                       {profitLoss.expenses.categories.map((category, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
+                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" o> handleCategoryClick(category.category)}>
                           <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
                             {category.category.replace(/_/g, ' ')}
                             <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -511,11 +511,11 @@ export default function Reports() {
                 Balance Sheet
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('balance-sheet')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('balance-sheet')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -638,11 +638,11 @@ export default function Reports() {
                 GST/HST Tax Summary
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('tax-summary')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('tax-summary')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -754,11 +754,11 @@ export default function Reports() {
                 )}
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('trial-balance')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('trial-balance')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -849,11 +849,11 @@ export default function Reports() {
                 General Ledger
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => exportReport('general-ledger')}>
+                <Button aria-label="Small action button" variant="outline" size="sm" o o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('general-ledger')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o o o onClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')}nClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>

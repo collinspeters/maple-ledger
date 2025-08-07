@@ -170,7 +170,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
           <h2 className="text-xl font-semibold">
             {estimate ? "Edit Estimate" : "Create New Estimate"}
           </h2>
-          <Button aria-label="Small action button" variant="ghost" size="sm" onClick={onClose}>
+          <Button aria-label="Small action button" variant="ghost" size="sm" o>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -215,7 +215,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label className="text-lg font-medium">Estimate Items</Label>
-              <Button aria-label="Small action button" type="button" onClick={addItem} size="sm">
+              <Button aria-label="Small action button" type="button" o>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
@@ -262,7 +262,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeItem(index)}
+                      o> removeItem(index)}
                       disabled={items.length === 1}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -303,7 +303,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button aria-label="Button action" type="button" variant="outline" onClick={onClose}>
+            <Button aria-label="Button action" type="button" variant="outline" o>
               Cancel
             </Button>
             <Button aria-label="Button action" 

@@ -199,7 +199,7 @@ export default function Banking() {
         <div className="flex gap-2">
           {connections.length > 0 && (
             <Button aria-label="Button action"
-              onClick={handleSyncTransactions}
+              o
               disabled={isSyncing}
               variant="outline"
             >
@@ -208,7 +208,7 @@ export default function Banking() {
             </Button>
           )}
           <Button aria-label="Button action"
-            onClick={handleConnectBank}
+            o
             disabled={isLinking}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md"
             data-testid="connect-bank"
@@ -250,7 +250,7 @@ export default function Banking() {
                 </p>
                 
                 <Button aria-label="Button action" 
-                  onClick={handleConnectBank} 
+                  o
                   disabled={isLinking}
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg transform transition-transform hover:scale-105"
@@ -334,7 +334,7 @@ export default function Banking() {
                     <Button aria-label="Small action button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDeleteConnection(connection.id)}
+                      o> handleDeleteConnection(connection.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -109,12 +109,12 @@ export default function RealTimeReports() {
           <Button aria-label="Small action button"
             variant="outline"
             size="sm"
-            onClick={() => setAutoRefresh(!autoRefresh)}
+            o> setAutoRefresh(!autoRefresh)}
           >
             {autoRefresh ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             {autoRefresh ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
           </Button>
-          <Button aria-label="Small action button" variant="outline" size="sm" onClick={() => refetch()}>
+          <Button aria-label="Small action button" variant="outline" size="sm" o> refetch()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh Now
           </Button>

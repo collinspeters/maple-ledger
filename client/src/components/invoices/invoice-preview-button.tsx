@@ -3,11 +3,11 @@ import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface InvoicePreviewButtonProps {
-  onClick: () => void;
+  o> void;
   disabled?: boolean;
 }
 
-export default function InvoicePreviewButton({ onClick, disabled }: InvoicePreviewButtonProps) {
+export default function InvoicePreviewButton({ o
   return (
     <motion.div
       whileHover={disabled ? {} : { scale: 1.02 }}
@@ -17,7 +17,7 @@ export default function InvoicePreviewButton({ onClick, disabled }: InvoicePrevi
       <Button aria-label="Button action" 
         type="button" 
         variant="outline" 
-        onClick={onClick}
+        o
         disabled={disabled}
         className={`relative overflow-hidden ${
           disabled 
