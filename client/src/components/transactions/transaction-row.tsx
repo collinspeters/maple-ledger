@@ -131,39 +131,29 @@ export function TransactionRow({
     return account ? account.name : 'Unknown Account';
   };
 
-  // Debug log each render attempt
-  console.log(`🔧 TransactionRow rendering for transaction ${transaction.id}:`, {
-    description: transaction.description,
-    amount: transaction.amount,
-    date: transaction.date,
-    vendor: transaction.vendor,
-    isExpense: transaction.isExpense,
-    amountType: typeof transaction.amount
-  });
+  // Debug log removed - transactions now rendering properly
 
   // Add error boundary for this component
   try {
     return (
       <tr className={`
-        border-b transition-colors hover:bg-muted/50 min-h-[60px] bg-white
+        border-b transition-colors hover:bg-muted/50
         ${isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
         ${transaction.needsReview ? 'border-l-4 border-l-orange-400' : ''}
-      `} style={{ minHeight: '60px', backgroundColor: '#f8f9fa' }}>
+      `}>
       {/* Selection Checkbox */}
-      <td className="w-12 p-4" style={{ backgroundColor: '#e3f2fd', minHeight: '60px' }}>
+      <td className="w-12 p-4">
         <Checkbox
           checked={isSelected}
           onCheckedChange={onSelect}
         />
-        <div className="text-xs text-blue-600">✓</div>
       </td>
 
       {/* Date */}
-      <td className="p-4" style={{ backgroundColor: '#fff3e0' }}>
-        <div className="text-sm font-bold text-orange-800">
+      <td className="p-4">
+        <div className="text-sm">
           {transaction.date ? format(new Date(transaction.date), 'MMM d, yyyy') : 'No date'}
         </div>
-        <div className="text-xs text-orange-600">DATE</div>
       </td>
 
       {/* Description */}
