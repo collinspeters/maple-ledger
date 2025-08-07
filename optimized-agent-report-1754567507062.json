@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-08-07T11:51:47.058Z",
+  "sessionInfo": {
+    "cookies": null,
+    "authenticated": false,
+    "sessionId": null
+  },
+  "performance": {
+    "totalDuration": 19,
+    "averageLoadTime": 0,
+    "totalActions": 0,
+    "errorRate": 0
+  },
+  "errors": [],
+  "screenshots": [],
+  "recommendations": []
+}

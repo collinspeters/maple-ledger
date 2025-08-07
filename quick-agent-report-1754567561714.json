@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-08-07T11:52:38.933Z",
+  "tests": [
+    {
+      "endpoint": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "responseTime": 123,
+      "success": true,
+      "contentType": "application/json; charset=utf-8",
+      "dataLength": 237,
+      "hasData": true
+    },
+    {
+      "endpoint": "/api/transactions",
+      "method": "GET",
+      "status": 200,
+      "responseTime": 672,
+      "success": true,
+      "contentType": "application/json; charset=utf-8",
+      "dataLength": 554578,
+      "hasData": true
+    },
+    {
+      "endpoint": "/api/bank-connections",
+      "method": "GET",
+      "status": 200,
+      "responseTime": 214,
+      "success": true,
+      "contentType": "application/json; charset=utf-8",
+      "dataLength": 1891,
+      "hasData": true
+    },
+    {
+      "endpoint": "/api/receipts",
+      "method": "GET",
+      "status": 200,
+      "responseTime": 210,
+      "success": true,
+      "contentType": "application/json; charset=utf-8",
+      "dataLength": 673,
+      "hasData": true
+    },
+    {
+      "endpoint": "/api/financial-summary",
+      "method": "GET",
+      "status": 200,
+      "responseTime": 221,
+      "success": true,
+      "contentType": "application/json; charset=utf-8",
+      "dataLength": 102,
+      "hasData": true
+    }
+  ],
+  "performance": {
+    "successRate": 100,
+    "averageResponseTime": 288,
+    "totalTests": 5,
+    "successfulTests": 5,
+    "failedTests": 0
+  },
+  "recommendations": [
+    "✅ Transaction data is properly accessible via API",
+    "✅ Authentication system working correctly"
+  ]
+}

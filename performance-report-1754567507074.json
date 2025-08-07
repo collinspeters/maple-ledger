@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-08-07T11:51:47.074Z",
+  "performanceScore": {
+    "overall": 100,
+    "breakdown": {
+      "pageLoad": 100,
+      "errorRate": 100,
+      "networkHealth": 100,
+      "memoryEfficiency": 100
+    },
+    "grade": "A+"
+  },
+  "insights": [],
+  "metrics": {
+    "totalPageLoads": 0,
+    "totalUserActions": 0,
+    "totalErrors": 0,
+    "totalNetworkRequests": 0,
+    "averageMemoryUsage": 0
+  },
+  "alerts": [],
+  "recommendations": []
+}
