@@ -1,10 +1,7 @@
 import { useState } from "react";
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,14 +70,11 @@ export default function FinancialReports({ period = "current-month" }: ReportsPr
   if (isLoading) {
     return (
       <div className="space-y-6">
-      <ErrorBoundary>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded">
-      </ErrorBoundary>
-    </div>
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -112,7 +106,7 @@ export default function FinancialReports({ period = "current-month" }: ReportsPr
             </SelectContent>
           </Select>
           
-          <Button aria-label="Button action" o>
+          <Button onClick={handleExportPDF} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
@@ -135,7 +129,7 @@ export default function FinancialReports({ period = "current-month" }: ReportsPr
                 className={`cursor-pointer transition-all ${
                   isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:shadow-md'
                 }`}
-                o> setReportType(type.id as any)}
+                onClick={() => setReportType(type.id as any)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-3">

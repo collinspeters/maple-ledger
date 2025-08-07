@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import React from "react";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -99,13 +96,8 @@ export default function BulkCategorizeButton() {
   };
 
   return (
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
     <div className="space-y-4">
-      <ErrorBoundary>
-        <Card className="shadow-card border-0 rounded-xl bg-white">
+      <Card className="shadow-card border-0 rounded-xl bg-white">
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Brain className="h-6 w-6 text-primary" />
@@ -117,8 +109,8 @@ export default function BulkCategorizeButton() {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          <Button aria-label="Button action"
-            o
+          <Button
+            onClick={handleBulkCategorize}
             disabled={bulkCategorizeMutation.isPending}
             className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
           >
@@ -141,8 +133,7 @@ export default function BulkCategorizeButton() {
                 <span className="text-sm text-gray-600">Processing transactions...</span>
               </div>
               <Progress value={50} className="w-full" />
-      </ErrorBoundary>
-    </div>
+            </div>
           )}
         </CardContent>
       </Card>

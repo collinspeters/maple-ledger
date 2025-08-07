@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, RefreshCw, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -121,22 +120,21 @@ const QuickActions = React.memo(function QuickActions() {
               const Icon = isLoading ? Check : action.icon;
               
               return (
-                <Button aria-label="Ghost button" key={action.id}
+                <Button
+                  key={action.id}
                   variant="ghost"
                   onClick={action.onClick}
                   disabled={isLoading}
                   className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors justify-start h-auto"
                   data-testid={`quick-action-${action.id}`}
                 >
-      <ErrorBoundary>
-        <div className={`w-8 h-8 ${action.iconBg} rounded-lg flex items-center justify-center`}>
+                  <div className={`w-8 h-8 ${action.iconBg} rounded-lg flex items-center justify-center`}>
                     <Icon className={`${action.iconColor} text-sm h-4 w-4 ${
                       isLoading ? "text-secondary" : ""
                     }`} />
                   </div>
                   <span className="font-medium text-gray-900">{action.label}</span>
-      </ErrorBoundary>
-    </Button>
+                </Button>
               );
             })}
           </div>

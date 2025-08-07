@@ -1,10 +1,7 @@
 import { useState, useCallback } from "react";
-import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDropzone } from "react-dropzone";
-import { Button } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -162,9 +159,8 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <ErrorBoundary>
-        <DialogTrigger asChild>
-        <Button o> console.log('Button clicked')} aria-label="Button action" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+      <DialogTrigger asChild>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200">
           <Upload className="h-4 w-4 mr-2" />
           Upload Receipt
         </Button>
@@ -177,11 +173,8 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
             Upload Receipts
           </DialogTitle>
         </DialogHeader>
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
 
-    <div className="space-y-4">
+        <div className="space-y-4">
           {/* Upload Zone */}
           <Card>
             <CardContent className="p-6">
@@ -197,9 +190,7 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
                 <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 
                 {isDragActive ? (
-                  <p className="text-blue-600 font-medium">Drop files here...
-      </ErrorBoundary>
-    </p>
+                  <p className="text-blue-600 font-medium">Drop files here...</p>
                 ) : (
                   <div>
                     <p className="text-gray-900 font-medium mb-1">
@@ -225,7 +216,7 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
                   {files.map((uploadFile, index) => (
                     <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       {uploadFile.preview ? (
-                        <img a a a alt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image" 
+                        <img 
                           src={uploadFile.preview} 
                           alt="Preview" 
                           className="h-10 w-10 object-cover rounded" 
@@ -243,10 +234,10 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
                         </p>
                       </div>
                       
-                      <Button o> console.log('Button clicked')} aria-label="Small action button"
+                      <Button
                         variant="ghost"
                         size="sm"
-                        o> removeFile(index)}
+                        onClick={() => removeFile(index)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-4 w-4" />
@@ -292,8 +283,8 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button aria-label="Button action"
-              o
+            <Button
+              onClick={handleUpload}
               disabled={files.length === 0 || uploadMutation.isPending}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -310,9 +301,9 @@ export default function ReceiptUpload({ onUploadComplete }: ReceiptUploadProps) 
               )}
             </Button>
             
-            <Button o> console.log('Button clicked')} aria-label="Button action"
+            <Button
               variant="outline"
-              o> setIsOpen(false)}
+              onClick={() => setIsOpen(false)}
               disabled={uploadMutation.isPending}
             >
               Cancel

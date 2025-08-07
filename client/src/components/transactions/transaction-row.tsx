@@ -56,12 +56,9 @@ const TransactionRow = React.memo(({
   onUpdate,
   categories,
   accounts,
-  isEditing,
-  onEditToggle
-}: TransactionRowProps) => {
-  // Set defaults inside the function body
-  const editing = isEditing || false;
-  const handleEditToggle = onEditToggle || (() => {});
+  isEditing = false,
+  onEditToggle = () => {}
+}: TransactionRowProps) {
   const [editingFields, setEditingFields] = useState<Record<string, boolean>>({});
   const [tempValues, setTempValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -176,17 +173,17 @@ const TransactionRow = React.memo(({
                   className="h-8"
                   autoFocus
                 />
-                <Button size="sm" variant="ghost" o> saveField('description')} aria-label="Save description changes">
+                <Button size="sm" variant="ghost" onClick={() => saveField('description')} aria-label="Save description changes">
                   <Check className="h-3 w-3" />
                 </Button>
-                <Button size="sm" variant="ghost" o> cancelEditing('description')} aria-label="Cancel description editing">
+                <Button size="sm" variant="ghost" onClick={() => cancelEditing('description')} aria-label="Cancel description editing">
                   <X className="h-3 w-3" />
                 </Button>
               </div>
             ) : (
               <div 
                 className="cursor-pointer hover:bg-muted p-1 rounded truncate"
-                role="button" o> startEditing('description', transaction.description)}
+                onClick={() => startEditing('description', transaction.description)}
               >
                 <div className="font-medium truncate">
                   {transaction.vendor || transaction.description || 'No description'}
@@ -231,17 +228,17 @@ const TransactionRow = React.memo(({
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="ghost" o> saveField('bankConnectionId')} aria-label="Save account changes">
+            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')} aria-label="Save account changes">
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" o> cancelEditing('bankConnectionId')} aria-label="Cancel account editing">
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')} aria-label="Cancel account editing">
               <X className="h-3 w-3" />
             </Button>
           </div>
         ) : (
           <div 
             className="cursor-pointer hover:bg-muted p-1 rounded text-sm"
-            role="button" o> startEditing('bankConnectionId', transaction.bankConnectionId || '')}
+            onClick={() => startEditing('bankConnectionId', transaction.bankConnectionId || '')}
           >
             {getAccountName()}
           </div>
@@ -268,17 +265,17 @@ const TransactionRow = React.memo(({
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="ghost" o> saveField('category')} aria-label="Save category changes">
+              <Button size="sm" variant="ghost" onClick={() => saveField('category')} aria-label="Save category changes">
                 <Check className="h-3 w-3" />
               </Button>
-              <Button size="sm" variant="ghost" o> cancelEditing('category')} aria-label="Cancel category editing">
+              <Button size="sm" variant="ghost" onClick={() => cancelEditing('category')} aria-label="Cancel category editing">
                 <X className="h-3 w-3" />
               </Button>
             </div>
           ) : (
             <div 
               className="cursor-pointer hover:bg-muted p-1 rounded"
-              role="button" o> startEditing('category', transaction.category || transaction.aiCategory || '')}
+              onClick={() => startEditing('category', transaction.category || transaction.aiCategory || '')}
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm">
@@ -316,17 +313,17 @@ const TransactionRow = React.memo(({
               className="h-8 w-24 text-right"
               autoFocus
             />
-            <Button size="sm" variant="ghost" o> saveField('amount')} aria-label="Save amount changes">
+            <Button size="sm" variant="ghost" onClick={() => saveField('amount')} aria-label="Save amount changes">
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" o> cancelEditing('amount')} aria-label="Cancel amount editing">
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('amount')} aria-label="Cancel amount editing">
               <X className="h-3 w-3" />
             </Button>
           </div>
         ) : (
           <div 
             className={`cursor-pointer hover:bg-muted p-1 rounded font-medium ${getAmountColor()}`}
-            role="button" o> startEditing('amount', transaction.amount)}
+            onClick={() => startEditing('amount', transaction.amount)}
           >
             {formatAmount(transaction.amount, transaction.isExpense, transaction.isTransfer || false)}
           </div>
@@ -337,10 +334,10 @@ const TransactionRow = React.memo(({
       <td className="p-4">
         <div className="flex items-center gap-2">
           {transaction.needsReview && !transaction.isReviewed && (
-            <Button aria-label="Button action"
+            <Button
               size="sm"
               variant="outline"
-              o
+              onClick={handleMarkReviewed}
               className="text-xs"
             >
               Review

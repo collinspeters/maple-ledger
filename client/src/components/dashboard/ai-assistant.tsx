@@ -1,9 +1,7 @@
 import { useState } from "react";
-import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Brain, Send } from "lucide-react";
@@ -14,7 +12,7 @@ export default function AiAssistant() {
   const [message, setMessage] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: chatHistory, isLoading } = useQuery<ChatMessage[]>({
+  const { data: chatHistory } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/history"],
   });
 
@@ -41,21 +39,16 @@ export default function AiAssistant() {
 
   const recentMessages = chatHistory?.slice(0, 4) || [];
 
-  if (isLoading) {
-    return <div className="animate-pulse">Loading...</div>;
-  }
-
   return (
     <Card className="shadow-card border-0 rounded-xl bg-white">
-      <ErrorBoundary>
-        <CardHeader className="border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Brain className="text-primary h-4 w-4" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">AI Assistant</h3>
+      <CardHeader className="border-b border-gray-200">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+            <Brain className="text-primary h-4 w-4" />
           </div>
-        </CardHeader>
+          <h3 className="text-lg font-semibold text-gray-900">AI Assistant</h3>
+        </div>
+      </CardHeader>
       
       <CardContent className="p-6">
         <div className="space-y-4">
@@ -100,7 +93,7 @@ export default function AiAssistant() {
               disabled={sendMessageMutation.isPending}
               className="flex-1"
             />
-            <Button aria-label="Button action" 
+            <Button 
               type="submit" 
               disabled={sendMessageMutation.isPending || !message.trim()}
               className="bg-primary hover:bg-primary-dark"
@@ -114,7 +107,6 @@ export default function AiAssistant() {
           </form>
         </div>
       </CardContent>
-      </ErrorBoundary>
     </Card>
   );
 }

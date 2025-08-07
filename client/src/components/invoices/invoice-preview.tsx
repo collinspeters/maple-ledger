@@ -1,5 +1,4 @@
 import { useState } from "react";
-import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Download, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -96,7 +95,7 @@ export default function InvoicePreview({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          o
+          onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -111,7 +110,7 @@ export default function InvoicePreview({
             className={`bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden ${
               isMinimized ? 'cursor-pointer' : ''
             }`}
-            o> {
+            onClick={(e) => {
               e.stopPropagation();
               if (isMinimized) setIsMinimized(false);
             }}
@@ -135,7 +134,7 @@ export default function InvoicePreview({
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  o> setIsMinimized(!isMinimized)}
+                  onClick={() => setIsMinimized(!isMinimized)}
                   className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
                   title={isMinimized ? "Expand Preview" : "Minimize Preview"}
                 >
@@ -155,8 +154,8 @@ export default function InvoicePreview({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Button aria-label="Small action button" 
-                    o
+                  <Button 
+                    onClick={onSend}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700"
                   >
@@ -168,7 +167,7 @@ export default function InvoicePreview({
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  o
+                  onClick={onClose}
                   className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
                 >
                   <X className="h-4 w-4" />

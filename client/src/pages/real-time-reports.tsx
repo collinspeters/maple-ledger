@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -77,13 +74,11 @@ export default function RealTimeReports() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-      <ErrorBoundary>
         <div className="flex items-center space-x-2 mb-6">
           <RefreshCw className="w-4 h-4 animate-spin" />
           <span>Loading real-time financial data...</span>
         </div>
-      </ErrorBoundary>
-    </div>
+      </div>
     );
   }
 
@@ -106,15 +101,15 @@ export default function RealTimeReports() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button aria-label="Small action button"
+          <Button
             variant="outline"
             size="sm"
-            o> setAutoRefresh(!autoRefresh)}
+            onClick={() => setAutoRefresh(!autoRefresh)}
           >
             {autoRefresh ? <Clock className="w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             {autoRefresh ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
           </Button>
-          <Button aria-label="Small action button" variant="outline" size="sm" o> refetch()}>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh Now
           </Button>

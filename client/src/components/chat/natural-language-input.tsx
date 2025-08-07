@@ -1,10 +1,8 @@
 import { useState } from "react";
-import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -117,8 +115,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
 
   return (
     <div className="space-y-4">
-      <ErrorBoundary>
-        <Card>
+      <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2 mb-3">
             <Sparkles className="h-5 w-5 text-blue-600" />
@@ -134,7 +131,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
                 className="flex-1"
                 disabled={parseInputMutation.isPending}
               />
-              <Button aria-label="Button action" 
+              <Button 
                 type="submit" 
                 disabled={!input.trim() || parseInputMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -164,7 +161,6 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
           </form>
         </CardContent>
       </Card>
-      </ErrorBoundary>
 
       {/* Confirmation UI */}
       {lastParsed && (lastParsed.action === 'add_transaction' || lastParsed.action === 'add_expense') && (
@@ -202,15 +198,8 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
           </div>
           
           <div className="flex space-x-2">
-            <Button aria-label="Small action button" 
-              onClick={() => confirmTransactionMutation.mutate({
-                amount: lastParsed.amount,
-                description: lastParsed.description,
-                vendor: lastParsed.vendor,
-                category: lastParsed.category,
-                date: lastParsed.date,
-                isExpense: lastParsed.action === 'add_expense'
-              })}
+            <Button 
+              onClick={handleConfirm}
               disabled={confirmTransactionMutation.isPending}
               size="sm"
               className="bg-green-600 hover:bg-green-700"
@@ -220,8 +209,8 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
               ) : null}
               Confirm & Add
             </Button>
-            <Button aria-label="Small action button" 
-              onClick={() => setLastParsed(null)}
+            <Button 
+              onClick={handleReject}
               variant="outline"
               size="sm"
             >

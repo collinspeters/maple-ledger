@@ -199,7 +199,7 @@ const CarouselPrevious = React.forwardRef<
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
-    <Button aria-label="Button action"
+    <Button
       ref={ref}
       variant={variant}
       size={size}
@@ -211,7 +211,7 @@ const CarouselPrevious = React.forwardRef<
         className
       )}
       disabled={!canScrollPrev}
-      o
+      onClick={scrollPrev}
       {...props}
     >
       <ArrowLeft className="h-4 w-4" />
@@ -228,7 +228,7 @@ const CarouselNext = React.forwardRef<
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (
-    <Button aria-label="Button action"
+    <Button
       ref={ref}
       variant={variant}
       size={size}
@@ -240,7 +240,7 @@ const CarouselNext = React.forwardRef<
         className
       )}
       disabled={!canScrollNext}
-      o
+      onClick={scrollNext}
       {...props}
     >
       <ArrowRight className="h-4 w-4" />

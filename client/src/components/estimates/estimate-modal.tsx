@@ -1,13 +1,10 @@
 import { useState } from "react";
-import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,7 +65,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
   ]);
   const queryClient = useQueryClient();
 
-  const { data: clients, isLoading } = useQuery<Client[]>({
+  const { data: clients } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
   });
 
@@ -159,18 +156,13 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
   const { subtotal, taxAmount, total } = calculateTotals();
 
   return (
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <ErrorBoundary>
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
             {estimate ? "Edit Estimate" : "Create New Estimate"}
           </h2>
-          <Button aria-label="Small action button" variant="ghost" size="sm" o>
+          <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -187,8 +179,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
                   {clients?.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.businessName}
-      </ErrorBoundary>
-    </SelectItem>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -215,7 +206,7 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label className="text-lg font-medium">Estimate Items</Label>
-              <Button aria-label="Small action button" type="button" o>
+              <Button type="button" onClick={addItem} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
@@ -258,11 +249,11 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
                     />
                   </div>
                   <div className="col-span-1">
-                    <Button aria-label="Small action button"
+                    <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      o> removeItem(index)}
+                      onClick={() => removeItem(index)}
                       disabled={items.length === 1}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -303,10 +294,10 @@ export default function EstimateModal({ estimate, onClose }: EstimateModalProps)
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button aria-label="Button action" type="button" variant="outline" o>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button aria-label="Button action" 
+            <Button 
               type="submit" 
               disabled={createEstimateMutation.isPending}
               className="bg-primary hover:bg-primary-dark"

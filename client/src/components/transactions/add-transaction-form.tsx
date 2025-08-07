@@ -1,12 +1,9 @@
 import { useState } from "react";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,7 +84,6 @@ export default function AddTransactionForm() {
   if (!showForm) {
     return (
       <Card className="shadow-card">
-      <ErrorBoundary>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Plus className="h-5 w-5" />
@@ -95,8 +91,8 @@ export default function AddTransactionForm() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Button aria-label="Button action" 
-            o> setShowForm(true)}
+          <Button 
+            onClick={() => setShowForm(true)}
             className="w-full bg-primary hover:bg-primary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -106,8 +102,7 @@ export default function AddTransactionForm() {
             AI will categorize using T2125 tax codes
           </p>
         </CardContent>
-      </ErrorBoundary>
-    </Card>
+      </Card>
     );
   }
 
@@ -126,11 +121,7 @@ export default function AddTransactionForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => createTransactionMutation.mutate(data))} className="space-y-4">
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
-    <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="amount"
@@ -256,7 +247,7 @@ export default function AddTransactionForm() {
             />
 
             <div className="flex items-center space-x-2 pt-4">
-              <Button aria-label="Button action"
+              <Button
                 type="submit"
                 disabled={createTransactionMutation.isPending}
                 className="flex-1"
@@ -274,10 +265,10 @@ export default function AddTransactionForm() {
                 )}
               </Button>
               
-              <Button aria-label="Button action"
+              <Button
                 type="button"
                 variant="outline"
-                o> setShowForm(false)}
+                onClick={() => setShowForm(false)}
                 disabled={createTransactionMutation.isPending}
               >
                 Cancel

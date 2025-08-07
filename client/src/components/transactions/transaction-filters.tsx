@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import React from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,10 +68,10 @@ export function TransactionFiltersComponent({
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active
               </Badge>
-              <Button aria-label="Small action button"
+              <Button
                 variant="outline"
                 size="sm"
-                o
+                onClick={onClearFilters}
                 className="flex items-center gap-1"
                 data-testid="clear-filters"
               >

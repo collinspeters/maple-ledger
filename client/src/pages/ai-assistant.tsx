@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +26,7 @@ export default function AIAssistant() {
   const { toast } = useToast();
 
   // Fetch chat history
-  const { data: chatHistory, isLoading } = useQuery({
+  const { data: chatHistory = [], refetch } = useQuery({
     queryKey: ["/api/chat/history"],
     refetchOnWindowFocus: false,
   });
@@ -91,13 +89,8 @@ export default function AIAssistant() {
   ]).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   return (
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
     <div className="flex flex-col h-full max-h-[calc(100vh-4rem)]">
-      <ErrorBoundary>
-        <div className="p-6 border-b">
+      <div className="p-6 border-b">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <Bot className="h-5 w-5 text-primary" />
@@ -126,42 +119,41 @@ export default function AIAssistant() {
                     analyze spending patterns, and provide insights for better financial decisions.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto text-sm">
-                    <Button aria-label="Button action" 
+                    <Button 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      o> setMessage("What were my biggest expenses this month?")}
+                      onClick={() => setMessage("What were my biggest expenses this month?")}
                     >
                       <span className="text-primary mr-2">💰</span>
                       What were my biggest expenses this month?
                     </Button>
-                    <Button aria-label="Button action" 
+                    <Button 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      o> setMessage("Show me my profit and loss summary")}
+                      onClick={() => setMessage("Show me my profit and loss summary")}
                     >
                       <span className="text-primary mr-2">📊</span>
                       Show me my profit and loss summary
                     </Button>
-                    <Button aria-label="Button action" 
+                    <Button 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      o> setMessage("Which transactions need review?")}
+                      onClick={() => setMessage("Which transactions need review?")}
                     >
                       <span className="text-primary mr-2">🔍</span>
                       Which transactions need review?
                     </Button>
-                    <Button aria-label="Button action" 
+                    <Button 
                       variant="outline" 
                       className="justify-start text-left h-auto py-3 px-4"
-                      o> setMessage("Help me categorize my expenses")}
+                      onClick={() => setMessage("Help me categorize my expenses")}
                     >
                       <span className="text-primary mr-2">📋</span>
                       Help me categorize my expenses
                     </Button>
                   </div>
                 </CardContent>
-      </ErrorBoundary>
-    </Card>
+              </Card>
             ) : (
               <div className="messages chat-history" data-testid="messages">
                 {allMessages.map((msg: any) => (
@@ -232,7 +224,7 @@ export default function AIAssistant() {
                 data-testid="message-input"
                 id="message-input"
               />
-              <Button aria-label="Button action" 
+              <Button 
                 type="submit" 
                 disabled={!message.trim() || chatMutation.isPending}
                 size="default"

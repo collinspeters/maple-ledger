@@ -55,10 +55,10 @@ export function DoubleEntryStatus({ transaction, onPost, isPosting }: DoubleEntr
         Ready to Post
       </Badge>
       {onPost && (
-        <Button aria-label="Small action button"
+        <Button
           size="sm"
           variant="outline"
-          o> onPost(transaction.id)}
+          onClick={() => onPost(transaction.id)}
           disabled={isPosting}
           className="h-6 px-2 text-xs"
         >

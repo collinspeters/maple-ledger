@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { T2125_CATEGORIES } from "@shared/t2125-categories";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Transaction } from "@shared/schema";
@@ -15,35 +14,33 @@ const RecentTransactions = React.memo(function RecentTransactions() {
     select: (data) => data.slice(0, 5), // Only process first 5 for performance
   });
 
-  if (isLoading || !recentTransactions) {
+  if (isLoading) {
     return (
       <Card className="shadow-card border-0 rounded-xl bg-white recent-transactions" data-testid="recent-transactions">
-        <ErrorBoundary>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-                <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
-              </div>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+              <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse flex items-center justify-between p-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-24"></div>
-                    </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse flex items-center justify-between p-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div>
+                    <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-24"></div>
                   </div>
-                  <div className="h-4 bg-gray-200 rounded w-20"></div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </ErrorBoundary>
+                <div className="h-4 bg-gray-200 rounded w-20"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -101,7 +98,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
             <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
           </div>
           <Link href="/transactions">
-            <Button onClick={() => console.log('Button clicked')} aria-label="Ghost button" variant="ghost" className="text-primary hover:text-primary-dark font-medium text-sm">
+            <Button variant="ghost" className="text-primary hover:text-primary-dark font-medium text-sm">
               View All
             </Button>
           </Link>
@@ -144,14 +141,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
                     }`}>
                       {transaction.isExpense ? "-" : "+"}${parseFloat(transaction.amount).toLocaleString()}
                     </span>
-                    <Button 
-                      aria-label="Small action button" 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-gray-400 hover:text-gray-600 p-1"
-                      onClick={() => window.open(`/transactions?selected=${transaction.id}`, '_blank')}
-                      title="View in transactions page"
-                    >
+                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600 p-1">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
@@ -160,7 +150,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
             );
           })}
           
-          {(!recentTransactions || recentTransactions.length === 0) && (
+          {(!transactions || transactions.length === 0) && (
             <div className="p-8 text-center">
               <p className="text-gray-500">No transactions yet. Add your first transaction to get started!</p>
             </div>

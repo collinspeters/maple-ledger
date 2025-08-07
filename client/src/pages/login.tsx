@@ -9,7 +9,7 @@ import { Brain } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("demo@bookkeepai.com");
-  const [password, setPassword] = useState("password123");
+  const [password, setPassword] = useState("demo123");
   const { login, isLoginLoading } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,7 +66,7 @@ export default function Login() {
           </CardContent>
           
           <CardFooter className="flex flex-col space-y-4">
-            <Button aria-label="Button action" 
+            <Button 
               type="submit" 
               className="w-full btn-modern bg-primary hover:bg-primary-dark text-white shadow-md login-button"
               disabled={isLoginLoading}

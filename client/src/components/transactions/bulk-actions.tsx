@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import React from "react";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -115,7 +114,7 @@ export function BulkActions({
           <Button
             variant="ghost"
             size="sm"
-            o
+            onClick={onClearSelection}
             className="text-gray-500 hover:text-gray-700"
             aria-label="Clear transaction selection"
           >
@@ -129,7 +128,7 @@ export function BulkActions({
           <Button
             variant="outline"
             size="sm"
-            o
+            onClick={handleBulkReview}
             disabled={isLoading}
             className="flex items-center gap-2"
             aria-label="Mark all selected transactions as reviewed"
@@ -141,7 +140,7 @@ export function BulkActions({
           {/* Bulk Edit */}
           <Dialog open={bulkEditOpen} onOpenChange={setBulkEditOpen}>
             <DialogTrigger asChild>
-              <Button aria-label="Small action button"
+              <Button
                 variant="outline"
                 size="sm"
                 disabled={!canBulkEdit || isLoading}
@@ -170,7 +169,7 @@ export function BulkActions({
                   <Button
                     variant="outline"
                     size="sm"
-                    o> addBulkEdit('category')}
+                    onClick={() => addBulkEdit('category')}
                     className="flex items-center gap-2"
                     aria-label="Add category change to bulk edit"
                   >
@@ -180,7 +179,7 @@ export function BulkActions({
                   <Button
                     variant="outline"
                     size="sm"
-                    o> addBulkEdit('account')}
+                    onClick={() => addBulkEdit('account')}
                     className="flex items-center gap-2"
                     aria-label="Add account change to bulk edit"
                   >
@@ -190,7 +189,7 @@ export function BulkActions({
                   <Button
                     variant="outline"
                     size="sm"
-                    o> addBulkEdit('salesTax')}
+                    onClick={() => addBulkEdit('salesTax')}
                     className="flex items-center gap-2"
                     aria-label="Add sales tax change to bulk edit"
                   >
@@ -210,7 +209,7 @@ export function BulkActions({
                         <Button
                           variant="ghost"
                           size="sm"
-                          o> removeBulkEdit(index)}
+                          onClick={() => removeBulkEdit(index)}
                           aria-label="Remove this bulk edit operation"
                         >
                           <X className="h-4 w-4" />
@@ -286,10 +285,11 @@ export function BulkActions({
               </div>
 
               <DialogFooter>
-                <Button aria-label="Button action" variant="outline" onClick={() => setBulkEditOpen(false)}>
+                <Button variant="outline" onClick={() => setBulkEditOpen(false)}>
                   Cancel
                 </Button>
-                <Button aria-label="Button action" onClick={applyBulkEdits}
+                <Button 
+                  onClick={applyBulkEdits}
                   disabled={bulkEdits.length === 0 || bulkEdits.some(e => !e.newValue)}
                 >
                   Apply Changes
@@ -323,7 +323,7 @@ export function BulkActions({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  o
+                  onClick={handleBulkDelete}
                   className="bg-red-600 hover:bg-red-700"
                 >
                   Delete Transactions

@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -185,13 +183,8 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
   }
 
   return (
-    if (isLoading) {
-      return <div className="animate-pulse">Loading...</div>;
-    }
-
     <div className="space-y-6">
-      <ErrorBoundary>
-        {/* Receipts with Suggestions */}
+      {/* Receipts with Suggestions */}
       {withSuggestions.length > 0 && (
         <Card>
           <CardHeader>
@@ -211,8 +204,7 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                         <span className="flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
                           {receipt.extractedVendor}
-      </ErrorBoundary>
-    </span>
+                        </span>
                       )}
                       {receipt.extractedAmount && (
                         <span className="flex items-center gap-1">
@@ -273,9 +265,9 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                         </div>
 
                         <div className="flex items-center gap-2 ml-4">
-                          <Button aria-label="Small action button"
+                          <Button
                             size="sm"
-                            o> handleMatch(receipt.id, transaction.id, 'confirm')}
+                            onClick={() => handleMatch(receipt.id, transaction.id, 'confirm')}
                             disabled={isProcessing}
                             className="bg-green-600 hover:bg-green-700 text-white"
                             aria-label="Match receipt to this transaction"
@@ -283,10 +275,10 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Match
                           </Button>
-                          <Button aria-label="Small action button"
+                          <Button
                             variant="outline"
                             size="sm"
-                            o> handleMatch(receipt.id, transaction.id, 'reject')}
+                            onClick={() => handleMatch(receipt.id, transaction.id, 'reject')}
                             disabled={isProcessing}
                             aria-label="Reject this receipt match"
                           >
@@ -350,6 +342,4 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
       )}
     </div>
   );
-});
-
-export default ReceiptMatchSuggestions;
+}

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -162,10 +161,10 @@ export default function ReceiptViewer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium text-gray-900">Receipt Preview</h3>
-                <Button o> console.log('Button clicked')} aria-label="Small action button"
+                <Button
                   variant="outline"
                   size="sm"
-                  o
+                  onClick={handleDownload}
                   className="text-blue-600 hover:text-blue-700"
                 >
                   <Download className="h-4 w-4 mr-1" />
@@ -175,7 +174,7 @@ export default function ReceiptViewer({
 
               {isImageFile(receipt.mimeType) ? (
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <img a a a a a alt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image"lt="Interface image"
+                  <img
                     src={`/api/receipts/${receipt.id}/preview`}
                     alt={receipt.fileName}
                     className="w-full h-auto max-h-96 object-contain rounded"
@@ -293,10 +292,10 @@ export default function ReceiptViewer({
                           </p>
                         </div>
                         {onUnmatchTransaction && (
-                          <Button o> console.log('Button clicked')} aria-label="Small action button"
+                          <Button
                             variant="ghost"
                             size="sm"
-                            o> onUnmatchTransaction(receipt.id)}
+                            onClick={() => onUnmatchTransaction(receipt.id)}
                             className="text-red-600 hover:text-red-700"
                           >
                             <X className="h-4 w-4" />
@@ -310,10 +309,10 @@ export default function ReceiptViewer({
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">No transaction linked</span>
                       {suggestedTransactions.length > 0 && (
-                        <Button o> console.log('Button clicked')} aria-label="Small action button"
+                        <Button
                           variant="outline"
                           size="sm"
-                          o> setShowSuggestions(!showSuggestions)}
+                          onClick={() => setShowSuggestions(!showSuggestions)}
                         >
                           View Suggestions ({suggestedTransactions.length})
                         </Button>
@@ -327,7 +326,7 @@ export default function ReceiptViewer({
                           <div
                             key={transaction.id}
                             className="p-3 bg-gray-50 border rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                            o> onMatchTransaction?.(receipt.id, transaction.id)}
+                            onClick={() => onMatchTransaction?.(receipt.id, transaction.id)}
                           >
                             <div className="flex justify-between items-start">
                               <div>
@@ -341,7 +340,7 @@ export default function ReceiptViewer({
                                   {formatDate(transaction.date)}
                                 </p>
                               </div>
-                              <Button o> console.log('Button clicked')} aria-label="Small action button" size="sm" variant="ghost">
+                              <Button size="sm" variant="ghost">
                                 <LinkIcon className="h-4 w-4" />
                               </Button>
                             </div>
@@ -389,17 +388,17 @@ export default function ReceiptViewer({
         {/* Action Buttons */}
         <Separator />
         <div className="flex justify-between">
-          <Button o> console.log('Button clicked')} aria-label="Button action"
+          <Button
             variant="outline"
-            o
+            onClick={onClose}
           >
             Close
           </Button>
           
           {onDelete && (
-            <Button o> console.log('Button clicked')} aria-label="Button action"
+            <Button
               variant="destructive"
-              o> {
+              onClick={() => {
                 onDelete(receipt.id);
                 onClose();
               }}

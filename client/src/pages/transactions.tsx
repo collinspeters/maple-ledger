@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +25,9 @@ import {
   FileText
 } from 'lucide-react';
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 export default function Transactions() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   
   // State management
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
@@ -156,7 +153,10 @@ export default function Transactions() {
       return true;
     });
 
-
+    console.log('🎯 After filtering:', { 
+      filtered: filtered.length, 
+      sampleTransaction: filtered[0] || 'No filtered transactions' 
+    });
 
     // Sort transactions
     filtered.sort((a, b) => {
@@ -258,15 +258,12 @@ export default function Transactions() {
   if (isLoading) {
     return (
       <div className="p-6">
-      <ErrorBoundary>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
           <div className="space-y-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded">
-      </ErrorBoundary>
-    </div>
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -280,8 +277,8 @@ export default function Transactions() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-red-600">Error loading transactions. Please try again.</p>
-            <Button o> console.log('Button clicked')} aria-label="Button action" 
-              o> queryClient.invalidateQueries({ queryKey: ['/api/transactions'] })}
+            <Button 
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/transactions'] })}
               className="mt-4"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -294,77 +291,35 @@ export default function Transactions() {
   }
 
   return (
-    <div className="p-6 space-y-6 min-h-screen max-h-screen flex flex-col overflow-hidden">
+    <div className="p-6 space-y-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground mt-1">
             {filteredAndSortedTransactions.length} of {transactions.length} transactions
+            {process.env.NODE_ENV === 'development' && (
+              <span className="text-xs block text-red-500">
+                Debug: filters={JSON.stringify(filters)} activeFilters={activeFilterCount}
+              </span>
+            )}
           </p>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button o> console.log('Button clicked')} aria-label="Small action button" 
-            variant="outline" 
-            size="sm"
-            o> {
-              toast({
-                title: "Coming Soon",
-                description: "Import functionality is in development",
-              });
-            }}
-          >
+          <Button variant="outline" size="sm">
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
-          <Button o> console.log('Button clicked')} aria-label="Small action button" 
-            variant="outline" 
-            size="sm"
-            o> {
-              const csv = filteredAndSortedTransactions.map(t => ({
-                Date: new Date(t.date).toLocaleDateString(),
-                Description: t.description,
-                Vendor: t.vendor || '',
-                Amount: t.amount,
-                Category: t.category || t.aiCategory || 'Uncategorized',
-                Type: t.isTransfer ? 'Transfer' : (t.isExpense ? 'Expense' : 'Income')
-              }));
-              
-              const csvContent = [
-                Object.keys(csv[0]).join(','),
-                ...csv.map(row => Object.values(row).join(','))
-              ].join('\n');
-              
-              const blob = new Blob([csvContent], { type: 'text/csv' });
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
-              a.click();
-              window.URL.revokeObjectURL(url);
-            }}
-          >
+          <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button o> console.log('Button clicked')} aria-label="Small action button" 
-            variant="outline" 
-            size="sm"
-            o> window.open('/reports', '_blank')}
-          >
+          <Button variant="outline" size="sm">
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button o> console.log('Button clicked')} aria-label="Button action" 
-            data-testid="add-transaction"
-            o> {
-              toast({
-                title: "Coming Soon",
-                description: "Transaction form modal is in development. Use the Quick Add form in the dashboard.",
-              });
-            }}
-          >
+          <Button data-testid="add-transaction">
             <Plus className="h-4 w-4 mr-2" />
             Add Transaction
           </Button>
@@ -376,9 +331,9 @@ export default function Transactions() {
 
       {/* Filters Toggle */}
       <div className="flex items-center justify-between">
-        <Button o> console.log('Button clicked')} aria-label="Button action"
+        <Button
           variant="outline"
-          o> setShowFilters(!showFilters)}
+          onClick={() => setShowFilters(!showFilters)}
           className="flex items-center gap-2 filters"
           data-testid="filters"
         >
@@ -405,10 +360,10 @@ export default function Transactions() {
                 <SelectItem value="description">Description</SelectItem>
               </SelectContent>
             </Select>
-            <Button o> console.log('Button clicked')} aria-label="Small action button"
+            <Button
               variant="outline"
               size="sm"
-              o> setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             >
               {sortOrder === 'asc' ? '↑' : '↓'}
             </Button>
@@ -430,9 +385,9 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Transactions Table - Fixed Scrolling */}
-      <Card data-testid="transactions" className="flex-1 flex flex-col min-h-0">
-        <CardHeader className="transaction-list border-b flex-shrink-0">
+      {/* Transactions Table - Improved Layout */}
+      <Card data-testid="transactions" className="flex-1 overflow-hidden">
+        <CardHeader className="transaction-list border-b">
           <div className="flex items-center justify-between">
             <CardTitle>All Transactions</CardTitle>
             <div className="flex items-center gap-2">
@@ -446,9 +401,9 @@ export default function Transactions() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0 flex-1 overflow-y-auto min-h-0 max-h-96">
+        <CardContent className="p-0 overflow-auto">
           {filteredAndSortedTransactions.length > 0 ? (
-            <div className="overflow-x-auto h-full">
+            <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -487,11 +442,11 @@ export default function Transactions() {
                 }
               </p>
               {activeFilterCount > 0 ? (
-                <Button aria-label="Button action" variant="outline" o o> console.log('Button clicked')}>
+                <Button variant="outline" onClick={clearFilters}>
                   Clear filters
                 </Button>
               ) : (
-                <Button o> console.log('Button clicked')} aria-label="Button action">
+                <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first transaction
                 </Button>

@@ -1,9 +1,6 @@
 import { useState } from "react";
-import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
-import ErrorBoundary from "@/components/ui/error-boundary";
-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Send, DollarSign, Calendar, User } from "lucide-react";
@@ -63,10 +60,8 @@ export default function Invoices() {
 
     return (
       <Badge className={colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800"}>
-      <ErrorBoundary>
         {status.charAt(0).toUpperCase() + status.slice(1)}
-      </ErrorBoundary>
-    </Badge>
+      </Badge>
     );
   };
 
@@ -93,8 +88,8 @@ export default function Invoices() {
             <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
             <p className="text-gray-600">Manage your client invoices and payments</p>
           </div>
-          <Button aria-label="Button action" 
-            o> setShowInvoiceModal(true)}
+          <Button 
+            onClick={() => setShowInvoiceModal(true)}
             className="btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
             style={{ visibility: 'visible', display: 'flex', alignItems: 'center' }}
           >
@@ -174,7 +169,7 @@ export default function Invoices() {
               <Card 
                 key={invoice.id} 
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                o> window.open(`/invoices/${invoice.id}`, '_blank')}
+                onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -206,9 +201,9 @@ export default function Invoices() {
                     </div>
                     
                     {invoice.status === 'sent' && (
-                      <Button aria-label="Small action button" 
+                      <Button 
                         size="sm" 
-                        o> {
+                        onClick={(e) => {
                           e.stopPropagation();
                           markPaidMutation.mutate(invoice.id);
                         }}
@@ -237,7 +232,7 @@ export default function Invoices() {
               <p className="text-gray-600 mb-4">
                 Create your first invoice to start tracking payments
               </p>
-              <Button aria-label="Button action" o> setShowInvoiceModal(true)}>
+              <Button onClick={() => setShowInvoiceModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Your First Invoice
               </Button>

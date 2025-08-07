@@ -35,7 +35,7 @@ export default function Settings() {
               <Label htmlFor="businessName">Business Name</Label>
               <Input id="businessName" defaultValue={user?.businessName || ""} />
             </div>
-            <Button o o> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Button action" className="bg-primary hover:bg-primary-dark">
+            <Button className="bg-primary hover:bg-primary-dark">
               Save Changes
             </Button>
           </CardContent>
@@ -61,7 +61,7 @@ export default function Settings() {
                   </span>
                 </div>
               )}
-              <Button o o> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Button action" className="bg-accent hover:bg-orange-600">
+              <Button className="bg-accent hover:bg-orange-600">
                 Manage Subscription
               </Button>
             </div>

@@ -1,8 +1,6 @@
 import { useState } from "react";
-import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -182,15 +180,12 @@ export default function Receipts() {
   if (isLoading) {
     return (
       <div className="p-6">
-      <ErrorBoundary>
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-200 rounded">
-      </ErrorBoundary>
-    </div>
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -434,7 +429,7 @@ function ReceiptList({
                   {/* Receipt Icon/Preview */}
                   <div className="flex-shrink-0">
                     {receipt.mimeType?.startsWith('image/') ? (
-                      <img a alt="Interface image"lt="Interface image"
+                      <img
                         src={`/api/receipts/${receipt.id}/thumbnail`}
                         alt="Receipt thumbnail"
                         className="w-12 h-12 object-cover rounded border"
@@ -498,19 +493,19 @@ function ReceiptList({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 ml-4">
-                  <Button aria-label="Small action button"
+                  <Button
                     variant="outline"
                     size="sm"
-                    o> onReceiptClick(receipt)}
+                    onClick={() => onReceiptClick(receipt)}
                     className="text-blue-600 hover:text-blue-700"
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     View
                   </Button>
-                  <Button aria-label="Small action button"
+                  <Button
                     variant="ghost"
                     size="sm"
-                    o> onDelete(receipt.id)}
+                    onClick={() => onDelete(receipt.id)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <X className="h-4 w-4" />

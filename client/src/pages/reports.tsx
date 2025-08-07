@@ -1,8 +1,6 @@
 import { useState } from "react";
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -267,8 +265,7 @@ export default function Reports() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      <ErrorBoundary>
-        {/* Header */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Financial Reports</h1>
@@ -296,7 +293,7 @@ export default function Reports() {
           {datePreset === "custom" && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Button action" variant="outline" className="w-60 justify-start text-left font-normal">
+                <Button variant="outline" className="w-60 justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateRange?.from ? (
                     dateRange.to ? (
@@ -308,9 +305,7 @@ export default function Reports() {
                       format(dateRange.from, "LLL dd, y")
                     )
                   ) : (
-                    <span>Pick a date range
-      </ErrorBoundary>
-    </span>
+                    <span>Pick a date range</span>
                   )}
                 </Button>
               </PopoverTrigger>
@@ -430,11 +425,11 @@ export default function Reports() {
                 Profit & Loss Statement
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('profit-loss')}>
+                <Button variant="outline" size="sm" onClick={() => exportReport('profit-loss')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -469,7 +464,7 @@ export default function Reports() {
                         <TableCell></TableCell>
                       </TableRow>
                       {profitLoss.revenue.categories.map((category, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" o> handleCategoryClick(category.category)}>
+                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
                           <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
                             {category.category.replace(/_/g, ' ')}
                             <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -495,7 +490,7 @@ export default function Reports() {
                         <TableCell></TableCell>
                       </TableRow>
                       {profitLoss.expenses.categories.map((category, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" o> handleCategoryClick(category.category)}>
+                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
                           <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
                             {category.category.replace(/_/g, ' ')}
                             <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -544,11 +539,11 @@ export default function Reports() {
                 Balance Sheet
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('balance-sheet')}>
+                <Button variant="outline" size="sm" onClick={() => exportReport('balance-sheet')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -675,11 +670,11 @@ export default function Reports() {
                 Tax Summary
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('tax-summary')}>
+                <Button variant="outline" size="sm" onClick={() => exportReport('tax-summary')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -792,11 +787,11 @@ export default function Reports() {
                 )}
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('trial-balance')}>
+                <Button variant="outline" size="sm" onClick={() => exportReport('trial-balance')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>
@@ -887,11 +882,11 @@ export default function Reports() {
                 General Ledger
               </CardTitle>
               <div className="flex gap-2">
-                <Button aria-label="Small action button" variant="outline" size="sm" o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> exportReport('general-ledger')}>
+                <Button variant="outline" size="sm" onClick={() => exportReport('general-ledger')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button o o o> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')}> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm">
+                <Button variant="outline" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Button>

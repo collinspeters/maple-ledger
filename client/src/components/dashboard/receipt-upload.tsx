@@ -1,10 +1,8 @@
 import { useState, useRef } from "react";
-import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import ErrorBoundary from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { Camera, FileText, Image } from "lucide-react";
 import { Receipt } from "@shared/schema";
@@ -15,7 +13,7 @@ export default function ReceiptUpload() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: receipts, isLoading } = useQuery<Receipt[]>({
+  const { data: receipts } = useQuery<Receipt[]>({
     queryKey: ["/api/receipts"],
   });
 
@@ -89,21 +87,16 @@ export default function ReceiptUpload() {
 
   const recentReceipts = receipts?.slice(0, 2) || [];
 
-  if (isLoading) {
-    return <div className="animate-pulse">Loading...</div>;
-  }
-
   return (
     <Card className="shadow-card border-0 rounded-xl bg-white">
-      <ErrorBoundary>
-        <CardHeader className="border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">Upload Receipt</h3>
-          <p className="text-sm text-gray-600">Snap a photo or upload a PDF</p>
-        </CardHeader>
-        
-        <CardContent className="p-6">
-          {/* Upload area */}
-          <div
+      <CardHeader className="border-b border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900">Upload Receipt</h3>
+        <p className="text-sm text-gray-600">Snap a photo or upload a PDF</p>
+      </CardHeader>
+      
+      <CardContent className="p-6">
+        {/* Upload area */}
+        <div
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
             isDragOver
               ? "border-primary bg-primary/5"
@@ -112,7 +105,7 @@ export default function ReceiptUpload() {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          o
+          onClick={handleClick}
         >
           <input
             ref={fileInputRef}
@@ -130,7 +123,7 @@ export default function ReceiptUpload() {
               <p className="text-sm font-medium text-gray-900">Upload Receipt</p>
               <p className="text-xs text-gray-600">JPG, PNG, PDF up to 10MB</p>
             </div>
-            <Button aria-label="Button action"
+            <Button
               disabled={uploadReceiptMutation.isPending}
               className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary-dark transition-colors"
             >
@@ -171,8 +164,7 @@ export default function ReceiptUpload() {
             </div>
           </div>
         )}
-        </CardContent>
-      </ErrorBoundary>
+      </CardContent>
     </Card>
   );
 }
