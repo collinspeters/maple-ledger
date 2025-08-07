@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { T2125_CATEGORIES } from "@shared/t2125-categories";
-import { Card, CardContent, CardHeader } from "@/components/ui/
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ErrorBoundary from "@/components/ui/error-boundary";
-card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Transaction } from "@shared/schema";
@@ -19,32 +18,32 @@ const RecentTransactions = React.memo(function RecentTransactions() {
   if (isLoading || !recentTransactions) {
     return (
       <Card className="shadow-card border-0 rounded-xl bg-white recent-transactions" data-testid="recent-transactions">
-      <ErrorBoundary>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-              <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
+        <ErrorBoundary>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+                <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="animate-pulse flex items-center justify-between p-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-                  <div>
-                    <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-24"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center justify-between p-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                    <div>
+                      <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-24"></div>
+                    </div>
                   </div>
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
                 </div>
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-      </ErrorBoundary>
-    </div>
-            ))}
-          </div>
-        </CardContent>
+              ))}
+            </div>
+          </CardContent>
+        </ErrorBoundary>
       </Card>
     );
   }
@@ -145,7 +144,8 @@ const RecentTransactions = React.memo(function RecentTransactions() {
                     }`}>
                       {transaction.isExpense ? "-" : "+"}${parseFloat(transaction.amount).toLocaleString()}
                     </span>
-                    <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" 
+                    <Button 
+                      aria-label="Small action button" 
                       variant="ghost" 
                       size="sm" 
                       className="text-gray-400 hover:text-gray-600 p-1"
