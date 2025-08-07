@@ -9,7 +9,7 @@ import { Brain } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("demo@bookkeepai.com");
-  const [password, setPassword] = useState("demo123");
+  const [password, setPassword] = useState("password123");
   const { login, isLoginLoading } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
