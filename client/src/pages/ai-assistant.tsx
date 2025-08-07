@@ -34,7 +34,10 @@ export default function AIAssistant() {
   // Chat mutation
   const chatMutation = useMutation({
     mutationFn: async (userMessage: string) => {
-      const response = await apiRequest("/api/chat", "POST", { message: userMessage });
+      const response = await apiRequest("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({ message: userMessage }),
+      });
       return response;
     },
     onSuccess: () => {
@@ -70,7 +73,7 @@ export default function AIAssistant() {
   }, [chatHistory, isTyping]);
 
   // Flatten and sort messages chronologically
-  const allMessages = chatHistory.flatMap((chat: ChatMessage) => [
+  const allMessages = (chatHistory as ChatMessage[]).flatMap((chat: ChatMessage) => [
     {
       id: `${chat.id}-user`,
       content: chat.message,
@@ -83,7 +86,7 @@ export default function AIAssistant() {
       isFromUser: false,
       timestamp: chat.createdAt,
     },
-  ]).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  ]).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-4rem)]">
@@ -103,9 +106,9 @@ export default function AIAssistant() {
 
       <div className="flex-1 flex flex-col min-h-0">
         <ScrollArea className="flex-1 p-6">
-          <div className="space-y-4 max-w-4xl mx-auto">
+          <div className="space-y-4 max-w-4xl mx-auto chat" data-testid="chat">
             {allMessages.length === 0 ? (
-              <Card className="bg-gradient-to-br from-primary/5 to-blue-50">
+              <Card className="bg-gradient-to-br from-primary/5 to-blue-50 chat-history" data-testid="messages">
                 <CardContent className="py-12 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto mb-4">
                     <MessageSquare className="h-8 w-8 text-primary" />
@@ -152,8 +155,8 @@ export default function AIAssistant() {
                 </CardContent>
               </Card>
             ) : (
-              <>
-                {allMessages.map((msg) => (
+              <div className="messages chat-history" data-testid="messages">
+                {allMessages.map((msg: any) => (
                   <div
                     key={msg.id}
                     className={`flex gap-3 ${msg.isFromUser ? 'justify-end' : 'justify-start'}`}
@@ -189,7 +192,7 @@ export default function AIAssistant() {
                     )}
                   </div>
                 ))}
-              </>
+              </div>
             )}
 
             {isTyping && (
@@ -218,6 +221,8 @@ export default function AIAssistant() {
                 placeholder="Ask me about your finances, transactions, or business insights..."
                 className="flex-1"
                 disabled={chatMutation.isPending}
+                data-testid="message-input"
+                id="message-input"
               />
               <Button 
                 type="submit" 

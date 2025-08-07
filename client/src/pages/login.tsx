@@ -68,8 +68,10 @@ export default function Login() {
           <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
-              className="w-full btn-modern bg-primary hover:bg-primary-dark text-white shadow-md"
+              className="w-full btn-modern bg-primary hover:bg-primary-dark text-white shadow-md login-button"
               disabled={isLoginLoading}
+              data-testid="login-button"
+              id="login-button"
             >
               {isLoginLoading ? "Signing In..." : "Sign In"}
             </Button>

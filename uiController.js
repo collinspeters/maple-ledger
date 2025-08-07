@@ -70,7 +70,7 @@ class UIController {
     try {
       await this.page.waitForSelector(selector, { timeout: 5000 });
       await this.page.click(selector);
-      await this.page.waitForTimeout(1000); // Wait for animations
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for animations
       
       await this.captureScreenshot(`click-${this.sanitizeFilename(description || selector)}`);
       this.logAction('click', { selector, description });
@@ -123,7 +123,7 @@ class UIController {
         }
       }, selector);
       
-      await this.page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await this.captureScreenshot(`scroll-${this.sanitizeFilename(description || selector)}`);
       this.logAction('scroll', { selector, description });
       

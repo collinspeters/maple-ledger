@@ -203,10 +203,12 @@ export default function Receipts() {
             Upload and manage your business receipts with smart matching
           </p>
         </div>
-        <ReceiptUpload onUploadComplete={() => {
+        <div className="upload" data-testid="upload">
+          <ReceiptUpload onUploadComplete={() => {
           queryClient.invalidateQueries({ queryKey: ["/api/receipts"] });
           queryClient.invalidateQueries({ queryKey: ["/api/receipts/unmatched"] });
         }} />
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -270,11 +272,13 @@ export default function Receipts() {
 
       {/* Smart Matching Section */}
       {unmatchedReceipts.length > 0 && (
-        <ReceiptMatchSuggestions
-          receipts={unmatchedReceipts}
-          onMatchConfirmed={handleMatchConfirmed}
-          onMatchRejected={handleMatchRejected}
-        />
+        <div className="unmatched" data-testid="unmatched">
+          <ReceiptMatchSuggestions
+            receipts={unmatchedReceipts}
+            onMatchConfirmed={handleMatchConfirmed}
+            onMatchRejected={handleMatchRejected}
+          />
+        </div>
       )}
 
       {/* Receipts Tabs */}
@@ -288,11 +292,13 @@ export default function Receipts() {
         </TabsList>
 
         <TabsContent value="all">
-          <ReceiptList 
-            receipts={receipts} 
-            onReceiptClick={handleReceiptClick}
-            onDelete={(id) => deleteMutation.mutate(id)}
-          />
+          <div className="receipts receipt-list" data-testid="receipts">
+            <ReceiptList 
+              receipts={receipts} 
+              onReceiptClick={handleReceiptClick}
+              onDelete={(id) => deleteMutation.mutate(id)}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="matched">

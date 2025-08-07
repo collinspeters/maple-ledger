@@ -1,0 +1,199 @@
+[
+  {
+    "timestamp": "2025-08-07T02:41:41.485Z",
+    "action": "navigate",
+    "route": "/",
+    "url": "http://localhost:5000/"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:43.490Z",
+    "action": "exists",
+    "selector": "[data-testid=\"user-menu\"]",
+    "exists": false,
+    "description": "User menu (logged in state)"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:43.506Z",
+    "action": "exists",
+    "selector": "form",
+    "exists": true,
+    "description": "Login form"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:43.530Z",
+    "action": "exists",
+    "selector": "input[type=\"email\"], input[name=\"email\"], input[placeholder*=\"email\"]",
+    "exists": true,
+    "description": "Email field"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:43.543Z",
+    "action": "exists",
+    "selector": "input[type=\"password\"]",
+    "exists": true,
+    "description": "Password field"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:44.084Z",
+    "action": "type",
+    "selector": "input[type=\"email\"], input[name=\"email\"], input[placeholder*=\"email\"]",
+    "text": "demo@bookkeepai.com",
+    "description": "Email field"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:44.377Z",
+    "action": "type",
+    "selector": "input[type=\"password\"]",
+    "text": "password123",
+    "description": "Password field"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:52.470Z",
+    "action": "navigate",
+    "route": "/dashboard",
+    "url": "http://localhost:5000/dashboard"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:54.472Z",
+    "action": "exists",
+    "selector": "[data-testid=\"financial-summary\"], .financial-summary",
+    "exists": false,
+    "description": "Financial Summary"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:56.474Z",
+    "action": "exists",
+    "selector": "[data-testid=\"recent-transactions\"], .recent-transactions",
+    "exists": false,
+    "description": "Recent Transactions"
+  },
+  {
+    "timestamp": "2025-08-07T02:41:58.476Z",
+    "action": "exists",
+    "selector": "[data-testid=\"quick-actions\"], .quick-actions",
+    "exists": false,
+    "description": "Quick Actions"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:00.479Z",
+    "action": "exists",
+    "selector": "nav, .navigation, .sidebar",
+    "exists": false,
+    "description": "Navigation"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:02.665Z",
+    "action": "navigate",
+    "route": "/transactions",
+    "url": "http://localhost:5000/transactions"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:04.667Z",
+    "action": "exists",
+    "selector": "table, .transaction-list, [data-testid=\"transactions\"]",
+    "exists": false,
+    "description": "Transaction list"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:06.668Z",
+    "action": "exists",
+    "selector": "button:contains(\"Add\"), button:contains(\"New\"), [data-testid=\"add-transaction\"]",
+    "exists": false,
+    "description": "Add transaction button"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:08.670Z",
+    "action": "exists",
+    "selector": "select, .filters, [data-testid=\"filters\"]",
+    "exists": false,
+    "description": "Transaction filters"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:11.616Z",
+    "action": "navigate",
+    "route": "/banking",
+    "url": "http://localhost:5000/banking"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:13.618Z",
+    "action": "exists",
+    "selector": ".bank-connections, [data-testid=\"bank-connections\"]",
+    "exists": false,
+    "description": "Bank connections list"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:15.624Z",
+    "action": "exists",
+    "selector": "button:contains(\"Connect\"), button:contains(\"Add Bank\"), [data-testid=\"connect-bank\"]",
+    "exists": false,
+    "description": "Connect bank button"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:17.626Z",
+    "action": "exists",
+    "selector": "[data-testid=\"plaid\"], .plaid-link",
+    "exists": false,
+    "description": "Plaid integration elements"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:17.661Z",
+    "action": "getText",
+    "selector": "body",
+    "text": "BookkeepAISmart BookkeepingWelcome BackSign in to ...",
+    "description": "Page content"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:19.562Z",
+    "action": "navigate",
+    "route": "/ai-assistant",
+    "url": "http://localhost:5000/ai-assistant"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:21.565Z",
+    "action": "exists",
+    "selector": ".chat, [data-testid=\"chat\"], .ai-chat",
+    "exists": false,
+    "description": "Chat interface"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:23.566Z",
+    "action": "exists",
+    "selector": "input[placeholder*=\"message\"], textarea[placeholder*=\"ask\"], input[placeholder*=\"question\"]",
+    "exists": false,
+    "description": "Message input"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:25.567Z",
+    "action": "exists",
+    "selector": ".messages, .chat-history, [data-testid=\"messages\"]",
+    "exists": false,
+    "description": "Chat history"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:27.457Z",
+    "action": "navigate",
+    "route": "/receipts",
+    "url": "http://localhost:5000/receipts"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:29.460Z",
+    "action": "exists",
+    "selector": ".receipts, [data-testid=\"receipts\"], .receipt-list",
+    "exists": false,
+    "description": "Receipts list"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:31.461Z",
+    "action": "exists",
+    "selector": ".upload, [data-testid=\"upload\"], input[type=\"file\"]",
+    "exists": false,
+    "description": "Upload area"
+  },
+  {
+    "timestamp": "2025-08-07T02:42:33.462Z",
+    "action": "exists",
+    "selector": ".unmatched, [data-testid=\"unmatched\"]",
+    "exists": false,
+    "description": "Unmatched receipts queue"
+  }
+]

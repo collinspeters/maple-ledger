@@ -206,6 +206,7 @@ export default function Banking() {
             onClick={handleConnectBank}
             disabled={isLinking}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md"
+            data-testid="connect-bank"
           >
             <Building2 className="h-4 w-4 mr-2" />
             {isLinking ? "Connecting..." : "🏦 Connect Bank Account"}
@@ -248,6 +249,7 @@ export default function Banking() {
                   disabled={isLinking}
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg transform transition-transform hover:scale-105"
+                  data-testid="connect-bank"
                 >
                   <Building2 className="w-5 h-5 mr-3" />
                   {isLinking ? "Preparing Connection..." : "🏦 Connect Bank Account"}
@@ -300,7 +302,7 @@ export default function Banking() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 bank-connections" data-testid="bank-connections">
           {connections.map((connection) => (
             <Card key={connection.id}>
               <CardHeader>

@@ -80,7 +80,7 @@ class BookkeepAIIntegrationTest {
             await this.ui.type('input[type="password"]', 'password123', 'Password field');
             
             // Look for login button
-            const loginButton = await this.ui.click('button[type="submit"], button:contains("Login"), button:contains("Sign In")', 'Login button');
+            const loginButton = await this.ui.click('#login-button, [data-testid="login-button"], button[type="submit"], .login-button', 'Login button');
             
             if (loginButton) {
               // Wait for redirect or dashboard

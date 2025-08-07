@@ -1,0 +1,211 @@
+[
+  {
+    "timestamp": "2025-08-07T02:47:59.776Z",
+    "action": "navigate",
+    "route": "/",
+    "url": "http://localhost:5000/"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:01.780Z",
+    "action": "exists",
+    "selector": "[data-testid=\"user-menu\"]",
+    "exists": false,
+    "description": "User menu (logged in state)"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:01.797Z",
+    "action": "exists",
+    "selector": "form",
+    "exists": true,
+    "description": "Login form"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:01.807Z",
+    "action": "exists",
+    "selector": "input[type=\"email\"], input[name=\"email\"], input[placeholder*=\"email\"]",
+    "exists": true,
+    "description": "Email field"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:01.817Z",
+    "action": "exists",
+    "selector": "input[type=\"password\"]",
+    "exists": true,
+    "description": "Password field"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:02.113Z",
+    "action": "type",
+    "selector": "input[type=\"email\"], input[name=\"email\"], input[placeholder*=\"email\"]",
+    "text": "demo@bookkeepai.com",
+    "description": "Email field"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:02.296Z",
+    "action": "type",
+    "selector": "input[type=\"password\"]",
+    "text": "password123",
+    "description": "Password field"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:03.565Z",
+    "action": "click",
+    "selector": "#login-button, [data-testid=\"login-button\"], button[type=\"submit\"], .login-button",
+    "description": "Login button"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:03.791Z",
+    "action": "wait",
+    "selector": "[data-testid=\"dashboard\"], .dashboard, main",
+    "description": "Dashboard after login"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:06.499Z",
+    "action": "navigate",
+    "route": "/dashboard",
+    "url": "http://localhost:5000/dashboard"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:08.503Z",
+    "action": "exists",
+    "selector": "[data-testid=\"financial-summary\"], .financial-summary",
+    "exists": false,
+    "description": "Financial Summary"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:10.505Z",
+    "action": "exists",
+    "selector": "[data-testid=\"recent-transactions\"], .recent-transactions",
+    "exists": false,
+    "description": "Recent Transactions"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:12.506Z",
+    "action": "exists",
+    "selector": "[data-testid=\"quick-actions\"], .quick-actions",
+    "exists": false,
+    "description": "Quick Actions"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:14.509Z",
+    "action": "exists",
+    "selector": "nav, .navigation, .sidebar",
+    "exists": false,
+    "description": "Navigation"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:18.543Z",
+    "action": "navigate",
+    "route": "/transactions",
+    "url": "http://localhost:5000/transactions"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:18.564Z",
+    "action": "exists",
+    "selector": "table, .transaction-list, [data-testid=\"transactions\"]",
+    "exists": true,
+    "description": "Transaction list"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:20.566Z",
+    "action": "exists",
+    "selector": "button:contains(\"Add\"), button:contains(\"New\"), [data-testid=\"add-transaction\"]",
+    "exists": false,
+    "description": "Add transaction button"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:20.583Z",
+    "action": "exists",
+    "selector": "select, .filters, [data-testid=\"filters\"]",
+    "exists": true,
+    "description": "Transaction filters"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:23.323Z",
+    "action": "navigate",
+    "route": "/banking",
+    "url": "http://localhost:5000/banking"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:23.342Z",
+    "action": "exists",
+    "selector": ".bank-connections, [data-testid=\"bank-connections\"]",
+    "exists": true,
+    "description": "Bank connections list"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:25.357Z",
+    "action": "exists",
+    "selector": "button:contains(\"Connect\"), button:contains(\"Add Bank\"), [data-testid=\"connect-bank\"]",
+    "exists": false,
+    "description": "Connect bank button"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:27.358Z",
+    "action": "exists",
+    "selector": "[data-testid=\"plaid\"], .plaid-link",
+    "exists": false,
+    "description": "Plaid integration elements"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:27.523Z",
+    "action": "getText",
+    "selector": "body",
+    "text": "BookkeepAISmart Bookkeeping3 days leftin your free...",
+    "description": "Page content"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:30.395Z",
+    "action": "navigate",
+    "route": "/ai-assistant",
+    "url": "http://localhost:5000/ai-assistant"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:30.445Z",
+    "action": "exists",
+    "selector": ".chat, [data-testid=\"chat\"], .ai-chat",
+    "exists": true,
+    "description": "Chat interface"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:32.447Z",
+    "action": "exists",
+    "selector": "input[placeholder*=\"message\"], textarea[placeholder*=\"ask\"], input[placeholder*=\"question\"]",
+    "exists": false,
+    "description": "Message input"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:32.464Z",
+    "action": "exists",
+    "selector": ".messages, .chat-history, [data-testid=\"messages\"]",
+    "exists": true,
+    "description": "Chat history"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:35.311Z",
+    "action": "navigate",
+    "route": "/receipts",
+    "url": "http://localhost:5000/receipts"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:35.336Z",
+    "action": "exists",
+    "selector": ".receipts, [data-testid=\"receipts\"], .receipt-list",
+    "exists": true,
+    "description": "Receipts list"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:35.351Z",
+    "action": "exists",
+    "selector": ".upload, [data-testid=\"upload\"], input[type=\"file\"]",
+    "exists": true,
+    "description": "Upload area"
+  },
+  {
+    "timestamp": "2025-08-07T02:48:35.371Z",
+    "action": "exists",
+    "selector": ".unmatched, [data-testid=\"unmatched\"]",
+    "exists": true,
+    "description": "Unmatched receipts queue"
+  }
+]

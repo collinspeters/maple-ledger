@@ -294,7 +294,7 @@ export default function Transactions() {
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button>
+          <Button data-testid="add-transaction">
             <Plus className="h-4 w-4 mr-2" />
             Add Transaction
           </Button>
@@ -309,7 +309,8 @@ export default function Transactions() {
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 filters"
+          data-testid="filters"
         >
           <Filter className="h-4 w-4" />
           Filters
@@ -347,19 +348,21 @@ export default function Transactions() {
 
       {/* Filters */}
       {showFilters && (
-        <TransactionFiltersComponent
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          accounts={accounts}
-          categories={categories}
-          onClearFilters={clearFilters}
-          activeFilterCount={activeFilterCount}
-        />
+        <div className="filters" data-testid="filters">
+          <TransactionFiltersComponent
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            accounts={accounts}
+            categories={categories}
+            onClearFilters={clearFilters}
+            activeFilterCount={activeFilterCount}
+          />
+        </div>
       )}
 
       {/* Transactions Table */}
-      <Card>
-        <CardHeader>
+      <Card data-testid="transactions">
+        <CardHeader className="transaction-list">
           <div className="flex items-center justify-between">
             <CardTitle>All Transactions</CardTitle>
             <div className="flex items-center gap-2">

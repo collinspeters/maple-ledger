@@ -87,8 +87,8 @@ export default function RecentTransactions() {
   };
 
   return (
-    <Card className="shadow-card">
-      <CardHeader className="border-b border-gray-200">
+    <Card className="shadow-card" data-testid="recent-transactions">
+      <CardHeader className="border-b border-gray-200 recent-transactions">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>

@@ -10,7 +10,7 @@ import BankingConnectionCard from "@/components/dashboard/banking-connection-car
 
 export default function Dashboard() {
   return (
-    <div className="p-6">
+    <div className="p-6 dashboard" data-testid="dashboard">
       <FinancialCards />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">

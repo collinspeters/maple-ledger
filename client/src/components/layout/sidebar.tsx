@@ -45,7 +45,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col">
+    <div className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col sidebar navigation" data-testid="sidebar">
       {/* Logo and branding */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -80,7 +80,7 @@ export default function Sidebar() {
       )}
 
       {/* Navigation Menu */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 navigation" data-testid="navigation">
         {menuItems.map((item, index) => (
           <Link key={item.href} href={item.href}>
             <div className={`animate-slide-in flex items-center space-x-3 px-3 py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-sm ${
@@ -133,7 +133,8 @@ export default function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={() => logout()}
-            className="text-gray-400 hover:text-gray-600 p-1"
+            className="text-gray-400 hover:text-gray-600 p-1 user-menu"
+            data-testid="user-menu"
           >
             <MoreVertical className="w-4 h-4" />
           </Button>

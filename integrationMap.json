@@ -20,7 +20,7 @@
         "navigationLinks": 0,
         "componentsFound": 0
       },
-      "lastTested": "2025-08-07T01:31:12.804Z"
+      "lastTested": "2025-08-07T02:48:14.513Z"
     },
     "transactions": {
       "connectedFeatures": [
@@ -29,11 +29,11 @@
         "ai-categorization"
       ],
       "metadata": {
-        "listPresent": false,
+        "listPresent": true,
         "addButtonPresent": false,
-        "filtersPresent": false
+        "filtersPresent": true
       },
-      "lastTested": "2025-08-07T01:31:21.358Z"
+      "lastTested": "2025-08-07T02:48:20.583Z"
     },
     "banking": {
       "connectedFeatures": [
@@ -42,12 +42,12 @@
         "transaction-sync"
       ],
       "metadata": {
-        "connectionsPresent": false,
+        "connectionsPresent": true,
         "connectButtonPresent": false,
         "plaidIntegrated": false,
-        "canadianSupport": false
+        "canadianSupport": true
       },
-      "lastTested": "2025-08-07T01:31:29.396Z"
+      "lastTested": "2025-08-07T02:48:27.523Z"
     },
     "ai-categorization": {
       "connectedFeatures": [
@@ -69,11 +69,11 @@
         "transaction-matching"
       ],
       "metadata": {
-        "listPresent": false,
-        "uploadPresent": false,
-        "unmatchedQueuePresent": false
+        "listPresent": true,
+        "uploadPresent": true,
+        "unmatchedQueuePresent": true
       },
-      "lastTested": "2025-08-07T01:31:45.318Z"
+      "lastTested": "2025-08-07T02:48:35.371Z"
     },
     "reporting": {
       "connectedFeatures": [
@@ -209,11 +209,11 @@
         "financial-queries"
       ],
       "metadata": {
-        "chatPresent": false,
+        "chatPresent": true,
         "inputPresent": false,
-        "historyPresent": false
+        "historyPresent": true
       },
-      "lastTested": "2025-08-07T01:31:37.127Z"
+      "lastTested": "2025-08-07T02:48:32.464Z"
     }
   },
   "connections": [
@@ -398,5 +398,5 @@
       "verified": true
     }
   ],
-  "lastUpdated": "2025-08-07T01:31:45.318Z"
+  "lastUpdated": "2025-08-07T02:48:35.371Z"
 }
