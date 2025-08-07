@@ -41,7 +41,9 @@ interface ReceiptMatchSuggestionsProps {
   onMatchRejected: (receiptId: string, transactionId: string) => void;
 }
 
-export default function ReceiptMatchSuggestions({
+import React from "react";
+
+const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
   receipts,
   onMatchConfirmed,
   onMatchRejected
@@ -268,6 +270,7 @@ export default function ReceiptMatchSuggestions({
                             onClick={() => handleMatch(receipt.id, transaction.id, 'confirm')}
                             disabled={isProcessing}
                             className="bg-green-600 hover:bg-green-700 text-white"
+                            aria-label="Match receipt to this transaction"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Match
@@ -277,6 +280,7 @@ export default function ReceiptMatchSuggestions({
                             size="sm"
                             onClick={() => handleMatch(receipt.id, transaction.id, 'reject')}
                             disabled={isProcessing}
+                            aria-label="Reject this receipt match"
                           >
                             <X className="h-4 w-4" />
                           </Button>

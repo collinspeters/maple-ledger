@@ -135,6 +135,7 @@ export default function Sidebar() {
             onClick={() => logout()}
             className="text-gray-400 hover:text-gray-600 p-1 user-menu"
             data-testid="user-menu"
+            aria-label="User menu and logout options"
           >
             <MoreVertical className="w-4 h-4" />
           </Button>

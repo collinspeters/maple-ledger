@@ -6,9 +6,12 @@ import { Link } from "wouter";
 import { Transaction } from "@shared/schema";
 import { Store, Utensils, CreditCard, MoreVertical, Brain, TriangleAlert, Check } from "lucide-react";
 
-export default function RecentTransactions() {
-  const { data: transactions, isLoading } = useQuery<Transaction[]>({
+import React from "react";
+
+const RecentTransactions = React.memo(function RecentTransactions() {
+  const { data: recentTransactions, isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
+    select: (data) => data.slice(0, 5), // Only process first 5 for performance
   });
 
   if (isLoading) {
@@ -104,7 +107,7 @@ export default function RecentTransactions() {
 
       <CardContent className="p-0">
         <div className="divide-y divide-gray-200">
-          {transactions?.slice(0, 5).map((transaction) => {
+          {recentTransactions.map((transaction) => {
             const Icon = getTransactionIcon(transaction.category || transaction.aiCategory || "");
             const confidence = transaction.aiConfidence ? parseFloat(transaction.aiConfidence) : null;
             
@@ -156,4 +159,6 @@ export default function RecentTransactions() {
       </CardContent>
     </Card>
   );
-}
+});
+
+export default RecentTransactions;

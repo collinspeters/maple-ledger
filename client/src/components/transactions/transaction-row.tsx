@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -49,7 +49,7 @@ interface TransactionRowProps {
   onEditToggle?: () => void;
 }
 
-export function TransactionRow({
+const TransactionRow = React.memo(({
   transaction,
   isSelected,
   onSelect,
@@ -173,10 +173,10 @@ export function TransactionRow({
                   className="h-8"
                   autoFocus
                 />
-                <Button size="sm" variant="ghost" onClick={() => saveField('description')}>
+                <Button size="sm" variant="ghost" onClick={() => saveField('description')} aria-label="Save description changes">
                   <Check className="h-3 w-3" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => cancelEditing('description')}>
+                <Button size="sm" variant="ghost" onClick={() => cancelEditing('description')} aria-label="Cancel description editing">
                   <X className="h-3 w-3" />
                 </Button>
               </div>
@@ -228,10 +228,10 @@ export function TransactionRow({
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')}>
+            <Button size="sm" variant="ghost" onClick={() => saveField('bankConnectionId')} aria-label="Save account changes">
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')}>
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('bankConnectionId')} aria-label="Cancel account editing">
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -265,10 +265,10 @@ export function TransactionRow({
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="ghost" onClick={() => saveField('category')}>
+              <Button size="sm" variant="ghost" onClick={() => saveField('category')} aria-label="Save category changes">
                 <Check className="h-3 w-3" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => cancelEditing('category')}>
+              <Button size="sm" variant="ghost" onClick={() => cancelEditing('category')} aria-label="Cancel category editing">
                 <X className="h-3 w-3" />
               </Button>
             </div>
@@ -313,10 +313,10 @@ export function TransactionRow({
               className="h-8 w-24 text-right"
               autoFocus
             />
-            <Button size="sm" variant="ghost" onClick={() => saveField('amount')}>
+            <Button size="sm" variant="ghost" onClick={() => saveField('amount')} aria-label="Save amount changes">
               <Check className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelEditing('amount')}>
+            <Button size="sm" variant="ghost" onClick={() => cancelEditing('amount')} aria-label="Cancel amount editing">
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -369,4 +369,6 @@ export function TransactionRow({
       </tr>
     );
   }
-}
+});
+
+export { TransactionRow };

@@ -39,17 +39,18 @@ export default function Topbar() {
               <Input 
                 placeholder="Search transactions, clients..." 
                 className="pl-10 w-64 bg-gray-50 border-gray-200 focus:bg-white"
+                aria-label="Search transactions, clients, and other records"
               />
             </div>
             
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
+            <Button variant="ghost" size="sm" className="relative" aria-label="Notifications">
               <Bell className="h-5 w-5 text-gray-600" />
               <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
             </Button>
             
             {/* AI Processing Indicator */}
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-primary/10 text-primary rounded-lg">
+            <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-primary/10 text-primary rounded-lg" role="status" aria-label="AI system status: ready">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">AI Ready</span>
             </div>

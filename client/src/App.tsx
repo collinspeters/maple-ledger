@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -5,24 +6,26 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { checkSubscriptionAccess } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
 
-// Pages
+// Critical pages loaded immediately
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import Dashboard from "@/pages/dashboard";
-import Clients from "@/pages/clients";
-import Invoices from "@/pages/invoices";
-import Estimates from "@/pages/estimates";
-import Transactions from "@/pages/transactions";
-import Receipts from "@/pages/receipts";
-import Reports from "@/pages/reports";
-import Banking from "@/pages/banking";
-import Settings from "@/pages/settings";
-import ChartOfAccountsPage from "@/pages/chart-of-accounts";
-import AIAssistant from "@/pages/ai-assistant";
-
 import Subscribe from "@/pages/subscribe";
 import NotFound from "@/pages/not-found";
+
+// Lazy load heavy pages for better performance
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Clients = lazy(() => import("@/pages/clients"));
+const Invoices = lazy(() => import("@/pages/invoices"));
+const Estimates = lazy(() => import("@/pages/estimates"));
+const Transactions = lazy(() => import("@/pages/transactions"));
+const Receipts = lazy(() => import("@/pages/receipts"));
+const Reports = lazy(() => import("@/pages/reports"));
+const Banking = lazy(() => import("@/pages/banking"));
+const Settings = lazy(() => import("@/pages/settings"));
+const ChartOfAccountsPage = lazy(() => import("@/pages/chart-of-accounts"));
+const AIAssistant = lazy(() => import("@/pages/ai-assistant"));
 
 // Layout
 import Sidebar from "@/components/layout/sidebar";
@@ -53,7 +56,16 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />
         <main className="flex-1 overflow-y-auto">
-          <Component />
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="text-gray-600">Loading...</span>
+              </div>
+            </div>
+          }>
+            <Component />
+          </Suspense>
         </main>
       </div>
     </div>

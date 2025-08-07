@@ -48,7 +48,9 @@ interface MultiAccountDisplayProps {
   onViewTransfers: (bankName: string) => void;
 }
 
-export function MultiAccountDisplay({ 
+import React from "react";
+
+const MultiAccountDisplay = React.memo(function MultiAccountDisplay({ 
   bankGroups, 
   transferSummary, 
   onDisconnectAccount,

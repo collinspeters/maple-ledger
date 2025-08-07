@@ -184,7 +184,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             <div>
               <Label htmlFor="province">Province</Label>
               <Select onValueChange={(value) => form.setValue("province", value)}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Select province">
                   <SelectValue placeholder="Select province" />
                 </SelectTrigger>
                 <SelectContent>
@@ -208,7 +208,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             <div>
               <Label htmlFor="country">Country</Label>
               <Select onValueChange={(value) => form.setValue("country", value)}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Select country">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,7 +222,7 @@ export default function ClientModal({ client, onClose }: ClientModalProps) {
             <div>
               <Label htmlFor="currency">Currency</Label>
               <Select onValueChange={(value) => form.setValue("currency", value)}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Select currency">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
