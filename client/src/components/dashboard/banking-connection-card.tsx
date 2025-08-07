@@ -105,13 +105,13 @@ export default function BankingConnectionCard() {
             </div>
             <div className="flex space-x-3">
               <Link href="/banking">
-                <Button o> console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm" className="flex-1">
+                <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" variant="outline" size="sm" className="flex-1">
                   <Building2 className="w-4 h-4 mr-2" />
                   Manage Banks
                 </Button>
               </Link>
               <Link href="/banking">
-                <Button o> console.log('Button clicked')} aria-label="Small action button" size="sm" className="flex-1">
+                <Button onClick={() => console.log('Button clicked')} aria-label="Small action button" size="sm" className="flex-1">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Bank
                 </Button>
@@ -137,7 +137,7 @@ export default function BankingConnectionCard() {
               </div>
             </div>
             <Link href="/banking">
-              <Button o> console.log('Button clicked')} aria-label="Button action" className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
+              <Button onClick={() => console.log('Button clicked')} aria-label="Button action" className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
                 <Building2 className="w-4 h-4 mr-2" />
                 Connect Bank Account
                 <ArrowRight className="w-4 h-4 ml-2" />
