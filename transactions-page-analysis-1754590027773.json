@@ -1,0 +1,702 @@
+{
+  "timestamp": "2025-08-07T18:07:07.772Z",
+  "pageUrl": "/transactions",
+  "analysis": {
+    "pageLoad": {
+      "domContentLoaded": 0.19999999552965164,
+      "loadComplete": 0.10000000149011612,
+      "transactionRowsFound": 52,
+      "filterElementsFound": 1,
+      "paginationElementsFound": 8,
+      "totalElements": 1540,
+      "tablePresent": true,
+      "loadingIndicators": 0
+    },
+    "tableAnalysis": {
+      "tableFound": true,
+      "headerCount": 7,
+      "headers": [
+        {
+          "text": "",
+          "sortable": false,
+          "width": 48
+        },
+        {
+          "text": "Date",
+          "sortable": false,
+          "width": 125
+        },
+        {
+          "text": "Description",
+          "sortable": false,
+          "width": 510
+        },
+        {
+          "text": "Account",
+          "sortable": false,
+          "width": 388
+        },
+        {
+          "text": "Category",
+          "sortable": false,
+          "width": 243
+        },
+        {
+          "text": "Amount",
+          "sortable": false,
+          "width": 143
+        },
+        {
+          "text": "Status",
+          "sortable": false,
+          "width": 143
+        }
+      ],
+      "totalRows": 50,
+      "sampleRows": [
+        {
+          "index": 0,
+          "cellCount": 7,
+          "hasData": true,
+          "isEmpty": false,
+          "cellContents": [
+            "",
+            "Aug 7, 2025",
+            "ECHELON INS",
+            "Manual Entry",
+            "INSURANCE",
+            "-$50.00",
+            "Unreviewed"
+          ]
+        },
+        {
+          "index": 1,
+          "cellCount": 7,
+          "hasData": true,
+          "isEmpty": false,
+          "cellContents": [
+            "",
+            "Aug 4, 2025",
+            "Mcdonalds",
+            "Manual Entry",
+            "MEALS_ENTERTAINMENT",
+            "-$569.00",
+            "Unreviewed"
+          ]
+        },
+        {
+          "index": 2,
+          "cellCount": 7,
+          "hasData": true,
+          "isEmpty": false,
+          "cellContents": [
+            "",
+            "Aug 4, 2025",
+            "Mark's Work Warehouse",
+            "Manual Entry",
+            "OTHER_EXPENSES",
+            "-$138.00",
+            "Unreviewed"
+          ]
+        },
+        {
+          "index": 3,
+          "cellCount": 7,
+          "hasData": true,
+          "isEmpty": false,
+          "cellContents": [
+            "",
+            "Aug 4, 2025",
+            "Sephora",
+            "Manual Entry",
+            "OTHER_EXPENSES",
+            "-$48.00",
+            "Unreviewed"
+          ]
+        },
+        {
+          "index": 4,
+          "cellCount": 7,
+          "hasData": true,
+          "isEmpty": false,
+          "cellContents": [
+            "",
+            "Aug 4, 2025",
+            "Bell",
+            "Manual Entry",
+            "TELEPHONE_UTILITIES",
+            "-$45.00",
+            "Unreviewed"
+          ]
+        }
+      ],
+      "emptyRows": 0,
+      "tableWidth": 1599,
+      "tableHeight": 3402
+    },
+    "filterSystem": {
+      "searchInputs": [
+        {
+          "index": 0,
+          "placeholder": "Search transactions, clients...",
+          "value": "",
+          "disabled": false,
+          "visible": true
+        }
+      ],
+      "dropdowns": [
+        {
+          "index": 0,
+          "optionCount": 0,
+          "selectedValue": "",
+          "disabled": false,
+          "visible": true,
+          "firstFewOptions": []
+        },
+        {
+          "index": 1,
+          "optionCount": 0,
+          "selectedValue": "",
+          "disabled": false,
+          "visible": true,
+          "firstFewOptions": []
+        }
+      ],
+      "buttons": [
+        {
+          "index": 9,
+          "text": "Filters",
+          "disabled": false,
+          "visible": true,
+          "hasIcon": true,
+          "className": "justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 flex items-center gap-2 filters"
+        }
+      ],
+      "dateInputs": []
+    },
+    "userExperience": {
+      "dataVisibility": {
+        "totalRows": 50,
+        "visibleRows": 50,
+        "emptyTableMessage": "missing",
+        "dataLoaded": true
+      },
+      "navigation": {
+        "paginationPresent": true,
+        "sortingAvailable": false,
+        "searchAvailable": false
+      },
+      "feedback": {
+        "successMessages": 0,
+        "errorMessages": 0,
+        "tooltips": 0
+      },
+      "accessibility": {
+        "missingAltText": 0,
+        "unlabeledInputs": 1,
+        "keyboardNavigation": 4
+      }
+    },
+    "scrollBehavior": {
+      "positions": [
+        {
+          "scrollPosition": 0,
+          "visibleRowCount": 8,
+          "loadingIndicators": 0
+        },
+        {
+          "scrollPosition": 25,
+          "visibleRowCount": 8,
+          "loadingIndicators": 0
+        },
+        {
+          "scrollPosition": 50,
+          "visibleRowCount": 8,
+          "loadingIndicators": 0
+        },
+        {
+          "scrollPosition": 75,
+          "visibleRowCount": 8,
+          "loadingIndicators": 0
+        },
+        {
+          "scrollPosition": 100,
+          "visibleRowCount": 8,
+          "loadingIndicators": 0
+        }
+      ],
+      "newContentLoaded": false,
+      "infiniteScroll": false,
+      "performanceImpact": []
+    },
+    "interactionTesting": {
+      "clickableRows": [
+        {
+          "index": 0,
+          "visible": true,
+          "hasClickHandler": false,
+          "hasDataAttributes": true,
+          "cellCount": 7
+        },
+        {
+          "index": 1,
+          "visible": true,
+          "hasClickHandler": false,
+          "hasDataAttributes": true,
+          "cellCount": 7
+        },
+        {
+          "index": 2,
+          "visible": true,
+          "hasClickHandler": false,
+          "hasDataAttributes": true,
+          "cellCount": 7
+        },
+        {
+          "index": 3,
+          "visible": true,
+          "hasClickHandler": false,
+          "hasDataAttributes": true,
+          "cellCount": 7
+        },
+        {
+          "index": 4,
+          "visible": true,
+          "hasClickHandler": false,
+          "hasDataAttributes": true,
+          "cellCount": 7
+        }
+      ],
+      "editableFields": [],
+      "actionButtons": [
+        {
+          "index": 14,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from ECHELON INS"
+        },
+        {
+          "index": 15,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Mcdonalds"
+        },
+        {
+          "index": 16,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Mark's Work Warehouse"
+        },
+        {
+          "index": 17,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Sephora"
+        },
+        {
+          "index": 18,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Bell"
+        },
+        {
+          "index": 19,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 20,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 21,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins ae4b7f59e1e2483a"
+        },
+        {
+          "index": 22,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 23,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Burger King"
+        },
+        {
+          "index": 24,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins ae4b7f59e1e2483a"
+        },
+        {
+          "index": 25,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Burger King"
+        },
+        {
+          "index": 26,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins ae4b7f59e1e2483a"
+        },
+        {
+          "index": 27,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Maestro Bar"
+        },
+        {
+          "index": 28,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Visa Debit purchase - 6727 PAY TO: CRA"
+        },
+        {
+          "index": 29,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 30,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 31,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Visa Debit purchase - 6727 PAY TO: CRA"
+        },
+        {
+          "index": 32,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Burger King"
+        },
+        {
+          "index": 33,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Maestro Bar"
+        },
+        {
+          "index": 34,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Burger King"
+        },
+        {
+          "index": 35,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 36,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Visa Debit purchase - 6727 PAY TO: CRA"
+        },
+        {
+          "index": 37,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins ae4b7f59e1e2483a"
+        },
+        {
+          "index": 38,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Maestro Bar"
+        },
+        {
+          "index": 39,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Burger King"
+        },
+        {
+          "index": 40,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Visa Debit purchase - 6727 PAY TO: CRA"
+        },
+        {
+          "index": 41,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Burger King"
+        },
+        {
+          "index": 42,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins ae4b7f59e1e2483a"
+        },
+        {
+          "index": 43,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Visa Debit purchase - 6727 PAY TO: CRA"
+        },
+        {
+          "index": 44,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Maestro Bar"
+        },
+        {
+          "index": 45,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Maestro Bar"
+        },
+        {
+          "index": 46,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins ae4b7f59e1e2483a"
+        },
+        {
+          "index": 47,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 48,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Visa Debit purchase - 6727 PAY TO: CRA"
+        },
+        {
+          "index": 49,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Maestro Bar"
+        },
+        {
+          "index": 50,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 51,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Transfer to Deposit Account-3513"
+        },
+        {
+          "index": 52,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Transfer to Deposit Account-5562"
+        },
+        {
+          "index": 53,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Banking payment - 4424 BMO MASTERCD"
+        },
+        {
+          "index": 54,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Transfer to Deposit Account-3513"
+        },
+        {
+          "index": 55,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from e-Transfer - Autodeposit Collins b911dd4470a14531"
+        },
+        {
+          "index": 56,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Transfer to Deposit Account-5562"
+        },
+        {
+          "index": 57,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Banking transfer - 7552"
+        },
+        {
+          "index": 58,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 59,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Banking payment - 4424 BMO MASTERCD"
+        },
+        {
+          "index": 60,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        },
+        {
+          "index": 61,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Transfer to Deposit Account-3513"
+        },
+        {
+          "index": 62,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Online Transfer to Deposit Account-5562"
+        },
+        {
+          "index": 63,
+          "text": "",
+          "disabled": false,
+          "hasIcon": false,
+          "visible": true,
+          "ariaLabel": "Select transaction from Tim Hortons"
+        }
+      ],
+      "contextMenus": []
+    },
+    "visualIssues": [
+      {
+        "type": "content_overflow",
+        "count": 55,
+        "severity": "medium",
+        "description": "55 elements have content overflow"
+      },
+      {
+        "type": "missing_loading_state",
+        "severity": "low",
+        "description": "No loading indicators found - users may not know when data is being fetched"
+      }
+    ],
+    "recommendations": [
+      {
+        "priority": "MEDIUM",
+        "issue": "1 inputs missing labels",
+        "solution": "Add proper aria-labels or associate with label elements"
+      }
+    ]
+  },
+  "summary": {
+    "overallStatus": "analyzed",
+    "criticalIssues": 0,
+    "highPriorityIssues": 0,
+    "mediumPriorityIssues": 1
+  }
+}

@@ -105,11 +105,12 @@ export default function Transactions() {
         }
       }
 
-      // Category filter
-      if (filters.category && filters.category !== 'all' && 
-          transaction.category !== filters.category && 
-          transaction.aiCategory !== filters.category) {
-        return false;
+      // Category filter - fixed logic to properly match categories
+      if (filters.category && filters.category !== 'all') {
+        const transactionCategory = transaction.category || transaction.aiCategory;
+        if (transactionCategory !== filters.category) {
+          return false;
+        }
       }
 
       // Status filter
