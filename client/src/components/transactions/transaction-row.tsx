@@ -111,8 +111,10 @@ export function TransactionRow({
       <TrendingUp className="h-4 w-4 text-green-500" />;
   };
 
-  const formatAmount = (amount: string, isExpense: boolean, isTransfer: boolean) => {
-    const value = parseFloat(amount);
+  const formatAmount = (amount: string | number, isExpense: boolean, isTransfer: boolean) => {
+    const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(value)) return '$0.00';
+    
     const formatted = value.toLocaleString('en-CA', { 
       minimumFractionDigits: 2,
       maximumFractionDigits: 2 
@@ -129,7 +131,19 @@ export function TransactionRow({
     return account ? account.name : 'Unknown Account';
   };
 
-  return (
+  // Debug log each render attempt
+  console.log(`🔧 TransactionRow rendering for transaction ${transaction.id}:`, {
+    description: transaction.description,
+    amount: transaction.amount,
+    date: transaction.date,
+    vendor: transaction.vendor,
+    isExpense: transaction.isExpense,
+    amountType: typeof transaction.amount
+  });
+
+  // Add error boundary for this component
+  try {
+    return (
     <tr className={`
       border-b transition-colors hover:bg-muted/50
       ${isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
@@ -146,7 +160,7 @@ export function TransactionRow({
       {/* Date */}
       <td className="p-4">
         <div className="text-sm">
-          {format(new Date(transaction.date), 'MMM d, yyyy')}
+          {transaction.date ? format(new Date(transaction.date), 'MMM d, yyyy') : 'No date'}
         </div>
       </td>
 
@@ -180,7 +194,7 @@ export function TransactionRow({
                 onClick={() => startEditing('description', transaction.description)}
               >
                 <div className="font-medium truncate">
-                  {transaction.vendor || transaction.description}
+                  {transaction.vendor || transaction.description || 'No description'}
                 </div>
                 {transaction.vendor && transaction.vendor !== transaction.description && (
                   <div className="text-xs text-muted-foreground truncate">
@@ -352,5 +366,15 @@ export function TransactionRow({
         </div>
       </td>
     </tr>
-  );
+    );
+  } catch (error) {
+    console.error(`❌ Error rendering transaction ${transaction.id}:`, error);
+    return (
+      <tr className="border-b bg-red-50">
+        <td colSpan={7} className="p-4 text-red-600">
+          Error rendering transaction: {transaction.id} - {error.message}
+        </td>
+      </tr>
+    );
+  }
 }
