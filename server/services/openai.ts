@@ -54,9 +54,7 @@ ${incomeList}
 
 IMPORTANT RULES:
 - Use ONLY the category codes provided above (e.g., "OFFICE_EXPENSES", "MEALS_ENTERTAINMENT")
-- For income transactions (positive amounts/deposits), use ONLY "BUSINESS_INCOME" or "PROFESSIONAL_INCOME"
-- NEVER use expense categories like "OTHER_EXPENSES" for income transactions
-- For negative amounts (expenses), use appropriate expense categories but NEVER use income categories
+- For income transactions, use "BUSINESS_INCOME" or "PROFESSIONAL_INCOME"
 - Consider Canadian tax compliance and T2125 form requirements
 - Use enriched merchant context to improve accuracy
 - Set confidence higher (0.8+) when merchant context clearly indicates business type
@@ -84,25 +82,19 @@ Respond with JSON in this exact format:
     // Validate that the returned category exists in our T2125 categories
     const validCategory = T2125_CATEGORIES.find(cat => cat.code === result.category);
     
-    // For income transactions (positive amounts), ensure proper categorization
-    const isIncomeAmount = amount > 0;
-    const fallbackCategory = isIncomeAmount ? "BUSINESS_INCOME" : "OTHER_EXPENSES";
-    
     return {
-      category: validCategory ? result.category : fallbackCategory,
+      category: validCategory ? result.category : "OTHER_EXPENSES",
       confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
       explanation: result.explanation || "Unable to categorize automatically",
-      isExpense: !isIncomeAmount, // Income transactions are not expenses
+      isExpense: result.isExpense !== false, // Default to expense
     };
   } catch (error) {
     console.error("OpenAI categorization error:", error);
-    // For fallback, determine if it's income or expense based on amount
-    const isIncomeAmount = amount > 0;
     return {
-      category: isIncomeAmount ? "BUSINESS_INCOME" : "OTHER_EXPENSES",
+      category: "OTHER_EXPENSES",
       confidence: 0,
       explanation: "AI categorization failed - manual review required",
-      isExpense: !isIncomeAmount,
+      isExpense: true,
     };
   }
 }
