@@ -284,4 +284,6 @@ const MultiAccountDisplay = React.memo(function MultiAccountDisplay({
       )}
     </div>
   );
-}
+});
+
+export { MultiAccountDisplay };

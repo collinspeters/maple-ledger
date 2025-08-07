@@ -342,4 +342,6 @@ const ReceiptMatchSuggestions = React.memo(function ReceiptMatchSuggestions({
       )}
     </div>
   );
-}
+});
+
+export default ReceiptMatchSuggestions;

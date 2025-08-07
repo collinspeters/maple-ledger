@@ -150,7 +150,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
             );
           })}
           
-          {(!transactions || transactions.length === 0) && (
+          {(!recentTransactions || recentTransactions.length === 0) && (
             <div className="p-8 text-center">
               <p className="text-gray-500">No transactions yet. Add your first transaction to get started!</p>
             </div>
