@@ -1,9 +1,8 @@
 import { useState } from "react";
 import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ErrorBoundary from "@/components/ui/error-boundary";
-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Loader2, Brain } from "lucide-react";
