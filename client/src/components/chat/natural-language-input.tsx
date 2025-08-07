@@ -154,7 +154,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
                   type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  o> setInput(example)}
+                  onClick={() => setInput(example)}
                   className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
                 >
                   {example}
