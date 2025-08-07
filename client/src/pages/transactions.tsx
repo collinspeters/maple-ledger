@@ -73,6 +73,20 @@ export default function Transactions() {
     [bankConnections]
   );
 
+  // Count active filters (must be before filteredAndSortedTransactions)
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.search) count++;
+    if (filters.category && filters.category !== 'all') count++;
+    if (filters.status && filters.status !== 'all') count++;
+    if (filters.type && filters.type !== 'all') count++;
+    if (filters.account && filters.account !== 'all') count++;
+    if (filters.receiptStatus && filters.receiptStatus !== 'all') count++;
+    if (filters.dateRange?.from) count++;
+    if (filters.autoUpdates && filters.autoUpdates !== 'all') count++;
+    return count;
+  }, [filters]);
+
   // Filter and sort transactions
   const filteredAndSortedTransactions = useMemo(() => {
     console.log('🔍 Filtering transactions:', { 
@@ -156,19 +170,7 @@ export default function Transactions() {
     return filtered;
   }, [transactions, filters, sortBy, sortOrder]);
 
-  // Count active filters
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.search) count++;
-    if (filters.category && filters.category !== 'all') count++;
-    if (filters.status && filters.status !== 'all') count++;
-    if (filters.type && filters.type !== 'all') count++;
-    if (filters.account && filters.account !== 'all') count++;
-    if (filters.receiptStatus && filters.receiptStatus !== 'all') count++;
-    if (filters.dateRange?.from) count++;
-    if (filters.autoUpdates && filters.autoUpdates !== 'all') count++;
-    return count;
-  }, [filters]);
+
 
   // Mutations
   const updateTransactionMutation = useMutation({
