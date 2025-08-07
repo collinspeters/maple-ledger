@@ -36,13 +36,13 @@ export default function Transactions() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<TransactionFilters>({
     search: '',
-    category: '',
-    status: '',
-    type: '',
-    account: '',
-    receiptStatus: '',
+    category: 'all',
+    status: 'all',
+    type: 'all',
+    account: 'all',
+    receiptStatus: 'all',
     dateRange: undefined,
-    autoUpdates: ''
+    autoUpdates: 'all'
   });
 
   // Data fetching
@@ -112,7 +112,7 @@ export default function Transactions() {
       }
 
       // Receipt filter
-      if (filters.receiptStatus) {
+      if (filters.receiptStatus && filters.receiptStatus !== 'all') {
         if (filters.receiptStatus === 'has_receipt' && !transaction.receiptAttached) return false;
         if (filters.receiptStatus === 'no_receipt' && transaction.receiptAttached) return false;
         if (filters.receiptStatus === 'from_scan' && transaction.receiptSource !== 'scan') return false;
@@ -154,13 +154,13 @@ export default function Transactions() {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.search) count++;
-    if (filters.category) count++;
-    if (filters.status) count++;
-    if (filters.type) count++;
-    if (filters.account) count++;
-    if (filters.receiptStatus) count++;
+    if (filters.category && filters.category !== 'all') count++;
+    if (filters.status && filters.status !== 'all') count++;
+    if (filters.type && filters.type !== 'all') count++;
+    if (filters.account && filters.account !== 'all') count++;
+    if (filters.receiptStatus && filters.receiptStatus !== 'all') count++;
     if (filters.dateRange?.from) count++;
-    if (filters.autoUpdates) count++;
+    if (filters.autoUpdates && filters.autoUpdates !== 'all') count++;
     return count;
   }, [filters]);
 
@@ -223,11 +223,11 @@ export default function Transactions() {
       search: '',
       category: 'all',
       status: 'all',
-      type: '',
-      account: '',
-      receiptStatus: '',
+      type: 'all',
+      account: 'all',
+      receiptStatus: 'all',
       dateRange: undefined,
-      autoUpdates: ''
+      autoUpdates: 'all'
     });
   };
 
