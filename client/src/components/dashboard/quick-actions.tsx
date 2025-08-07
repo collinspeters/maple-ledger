@@ -123,7 +123,7 @@ const QuickActions = React.memo(function QuickActions() {
               return (
                 <Button aria-label="Ghost button" key={action.id}
                   variant="ghost"
-                  o
+                  onClick={action.onClick}
                   disabled={isLoading}
                   className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors justify-start h-auto"
                   data-testid={`quick-action-${action.id}`}

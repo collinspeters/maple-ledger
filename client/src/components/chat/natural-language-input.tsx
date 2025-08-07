@@ -203,7 +203,14 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
           
           <div className="flex space-x-2">
             <Button aria-label="Small action button" 
-              o
+              onClick={() => confirmTransactionMutation.mutate({
+                amount: lastParsed.amount,
+                description: lastParsed.description,
+                vendor: lastParsed.vendor,
+                category: lastParsed.category,
+                date: lastParsed.date,
+                isExpense: lastParsed.action === 'add_expense'
+              })}
               disabled={confirmTransactionMutation.isPending}
               size="sm"
               className="bg-green-600 hover:bg-green-700"
@@ -214,7 +221,7 @@ export default function NaturalLanguageInput({ onTransactionAdded }: NaturalLang
               Confirm & Add
             </Button>
             <Button aria-label="Small action button" 
-              o
+              onClick={() => setLastParsed(null)}
               variant="outline"
               size="sm"
             >
