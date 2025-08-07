@@ -286,10 +286,10 @@ export function BulkActions({
               </div>
 
               <DialogFooter>
-                <Button aria-label="Button action" variant="outline" o o o> console.log('Button clicked')}> console.log('Button clicked')}> setBulkEditOpen(false)}>
+                <Button aria-label="Button action" variant="outline" onClick={() => setBulkEditOpen(false)}>
                   Cancel
                 </Button>
-                <Button aria-label="Button action" o
+                <Button aria-label="Button action" onClick={applyBulkEdits}
                   disabled={bulkEdits.length === 0 || bulkEdits.some(e => !e.newValue)}
                 >
                   Apply Changes
