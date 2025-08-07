@@ -86,28 +86,28 @@ export default function Transactions() {
       }
 
       // Category filter
-      if (filters.category && 
+      if (filters.category && filters.category !== 'all' && 
           transaction.category !== filters.category && 
           transaction.aiCategory !== filters.category) {
         return false;
       }
 
       // Status filter
-      if (filters.status) {
+      if (filters.status && filters.status !== 'all') {
         if (filters.status === 'reviewed' && !transaction.isReviewed) return false;
         if (filters.status === 'unreviewed' && (transaction.isReviewed || transaction.needsReview)) return false;
         if (filters.status === 'needs_review' && !transaction.needsReview) return false;
       }
 
       // Type filter
-      if (filters.type) {
+      if (filters.type && filters.type !== 'all') {
         if (filters.type === 'income' && transaction.isExpense) return false;
         if (filters.type === 'expense' && !transaction.isExpense) return false;
         if (filters.type === 'transfer' && !transaction.isTransfer) return false;
       }
 
       // Account filter
-      if (filters.account && transaction.bankConnectionId !== filters.account) {
+      if (filters.account && filters.account !== 'all' && transaction.bankConnectionId !== filters.account) {
         return false;
       }
 
@@ -221,8 +221,8 @@ export default function Transactions() {
   const clearFilters = () => {
     setFilters({
       search: '',
-      category: '',
-      status: '',
+      category: 'all',
+      status: 'all',
       type: '',
       account: '',
       receiptStatus: '',

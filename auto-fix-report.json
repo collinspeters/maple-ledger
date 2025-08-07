@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-07T03:36:41.693Z",
+  "timestamp": "2025-08-07T04:34:19.301Z",
   "summary": {
     "totalIssues": 9,
     "identified": 3,
@@ -24,13 +24,13 @@
       "fix": "Analyzed component visibility and structure",
       "status": "analyzed",
       "details": {
-        "hasFinancialSummary": false,
-        "hasRecentTransactions": false,
-        "hasQuickActions": false,
-        "hasSidebar": false,
-        "totalElements": 27,
-        "visibleButtons": 0,
-        "pageContent": "404 Page Not Found\n\nDid you forget to add the page to the router?"
+        "hasFinancialSummary": true,
+        "hasRecentTransactions": true,
+        "hasQuickActions": true,
+        "hasSidebar": true,
+        "totalElements": 601,
+        "visibleButtons": 23,
+        "pageContent": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nS"
       }
     },
     {
@@ -49,9 +49,9 @@
       "page": "/dashboard",
       "validation": {
         "url": "/dashboard",
-        "buttons": 0,
-        "forms": 0,
-        "inputs": 0,
+        "buttons": 23,
+        "forms": 3,
+        "inputs": 7,
         "hasErrors": false,
         "consoleErrors": []
       },

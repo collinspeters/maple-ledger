@@ -96,7 +96,7 @@ export function TransactionFiltersComponent({
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All categories</SelectItem>
+              <SelectItem value="all">All categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -117,7 +117,7 @@ export function TransactionFiltersComponent({
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="reviewed">Reviewed</SelectItem>
               <SelectItem value="unreviewed">Unreviewed</SelectItem>
               <SelectItem value="needs_review">Needs Review</SelectItem>
