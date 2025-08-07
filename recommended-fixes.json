@@ -1,0 +1,17 @@
+[
+  {
+    "file": "client/src/components/transactions/transaction-filters.tsx",
+    "issue": "Select.Item components missing value props",
+    "fix": "Add value=\"\" to empty SelectItem components"
+  },
+  {
+    "file": "server/routes.ts",
+    "issue": "financialReportsService not defined",
+    "fix": "Import and initialize financial reports service"
+  },
+  {
+    "file": "client/src/pages/dashboard.tsx",
+    "issue": "Components not visible to automation tests",
+    "fix": "Ensure proper CSS classes and data-testid attributes"
+  }
+]

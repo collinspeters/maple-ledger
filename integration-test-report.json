@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-08-07T03:40:29.065Z",
+  "overallStatus": "POOR",
+  "testResults": {
+    "authentication": {
+      "status": "failed",
+      "details": {
+        "error": "this.page.waitForTimeout is not a function"
+      }
+    },
+    "navigation": {
+      "status": "unknown",
+      "details": {}
+    },
+    "transactions": {
+      "status": "unknown",
+      "details": {}
+    },
+    "banking": {
+      "status": "unknown",
+      "details": {}
+    },
+    "aiAssistant": {
+      "status": "unknown",
+      "details": {}
+    },
+    "receipts": {
+      "status": "unknown",
+      "details": {}
+    },
+    "dashboard": {
+      "status": "unknown",
+      "details": {}
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "CRITICAL",
+      "issue": "Authentication not working",
+      "action": "Check login form and session management"
+    }
+  ]
+}

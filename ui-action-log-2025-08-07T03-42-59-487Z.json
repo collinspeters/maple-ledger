@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-08-07T03:42:59.487Z",
+  "summary": {
+    "totalPages": 1,
+    "workingPages": 0,
+    "failedPages": 1,
+    "screenshots": 2,
+    "totalActions": 3
+  },
+  "integrationStatus": {
+    "authentication": {
+      "status": "failed",
+      "details": {
+        "hasLoginForm": true,
+        "hasDashboardContent": false,
+        "hasAuthError": false,
+        "bodyText": "Login Failed\n401: Unauthorized\nBookkeepAI\n\nSmart Bookkeeping\n\nWelcome Back\nSign in to your account to continue managing your business finances\nEmail\nPassword\nSign In\n\nDon't have an account? Start your free trial"
+      }
+    }
+  },
+  "actionLog": [
+    {
+      "timestamp": "2025-08-07T03:42:53.813Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "ui-action-log-2025-08-07T03-42-53-723Z.png",
+        "description": "Navigate to http://localhost:5000/"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:42:53.813Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/",
+        "description": "Login page"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:42:54.397Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "ui-action-log-2025-08-07T03-42-54-296Z.png",
+        "description": "Credentials entered"
+      }
+    }
+  ],
+  "recommendations": []
+}

@@ -1,0 +1,445 @@
+{
+  "timestamp": "2025-08-07T03:39:22.705Z",
+  "totalActions": 51,
+  "screenshots": 22,
+  "actions": [
+    {
+      "timestamp": "2025-08-07T03:38:11.066Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-001-2025-08-07T03-38-10-912Z.png",
+        "description": "Navigate to http://localhost:5000/"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:11.067Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:11.640Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-002-2025-08-07T03-38-11-540Z.png",
+        "description": "Type into Email field"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:11.640Z",
+      "type": "type",
+      "data": {
+        "selector": "input[type=\"email\"]",
+        "text": "demo@bookkeepai.com",
+        "description": "Email field"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:11.906Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-003-2025-08-07T03-38-11-805Z.png",
+        "description": "Type into Password field"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:11.906Z",
+      "type": "type",
+      "data": {
+        "selector": "input[type=\"password\"]",
+        "text": "password123",
+        "description": "Password field"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:13.272Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-004-2025-08-07T03-38-13-001Z.png",
+        "description": "Click Login button"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:13.272Z",
+      "type": "click",
+      "data": {
+        "selector": "button[type=\"submit\"]",
+        "description": "Login button"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:16.488Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-005-2025-08-07T03-38-16-273Z.png",
+        "description": "After login attempt"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:19.513Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-006-2025-08-07T03-38-19-389Z.png",
+        "description": "Navigate to http://localhost:5000/dashboard"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:19.513Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/dashboard"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:19.517Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/dashboard",
+        "visibleText": "404 Page Not Found\n\nDid you forget to add the page to the router?",
+        "forms": 0,
+        "buttons": 0,
+        "links": 0,
+        "inputs": 0
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:26.365Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-007-2025-08-07T03-38-25-536Z.png",
+        "description": "Navigate to http://localhost:5000/transactions"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:26.365Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/transactions"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:26.374Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/transactions",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nTransactions\n\nReview and categorize your business transactions.\n\nAI Ready\nAdd Transaction\nTransactions\n\n615 of 615 transactions\n\nImport\nExport\nReports\nAdd Transaction\nAI Transaction Categorization\nAutomatically categorize uncategorized transactions using ",
+        "forms": 0,
+        "buttons": 628,
+        "links": 12,
+        "inputs": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:31.253Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-008-2025-08-07T03-38-31-053Z.png",
+        "description": "Navigate to http://localhost:5000/banking"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:31.253Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/banking"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:31.257Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/banking",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nBanking\n\nConnect and manage your bank accounts.\n\nAI Ready\nAdd Transaction\nBanking\n\nConnect your Canadian bank accounts for automatic transaction import\n\nSync Transactions\n🏦 Connect Bank Account\nEnhanced Banking Integration: Now using Plaid's official quicksta",
+        "forms": 0,
+        "buttons": 10,
+        "links": 12,
+        "inputs": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:36.038Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-009-2025-08-07T03-38-35-869Z.png",
+        "description": "Navigate to http://localhost:5000/ai-assistant"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:36.038Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/ai-assistant"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:36.043Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/ai-assistant",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nBookkeepAI\n\nAI-Powered Bookkeeping\n\nAI Ready\nAdd Transaction\nAI Assistant\n\nAsk questions about your finances, transactions, and business insights\n\nWhat are my total expenses for office supplies?\nJul 26, 08:02 p.m.\nJul 26, 08:02 p.m.\nI'm experiencing techn",
+        "forms": 1,
+        "buttons": 5,
+        "links": 12,
+        "inputs": 2
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:40.805Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-010-2025-08-07T03-38-40-636Z.png",
+        "description": "Navigate to http://localhost:5000/receipts"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:40.805Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/receipts"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:40.809Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/receipts",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nReceipts\n\nUpload and manage your business receipts.\n\nAI Ready\nAdd Transaction\nReceipts\n\nUpload and manage your business receipts with smart matching\n\nUpload Receipt\n\n0\n\nMatched\n\n1\n\nProcessed\n\n0\n\nProcessing\n\n0\n\nFailed\n\nUnmatched Receipts (1)\n\nIMG_0434.png\n",
+        "forms": 0,
+        "buttons": 12,
+        "links": 12,
+        "inputs": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:46.184Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-011-2025-08-07T03-38-45-986Z.png",
+        "description": "Navigate to http://localhost:5000/reports"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:46.184Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/reports"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:46.190Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/reports",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nReports\n\nGenerate financial reports and insights.\n\nAI Ready\nAdd Transaction\nFinancial Reports\n\nComprehensive financial reporting for your business\n\nThis Month\n\n--\n\nTotal Revenue\n\n--\n\nTotal Expenses\n\n--\n\nNet Profit\n\n$879.39\n\nTax Owing\n\nP&L\nBalance Sheet\nTa",
+        "forms": 0,
+        "buttons": 12,
+        "links": 12,
+        "inputs": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:50.876Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-012-2025-08-07T03-38-50-684Z.png",
+        "description": "Navigate to http://localhost:5000/clients"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:50.876Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/clients"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:50.885Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/clients",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nClients\n\nManage your client relationships and information.\n\nAI Ready\nAdd Transaction\nClients\n\nManage your client relationships and contact information\n\nAdd Client\n\n5\n\nActive Clients\n\n6\n\nTotal Clients\n\n29\n\nAvg Payment Terms (days)\n\nTest Company Ltd\nActive\n",
+        "forms": 0,
+        "buttons": 17,
+        "links": 12,
+        "inputs": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:55.710Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-013-2025-08-07T03-38-55-535Z.png",
+        "description": "Navigate to http://localhost:5000/invoices"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:55.710Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/invoices"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:38:55.715Z",
+      "type": "pageInfo",
+      "data": {
+        "title": "",
+        "url": "http://localhost:5000/invoices",
+        "visibleText": "BookkeepAI\n\nSmart Bookkeeping\n\n3 days left\n\nin your free trial\n\nUpgrade Now\nDashboard\nClients\nInvoices\nEstimates\nTransactions\n3\nReceipts\n2\nChart of Accounts\nReports\n🏦 Connect Bank\nNEW!\nAI Assistant\nSettings\n\nAlex Johnson\n\nDemo Tech Consulting\n\nInvoices\n\nCreate and track your customer invoices.\n\nAI Ready\nAdd Transaction\nInvoices\n\nManage your client invoices and payments\n\nCreate Invoice\n\n5\n\nTotal Invoices\n\n$6,441\n\nPaid\n\n$2,034\n\nOutstanding\n\n3\n\nOverdue\n\nINV-0001\nPaid\nUnknown Client\n$2,825 CAD\nDue:",
+        "forms": 0,
+        "buttons": 6,
+        "links": 12,
+        "inputs": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:01.971Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-014-2025-08-07T03-39-01-151Z.png",
+        "description": "Navigate to http://localhost:5000/transactions"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:01.971Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/transactions"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:03.599Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-015-2025-08-07T03-39-03-495Z.png",
+        "description": "Click Transaction filters"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:03.599Z",
+      "type": "click",
+      "data": {
+        "selector": "[data-testid=\"filters\"]",
+        "description": "Transaction filters"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:11.357Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-016-2025-08-07T03-39-11-185Z.png",
+        "description": "Navigate to http://localhost:5000/ai-assistant"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:11.357Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/ai-assistant"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:12.084Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-017-2025-08-07T03-39-11-892Z.png",
+        "description": "Type into AI message input"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:12.084Z",
+      "type": "type",
+      "data": {
+        "selector": "#message-input",
+        "text": "What are my total expenses this month?",
+        "description": "AI message input"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:13.343Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-018-2025-08-07T03-39-13-195Z.png",
+        "description": "Click Send message to AI"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:13.343Z",
+      "type": "click",
+      "data": {
+        "selector": "button[type=\"submit\"]",
+        "description": "Send message to AI"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:16.453Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-019-2025-08-07T03-39-16-251Z.png",
+        "description": "Navigate to http://localhost:5000/banking"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:16.453Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/banking"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:18.179Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-020-2025-08-07T03-39-17-639Z.png",
+        "description": "Click Connect bank"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:18.179Z",
+      "type": "click",
+      "data": {
+        "selector": "[data-testid=\"connect-bank\"]",
+        "description": "Connect bank"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:21.519Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-021-2025-08-07T03-39-21-334Z.png",
+        "description": "Navigate to http://localhost:5000/receipts"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:21.519Z",
+      "type": "navigate",
+      "data": {
+        "url": "http://localhost:5000/receipts"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:22.694Z",
+      "type": "screenshot",
+      "data": {
+        "filename": "agent-screenshot-022-2025-08-07T03-39-22-526Z.png",
+        "description": "Scroll to Receipt upload area"
+      }
+    },
+    {
+      "timestamp": "2025-08-07T03:39:22.694Z",
+      "type": "scroll",
+      "data": {
+        "selector": "[data-testid=\"upload\"]",
+        "description": "Receipt upload area"
+      }
+    }
+  ]
+}

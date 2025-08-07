@@ -826,10 +826,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const start = startDate ? new Date(startDate as string) : new Date(new Date().getFullYear(), 0, 1);
       const end = endDate ? new Date(endDate as string) : new Date();
       
-      const report = await financialReportsService.generateIncomeStatement(user.id, {
-        startDate: start,
-        endDate: end
-      });
+      const { generateProfitLossReport } = await import('./services/reports');
+      const report = await generateProfitLossReport(user.id, start, end);
       
       res.json({
         ...report,

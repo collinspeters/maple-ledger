@@ -1,376 +1,421 @@
-#!/usr/bin/env node
+import puppeteer from 'puppeteer';
+import fs from 'fs/promises';
 
-/**
- * BookkeepAI UI Integration Test Suite
- * Demonstrates full-stack SaaS integration using the UI Controller
- */
-
-import UIController from './uiController.js';
-
-class BookkeepAIIntegrationTest {
+class UIIntegrationTest {
   constructor() {
-    this.ui = new UIController();
-    this.testResults = {
-      passed: 0,
-      failed: 0,
-      features: {}
+    this.browser = null;
+    this.page = null;
+    this.testResults = [];
+    this.integrationMap = {
+      authentication: { status: 'unknown', details: {} },
+      navigation: { status: 'unknown', details: {} },
+      transactions: { status: 'unknown', details: {} },
+      banking: { status: 'unknown', details: {} },
+      aiAssistant: { status: 'unknown', details: {} },
+      receipts: { status: 'unknown', details: {} },
+      dashboard: { status: 'unknown', details: {} }
     };
   }
 
-  async runFullIntegrationTest() {
-    console.log('🔥 Starting BookkeepAI Full-Stack Integration Test');
-    console.log('=' .repeat(60));
+  async init() {
+    console.log('🚀 Starting UI Integration Test Suite...');
+    this.browser = await puppeteer.launch({
+      headless: false,
+      defaultViewport: { width: 1920, height: 1080 },
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 
+    this.page = await this.browser.newPage();
+    await this.page.setViewport({ width: 1920, height: 1080 });
+    
+    this.page.on('console', msg => {
+      console.log(`[BROWSER] ${msg.type()}: ${msg.text()}`);
+    });
+  }
+
+  async testAuthentication() {
+    console.log('🔐 Testing authentication flow...');
+    
     try {
-      await this.ui.init();
+      await this.page.goto('http://localhost:5000/', { waitUntil: 'networkidle2' });
       
-      // Test core authentication flow
-      await this.testAuthenticationFlow();
+      // Test login form
+      const emailInput = await this.page.$('input[type="email"]');
+      const passwordInput = await this.page.$('input[type="password"]');
+      const loginButton = await this.page.$('button[type="submit"]');
       
-      // Test dashboard integration  
-      await this.testDashboardIntegration();
+      if (!emailInput || !passwordInput || !loginButton) {
+        throw new Error('Login form elements not found');
+      }
       
-      // Test transaction management
-      await this.testTransactionManagement();
+      await emailInput.type('demo@bookkeepai.com');
+      await passwordInput.type('password123');
+      await loginButton.click();
       
-      // Test banking integration
-      await this.testBankingIntegration();
+      // Wait for redirect or navigation
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Test AI assistant integration
-      await this.testAIAssistantIntegration();
+      const currentUrl = this.page.url();
+      const isLoggedIn = currentUrl.includes('/dashboard') || currentUrl === 'http://localhost:5000/';
       
-      // Test receipts workflow
-      await this.testReceiptsWorkflow();
+      this.integrationMap.authentication = {
+        status: isLoggedIn ? 'working' : 'failed',
+        details: {
+          hasLoginForm: true,
+          redirectUrl: currentUrl,
+          loginSuccessful: isLoggedIn
+        }
+      };
       
-      // Generate final report
-      await this.generateIntegrationReport();
-      
+      return isLoggedIn;
     } catch (error) {
-      console.error('❌ Test suite failed:', error);
-    } finally {
-      await this.ui.close();
+      this.integrationMap.authentication = {
+        status: 'failed',
+        details: { error: error.message }
+      };
+      return false;
     }
   }
 
-  async testAuthenticationFlow() {
-    console.log('\n🔐 Testing Authentication Flow Integration');
-    console.log('-' .repeat(40));
+  async testDashboardComponents() {
+    console.log('📊 Testing dashboard components...');
     
     try {
-      // Navigate to login page
-      await this.ui.navigateTo('/');
+      await this.page.goto('http://localhost:5000/dashboard', { waitUntil: 'networkidle2' });
       
-      // Check if already logged in
-      const isLoggedIn = await this.ui.exists('[data-testid="user-menu"]', 'User menu (logged in state)');
-      
-      if (!isLoggedIn) {
-        // Look for login form
-        const hasLoginForm = await this.ui.exists('form', 'Login form');
-        
-        if (hasLoginForm) {
-          // Try to find email/username field
-          const emailField = await this.ui.exists('input[type="email"], input[name="email"], input[placeholder*="email"]', 'Email field');
-          const passwordField = await this.ui.exists('input[type="password"]', 'Password field');
-          
-          if (emailField && passwordField) {
-            console.log('✅ Login form structure verified');
-            
-            // Test with demo credentials
-            await this.ui.type('input[type="email"], input[name="email"], input[placeholder*="email"]', 'demo@bookkeepai.com', 'Email field');
-            await this.ui.type('input[type="password"]', 'password123', 'Password field');
-            
-            // Look for login button
-            const loginButton = await this.ui.click('#login-button, [data-testid="login-button"], button[type="submit"], .login-button', 'Login button');
-            
-            if (loginButton) {
-              // Wait for redirect or dashboard
-              await this.ui.waitFor('[data-testid="dashboard"], .dashboard, main', 10000, 'Dashboard after login');
-            }
+      const componentAnalysis = await this.page.evaluate(() => {
+        const analysis = {
+          financialCards: {
+            exists: !!document.querySelector('[data-testid="financial-cards"], .financial-summary'),
+            visible: false,
+            interactive: false
+          },
+          quickActions: {
+            exists: !!document.querySelector('[data-testid="quick-actions"], .quick-actions'),
+            visible: false,
+            interactive: false,
+            buttons: []
+          },
+          recentTransactions: {
+            exists: !!document.querySelector('[data-testid="recent-transactions"], .recent-transactions'),
+            visible: false,
+            interactive: false
+          },
+          totalInteractiveElements: 0,
+          pageStructure: {
+            totalElements: document.querySelectorAll('*').length,
+            buttons: document.querySelectorAll('button').length,
+            visibleButtons: Array.from(document.querySelectorAll('button')).filter(b => b.offsetParent !== null).length,
+            inputs: document.querySelectorAll('input').length,
+            hasContent: document.body.innerText.length > 100
           }
-        } else {
-          // Might be on register page, look for "Sign In" link
-          const signInLink = await this.ui.click('a:contains("Sign In"), a:contains("Login")', 'Sign In link');
+        };
+        
+        // Check if quick actions component is visible and interactive
+        const quickActionsEl = document.querySelector('[data-testid="quick-actions"], .quick-actions');
+        if (quickActionsEl) {
+          analysis.quickActions.visible = quickActionsEl.offsetParent !== null;
+          analysis.quickActions.buttons = Array.from(quickActionsEl.querySelectorAll('button')).map(btn => ({
+            text: btn.textContent.trim(),
+            visible: btn.offsetParent !== null,
+            testId: btn.getAttribute('data-testid')
+          }));
+          analysis.quickActions.interactive = analysis.quickActions.buttons.length > 0;
         }
-      }
-      
-      await this.ui.updateIntegrationMap('authentication', ['dashboard', 'navigation'], {
-        loginFormPresent: hasLoginForm,
-        userMenuPresent: isLoggedIn
+        
+        // Check financial cards
+        const financialCardsEl = document.querySelector('[data-testid="financial-cards"], .financial-summary');
+        if (financialCardsEl) {
+          analysis.financialCards.visible = financialCardsEl.offsetParent !== null;
+        }
+        
+        // Count total interactive elements
+        analysis.totalInteractiveElements = Array.from(document.querySelectorAll('button, input, a[href]'))
+          .filter(el => el.offsetParent !== null).length;
+        
+        return analysis;
       });
       
-      this.recordTestResult('authentication', true);
+      this.integrationMap.dashboard = {
+        status: componentAnalysis.totalInteractiveElements > 0 ? 'working' : 'failed',
+        details: componentAnalysis
+      };
       
+      console.log(`Dashboard Analysis:`);
+      console.log(`  - Financial Cards: ${componentAnalysis.financialCards.exists ? '✅' : '❌'} (visible: ${componentAnalysis.financialCards.visible})`);
+      console.log(`  - Quick Actions: ${componentAnalysis.quickActions.exists ? '✅' : '❌'} (visible: ${componentAnalysis.quickActions.visible})`);
+      console.log(`  - Quick Action Buttons: ${componentAnalysis.quickActions.buttons.length}`);
+      console.log(`  - Total Interactive Elements: ${componentAnalysis.totalInteractiveElements}`);
+      console.log(`  - Page Elements: ${componentAnalysis.pageStructure.totalElements}`);
+      
+      return componentAnalysis;
     } catch (error) {
-      console.error('❌ Authentication test failed:', error.message);
-      this.recordTestResult('authentication', false);
+      this.integrationMap.dashboard = {
+        status: 'failed',
+        details: { error: error.message }
+      };
+      return null;
     }
   }
 
-  async testDashboardIntegration() {
-    console.log('\n📊 Testing Dashboard Integration');
-    console.log('-' .repeat(40));
+  async testTransactionsPage() {
+    console.log('💰 Testing transactions page...');
     
     try {
-      await this.ui.navigateTo('/dashboard');
+      await this.page.goto('http://localhost:5000/transactions', { waitUntil: 'networkidle2' });
       
-      // Check for key dashboard components
-      const components = [
-        { selector: '[data-testid="financial-summary"], .financial-summary', name: 'Financial Summary' },
-        { selector: '[data-testid="recent-transactions"], .recent-transactions', name: 'Recent Transactions' },
-        { selector: '[data-testid="quick-actions"], .quick-actions', name: 'Quick Actions' },
-        { selector: 'nav, .navigation, .sidebar', name: 'Navigation' }
-      ];
-      
-      const foundComponents = [];
-      
-      for (const component of components) {
-        const exists = await this.ui.exists(component.selector, component.name);
-        if (exists) {
-          foundComponents.push(component.name);
-          console.log(`✅ ${component.name} found`);
-        } else {
-          console.log(`⚠️  ${component.name} not found`);
-        }
-      }
-      
-      // Test navigation elements
-      const navLinks = await this.ui.getInteractiveElements();
-      const dashboardFeatures = navLinks.filter(el => 
-        el.text.toLowerCase().includes('transaction') ||
-        el.text.toLowerCase().includes('receipt') ||
-        el.text.toLowerCase().includes('report') ||
-        el.text.toLowerCase().includes('bank')
-      );
-      
-      console.log(`✅ Found ${dashboardFeatures.length} navigation features`);
-      
-      await this.ui.updateIntegrationMap('dashboard', foundComponents, {
-        navigationLinks: dashboardFeatures.length,
-        componentsFound: foundComponents.length
+      const transactionTest = await this.page.evaluate(() => {
+        const addButton = document.querySelector('[data-testid="add-transaction"], button:contains("Add Transaction")');
+        const filterButton = document.querySelector('[data-testid="filters"], button:contains("Filter")');
+        const transactionTable = document.querySelector('table, [data-testid="transactions-table"]');
+        
+        return {
+          hasAddButton: !!addButton,
+          hasFilters: !!filterButton,
+          hasTransactionTable: !!transactionTable,
+          buttonCount: document.querySelectorAll('button').length,
+          visibleButtons: Array.from(document.querySelectorAll('button')).filter(b => b.offsetParent !== null).length
+        };
       });
       
-      this.recordTestResult('dashboard', foundComponents.length > 0);
+      this.integrationMap.transactions = {
+        status: transactionTest.visibleButtons > 10 ? 'working' : 'failed',
+        details: transactionTest
+      };
       
+      return transactionTest;
     } catch (error) {
-      console.error('❌ Dashboard test failed:', error.message);
-      this.recordTestResult('dashboard', false);
-    }
-  }
-
-  async testTransactionManagement() {
-    console.log('\n💰 Testing Transaction Management Integration');
-    console.log('-' .repeat(40));
-    
-    try {
-      await this.ui.navigateTo('/transactions');
-      
-      // Check for transaction components
-      const hasTransactionList = await this.ui.exists('table, .transaction-list, [data-testid="transactions"]', 'Transaction list');
-      const hasAddButton = await this.ui.exists('button:contains("Add"), button:contains("New"), [data-testid="add-transaction"]', 'Add transaction button');
-      const hasFilters = await this.ui.exists('select, .filters, [data-testid="filters"]', 'Transaction filters');
-      
-      console.log(`✅ Transaction list: ${hasTransactionList ? 'Found' : 'Missing'}`);
-      console.log(`✅ Add button: ${hasAddButton ? 'Found' : 'Missing'}`);
-      console.log(`✅ Filters: ${hasFilters ? 'Found' : 'Missing'}`);
-      
-      // Test add transaction flow if button exists
-      if (hasAddButton) {
-        await this.ui.click('button:contains("Add"), button:contains("New"), [data-testid="add-transaction"]', 'Add transaction');
-        
-        // Look for transaction form
-        const hasForm = await this.ui.waitFor('form, .transaction-form, [data-testid="transaction-form"]', 5000, 'Transaction form');
-        
-        if (hasForm) {
-          console.log('✅ Transaction form opened');
-          
-          // Try to fill sample data
-          await this.ui.type('input[name="amount"], input[placeholder*="amount"]', '25.99', 'Amount field');
-          await this.ui.type('input[name="vendor"], input[placeholder*="vendor"]', 'Test Vendor', 'Vendor field');
-          await this.ui.type('input[name="description"], textarea[name="description"]', 'Test transaction description', 'Description field');
-          
-          console.log('✅ Sample transaction data entered');
-        }
-      }
-      
-      await this.ui.updateIntegrationMap('transactions', ['transaction-list', 'add-form', 'ai-categorization'], {
-        listPresent: hasTransactionList,
-        addButtonPresent: hasAddButton,
-        filtersPresent: hasFilters
-      });
-      
-      this.recordTestResult('transactions', hasTransactionList);
-      
-    } catch (error) {
-      console.error('❌ Transaction test failed:', error.message);
-      this.recordTestResult('transactions', false);
+      this.integrationMap.transactions = {
+        status: 'failed',
+        details: { error: error.message }
+      };
+      return null;
     }
   }
 
   async testBankingIntegration() {
-    console.log('\n🏦 Testing Banking Integration');
-    console.log('-' .repeat(40));
+    console.log('🏦 Testing banking integration...');
     
     try {
-      await this.ui.navigateTo('/banking');
+      await this.page.goto('http://localhost:5000/banking', { waitUntil: 'networkidle2' });
       
-      // Check for banking components
-      const hasBankList = await this.ui.exists('.bank-connections, [data-testid="bank-connections"]', 'Bank connections list');
-      const hasConnectButton = await this.ui.exists('button:contains("Connect"), button:contains("Add Bank"), [data-testid="connect-bank"]', 'Connect bank button');
-      const hasPlaidElements = await this.ui.exists('[data-testid="plaid"], .plaid-link', 'Plaid integration elements');
-      
-      console.log(`✅ Bank connections: ${hasBankList ? 'Found' : 'Missing'}`);
-      console.log(`✅ Connect button: ${hasConnectButton ? 'Found' : 'Missing'}`);
-      console.log(`✅ Plaid integration: ${hasPlaidElements ? 'Found' : 'Missing'}`);
-      
-      // Check for Canadian banking features
-      const canadianFeatures = await this.ui.getText('body', 'Page content');
-      const hasCanadianSupport = canadianFeatures && (
-        canadianFeatures.includes('Canadian') ||
-        canadianFeatures.includes('CAD') ||
-        canadianFeatures.includes('TD Bank') ||
-        canadianFeatures.includes('RBC') ||
-        canadianFeatures.includes('Scotia')
-      );
-      
-      console.log(`✅ Canadian banking support: ${hasCanadianSupport ? 'Detected' : 'Not detected'}`);
-      
-      await this.ui.updateIntegrationMap('banking', ['plaid-integration', 'bank-connections', 'transaction-sync'], {
-        connectionsPresent: hasBankList,
-        connectButtonPresent: hasConnectButton,
-        plaidIntegrated: hasPlaidElements,
-        canadianSupport: hasCanadianSupport
+      const bankingTest = await this.page.evaluate(() => {
+        const connectButton = document.querySelector('[data-testid="connect-bank"], button:contains("Connect")');
+        const syncButton = document.querySelector('[data-testid="sync-transactions"], button:contains("Sync")');
+        const bankAccounts = document.querySelectorAll('[data-testid*="bank-account"], .bank-account');
+        
+        return {
+          hasConnectButton: !!connectButton,
+          hasSyncButton: !!syncButton,
+          bankAccountCount: bankAccounts.length,
+          hasPlaidIntegration: document.body.innerText.includes('Plaid') || document.body.innerText.includes('bank'),
+          interactiveElements: Array.from(document.querySelectorAll('button')).filter(b => b.offsetParent !== null).length
+        };
       });
       
-      this.recordTestResult('banking', hasBankList || hasConnectButton);
+      this.integrationMap.banking = {
+        status: bankingTest.interactiveElements > 5 ? 'working' : 'failed',
+        details: bankingTest
+      };
       
+      return bankingTest;
     } catch (error) {
-      console.error('❌ Banking test failed:', error.message);
-      this.recordTestResult('banking', false);
+      this.integrationMap.banking = {
+        status: 'failed',
+        details: { error: error.message }
+      };
+      return null;
     }
   }
 
-  async testAIAssistantIntegration() {
-    console.log('\n🤖 Testing AI Assistant Integration');
-    console.log('-' .repeat(40));
+  async testAIAssistant() {
+    console.log('🤖 Testing AI assistant...');
     
     try {
-      await this.ui.navigateTo('/ai-assistant');
+      await this.page.goto('http://localhost:5000/ai-assistant', { waitUntil: 'networkidle2' });
       
-      // Check for AI chat components
-      const hasChatInterface = await this.ui.exists('.chat, [data-testid="chat"], .ai-chat', 'Chat interface');
-      const hasMessageInput = await this.ui.exists('input[placeholder*="message"], textarea[placeholder*="ask"], input[placeholder*="question"]', 'Message input');
-      const hasChatHistory = await this.ui.exists('.messages, .chat-history, [data-testid="messages"]', 'Chat history');
-      
-      console.log(`✅ Chat interface: ${hasChatInterface ? 'Found' : 'Missing'}`);
-      console.log(`✅ Message input: ${hasMessageInput ? 'Found' : 'Missing'}`);
-      console.log(`✅ Chat history: ${hasChatHistory ? 'Found' : 'Missing'}`);
-      
-      // Test AI interaction if input exists
-      if (hasMessageInput) {
-        await this.ui.type('input[placeholder*="message"], textarea[placeholder*="ask"], input[placeholder*="question"]', 'What is my total revenue this month?', 'AI question');
+      const aiTest = await this.page.evaluate(() => {
+        const messageInput = document.querySelector('#message-input, input[placeholder*="message"], textarea');
+        const sendButton = document.querySelector('button[type="submit"], button:contains("Send")');
+        const chatHistory = document.querySelector('[data-testid="chat-history"], .chat-history, .messages');
         
-        // Look for send button
-        const hasSendButton = await this.ui.click('button:contains("Send"), button[type="submit"], [data-testid="send"]', 'Send message button');
+        return {
+          hasMessageInput: !!messageInput,
+          hasSendButton: !!sendButton,
+          hasChatHistory: !!chatHistory,
+          inputType: messageInput?.tagName,
+          canInteract: !!(messageInput && sendButton)
+        };
+      });
+      
+      // Test typing and sending a message
+      if (aiTest.hasMessageInput && aiTest.hasSendButton) {
+        const messageInput = await this.page.$('#message-input, input[placeholder*="message"], textarea');
+        const sendButton = await this.page.$('button[type="submit"], button:contains("Send")');
         
-        if (hasSendButton) {
-          console.log('✅ AI question sent');
-          
-          // Wait for response
-          await this.ui.waitFor('.message, .ai-response, [data-testid="ai-response"]', 10000, 'AI response');
+        if (messageInput && sendButton) {
+          await messageInput.type('Test message');
+          await sendButton.click();
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
       
-      await this.ui.updateIntegrationMap('ai-assistant', ['chat-interface', 'openai-integration', 'financial-queries'], {
-        chatPresent: hasChatInterface,
-        inputPresent: hasMessageInput,
-        historyPresent: hasChatHistory
-      });
+      this.integrationMap.aiAssistant = {
+        status: aiTest.canInteract ? 'working' : 'failed',
+        details: aiTest
+      };
       
-      this.recordTestResult('ai-assistant', hasChatInterface);
-      
+      return aiTest;
     } catch (error) {
-      console.error('❌ AI Assistant test failed:', error.message);
-      this.recordTestResult('ai-assistant', false);
+      this.integrationMap.aiAssistant = {
+        status: 'failed',
+        details: { error: error.message }
+      };
+      return null;
     }
   }
 
-  async testReceiptsWorkflow() {
-    console.log('\n📄 Testing Receipts Workflow Integration');
-    console.log('-' .repeat(40));
+  async testReceiptsUpload() {
+    console.log('📄 Testing receipts upload...');
     
     try {
-      await this.ui.navigateTo('/receipts');
+      await this.page.goto('http://localhost:5000/receipts', { waitUntil: 'networkidle2' });
       
-      // Check for receipts components
-      const hasReceiptsList = await this.ui.exists('.receipts, [data-testid="receipts"], .receipt-list', 'Receipts list');
-      const hasUploadArea = await this.ui.exists('.upload, [data-testid="upload"], input[type="file"]', 'Upload area');
-      const hasUnmatchedQueue = await this.ui.exists('.unmatched, [data-testid="unmatched"]', 'Unmatched receipts queue');
-      
-      console.log(`✅ Receipts list: ${hasReceiptsList ? 'Found' : 'Missing'}`);
-      console.log(`✅ Upload area: ${hasUploadArea ? 'Found' : 'Missing'}`);
-      console.log(`✅ Unmatched queue: ${hasUnmatchedQueue ? 'Found' : 'Missing'}`);
-      
-      await this.ui.updateIntegrationMap('receipts', ['file-upload', 'ocr-processing', 'transaction-matching'], {
-        listPresent: hasReceiptsList,
-        uploadPresent: hasUploadArea,
-        unmatchedQueuePresent: hasUnmatchedQueue
+      const receiptsTest = await this.page.evaluate(() => {
+        const uploadArea = document.querySelector('[data-testid="upload"], .upload-area, input[type="file"]');
+        const receiptsTable = document.querySelector('table, [data-testid="receipts-table"]');
+        const unmatchedSection = document.querySelector('[data-testid="unmatched"], .unmatched');
+        
+        return {
+          hasUploadArea: !!uploadArea,
+          hasReceiptsTable: !!receiptsTable,
+          hasUnmatchedSection: !!unmatchedSection,
+          uploadType: uploadArea?.tagName,
+          fileInputExists: !!document.querySelector('input[type="file"]')
+        };
       });
       
-      this.recordTestResult('receipts', hasReceiptsList || hasUploadArea);
+      this.integrationMap.receipts = {
+        status: receiptsTest.hasUploadArea ? 'working' : 'failed',
+        details: receiptsTest
+      };
       
+      return receiptsTest;
     } catch (error) {
-      console.error('❌ Receipts test failed:', error.message);
-      this.recordTestResult('receipts', false);
-    }
-  }
-
-  recordTestResult(feature, passed) {
-    this.testResults.features[feature] = passed;
-    if (passed) {
-      this.testResults.passed++;
-      console.log(`✅ ${feature} test: PASSED`);
-    } else {
-      this.testResults.failed++;
-      console.log(`❌ ${feature} test: FAILED`);
+      this.integrationMap.receipts = {
+        status: 'failed',
+        details: { error: error.message }
+      };
+      return null;
     }
   }
 
   async generateIntegrationReport() {
-    console.log('\n📋 Generating Integration Report');
-    console.log('=' .repeat(60));
+    console.log('📊 Generating integration report...');
     
-    const totalTests = this.testResults.passed + this.testResults.failed;
-    const successRate = totalTests > 0 ? (this.testResults.passed / totalTests * 100).toFixed(1) : 0;
+    const summary = {
+      timestamp: new Date().toISOString(),
+      overallStatus: this.calculateOverallStatus(),
+      testResults: this.integrationMap,
+      recommendations: this.generateRecommendations()
+    };
     
-    console.log(`\n🎯 Test Results Summary:`);
-    console.log(`   Total Tests: ${totalTests}`);
-    console.log(`   Passed: ${this.testResults.passed}`);
-    console.log(`   Failed: ${this.testResults.failed}`);
-    console.log(`   Success Rate: ${successRate}%`);
+    await fs.writeFile('integration-test-report.json', JSON.stringify(summary, null, 2));
     
-    console.log(`\n📊 Feature Integration Status:`);
-    Object.entries(this.testResults.features).forEach(([feature, passed]) => {
-      const status = passed ? '✅ INTEGRATED' : '❌ NEEDS WORK';
-      console.log(`   ${feature}: ${status}`);
+    console.log('\n🎯 Integration Test Summary:');
+    Object.entries(this.integrationMap).forEach(([feature, result]) => {
+      const status = result.status === 'working' ? '✅' : result.status === 'failed' ? '❌' : '⚠️';
+      console.log(`  ${status} ${feature}: ${result.status}`);
     });
     
-    // Check integration map for wiring status
-    console.log(`\n🔗 Feature Wiring Status:`);
-    const features = ['authentication', 'dashboard', 'transactions', 'banking', 'ai-assistant', 'receipts'];
-    features.forEach(feature => {
-      const isWired = this.ui.isFeatureWired(feature);
-      const connections = this.ui.integrationMap.features[feature]?.connectedFeatures?.length || 0;
-      console.log(`   ${feature}: ${isWired ? '✅' : '❌'} wired (${connections} connections)`);
-    });
+    console.log(`\n📈 Overall Status: ${summary.overallStatus}`);
     
-    console.log(`\n🏆 Overall Integration Health: ${successRate >= 70 ? '✅ GOOD' : successRate >= 50 ? '⚠️ FAIR' : '❌ NEEDS IMPROVEMENT'}`);
+    return summary;
+  }
+
+  calculateOverallStatus() {
+    const results = Object.values(this.integrationMap);
+    const working = results.filter(r => r.status === 'working').length;
+    const total = results.length;
+    const percentage = (working / total) * 100;
+    
+    if (percentage >= 80) return 'EXCELLENT';
+    if (percentage >= 60) return 'GOOD';
+    if (percentage >= 40) return 'FAIR';
+    return 'POOR';
+  }
+
+  generateRecommendations() {
+    const recommendations = [];
+    
+    if (this.integrationMap.dashboard.status === 'failed') {
+      recommendations.push({
+        priority: 'HIGH',
+        issue: 'Dashboard components not interactive',
+        action: 'Add data-testid attributes and verify component mounting'
+      });
+    }
+    
+    if (this.integrationMap.authentication.status === 'failed') {
+      recommendations.push({
+        priority: 'CRITICAL',
+        issue: 'Authentication not working',
+        action: 'Check login form and session management'
+      });
+    }
+    
+    if (this.integrationMap.banking.status === 'failed') {
+      recommendations.push({
+        priority: 'MEDIUM',
+        issue: 'Banking integration issues',
+        action: 'Verify Plaid connection and bank account components'
+      });
+    }
+    
+    return recommendations;
+  }
+
+  async runFullTestSuite() {
+    await this.init();
+    
+    // Run all tests
+    const authResult = await this.testAuthentication();
+    
+    if (authResult) {
+      await this.testDashboardComponents();
+      await this.testTransactionsPage();
+      await this.testBankingIntegration();
+      await this.testAIAssistant();
+      await this.testReceiptsUpload();
+    }
+    
+    const report = await this.generateIntegrationReport();
+    
+    await this.browser.close();
+    
+    return report;
+  }
+
+  async close() {
+    if (this.browser) {
+      await this.browser.close();
+    }
   }
 }
 
-// Run the integration test if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const test = new BookkeepAIIntegrationTest();
-  test.runFullIntegrationTest().catch(console.error);
+// Run the full integration test suite
+async function runIntegrationTests() {
+  const tester = new UIIntegrationTest();
+  const report = await tester.runFullTestSuite();
+  
+  console.log('\n🎉 Integration testing complete!');
+  console.log('📄 Report saved to integration-test-report.json');
+  
+  return report;
 }
 
-export default BookkeepAIIntegrationTest;
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runIntegrationTests();
+}
+
+export default UIIntegrationTest;

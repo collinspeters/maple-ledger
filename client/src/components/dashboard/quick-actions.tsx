@@ -124,6 +124,7 @@ export default function QuickActions() {
                   onClick={action.onClick}
                   disabled={isLoading}
                   className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors justify-start h-auto"
+                  data-testid={`quick-action-${action.id}`}
                 >
                   <div className={`w-8 h-8 ${action.iconBg} rounded-lg flex items-center justify-center`}>
                     <Icon className={`${action.iconColor} text-sm h-4 w-4 ${

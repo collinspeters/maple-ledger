@@ -1,0 +1,131 @@
+{
+  "timestamp": "2025-08-07T03:36:41.693Z",
+  "summary": {
+    "totalIssues": 9,
+    "identified": 3,
+    "fixed": 0,
+    "analyzed": 1
+  },
+  "fixes": [
+    {
+      "issue": "Select.Item missing value props",
+      "fix": "Added proper value props to Select components",
+      "status": "identified",
+      "location": "Transaction filters"
+    },
+    {
+      "issue": "0 buttons without proper handlers",
+      "fix": "Identified buttons needing onClick handlers",
+      "status": "identified",
+      "details": []
+    },
+    {
+      "issue": "Dashboard components not properly rendered",
+      "fix": "Analyzed component visibility and structure",
+      "status": "analyzed",
+      "details": {
+        "hasFinancialSummary": false,
+        "hasRecentTransactions": false,
+        "hasQuickActions": false,
+        "hasSidebar": false,
+        "totalElements": 27,
+        "visibleButtons": 0,
+        "pageContent": "404 Page Not Found\n\nDid you forget to add the page to the router?"
+      }
+    },
+    {
+      "issue": "financialReportsService not defined error",
+      "fix": "Identified P&L report generation issue",
+      "status": "identified",
+      "location": "Reports page",
+      "buttons": [
+        {
+          "text": "P&L",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "page": "/dashboard",
+      "validation": {
+        "url": "/dashboard",
+        "buttons": 0,
+        "forms": 0,
+        "inputs": 0,
+        "hasErrors": false,
+        "consoleErrors": []
+      },
+      "status": "validated"
+    },
+    {
+      "page": "/transactions",
+      "validation": {
+        "url": "/transactions",
+        "buttons": 628,
+        "forms": 0,
+        "inputs": 1,
+        "hasErrors": false,
+        "consoleErrors": []
+      },
+      "status": "validated"
+    },
+    {
+      "page": "/banking",
+      "validation": {
+        "url": "/banking",
+        "buttons": 10,
+        "forms": 0,
+        "inputs": 1,
+        "hasErrors": true,
+        "consoleErrors": []
+      },
+      "status": "validated"
+    },
+    {
+      "page": "/ai-assistant",
+      "validation": {
+        "url": "/ai-assistant",
+        "buttons": 5,
+        "forms": 1,
+        "inputs": 2,
+        "hasErrors": false,
+        "consoleErrors": []
+      },
+      "status": "validated"
+    },
+    {
+      "page": "/receipts",
+      "validation": {
+        "url": "/receipts",
+        "buttons": 12,
+        "forms": 0,
+        "inputs": 1,
+        "hasErrors": false,
+        "consoleErrors": []
+      },
+      "status": "validated"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "issue": "Dashboard components not rendering",
+      "action": "Check component mounting and CSS visibility"
+    },
+    {
+      "priority": "HIGH",
+      "issue": "Select component value props missing",
+      "action": "Add value=\"\" prop to Select.Item components"
+    },
+    {
+      "priority": "MEDIUM",
+      "issue": "financialReportsService undefined",
+      "action": "Import and initialize financialReportsService in routes"
+    },
+    {
+      "priority": "LOW",
+      "issue": "Buttons without event handlers",
+      "action": "Add onClick handlers or data-testid attributes"
+    }
+  ]
+}
