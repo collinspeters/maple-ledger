@@ -14,7 +14,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
     select: (data) => data.slice(0, 5), // Only process first 5 for performance
   });
 
-  if (isLoading) {
+  if (isLoading || !recentTransactions) {
     return (
       <Card className="shadow-card border-0 rounded-xl bg-white recent-transactions" data-testid="recent-transactions">
         <CardHeader>

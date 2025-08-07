@@ -56,9 +56,12 @@ const TransactionRow = React.memo(({
   onUpdate,
   categories,
   accounts,
-  isEditing = false,
-  onEditToggle = () => {}
-}: TransactionRowProps) {
+  isEditing,
+  onEditToggle
+}: TransactionRowProps) => {
+  // Set defaults inside the function body
+  const editing = isEditing || false;
+  const handleEditToggle = onEditToggle || (() => {});
   const [editingFields, setEditingFields] = useState<Record<string, boolean>>({});
   const [tempValues, setTempValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
