@@ -1,319 +1,158 @@
-const InteractiveWebAgent = require('./interactive-agent');
+import puppeteer from 'puppeteer';
 
-class IssueFixerAgent extends InteractiveWebAgent {
-  constructor() {
-    super();
-    this.issuesFound = [];
-    this.fixesApplied = [];
-  }
+async function identifyAndFixTransactionIssues() {
+  console.log('🔧 Identifying and Fixing Transaction Display Issues');
+  
+  const browser = await puppeteer.launch({
+    headless: false,
+    args: ['--no-sandbox'],
+    defaultViewport: { width: 1920, height: 1080 }
+  });
 
-  async analyzeAndFix() {
-    console.log('🔍 Starting comprehensive issue analysis and fixing...');
-    
-    await this.init();
-    await this.performLogin();
-    
-    // Analyze each page systematically
-    const pages = [
-      { url: '/dashboard', name: 'Dashboard' },
-      { url: '/transactions', name: 'Transactions' },
-      { url: '/banking', name: 'Banking' },
-      { url: '/ai-assistant', name: 'AI Assistant' },
-      { url: '/receipts', name: 'Receipts' }
-    ];
-    
-    for (const page of pages) {
-      await this.analyzePage(page);
+  const page = await browser.newPage();
+  
+  // Monitor all console logs for debugging
+  page.on('console', msg => {
+    const text = msg.text();
+    if (text.includes('🔍 Filtering transactions') || text.includes('🎯 After filtering')) {
+      console.log(`📊 TRANSACTION DEBUG: ${text}`);
+    } else if (msg.type() === 'error') {
+      console.log(`❌ ERROR: ${text}`);
     }
-    
-    // Generate fix recommendations
-    await this.generateFixRecommendations();
-    
-    await this.saveReport();
-    await this.close();
-  }
+  });
 
-  async analyzePage(pageInfo) {
-    console.log(`\n🔍 Analyzing ${pageInfo.name}...`);
-    await this.navigateTo(`http://localhost:5000${pageInfo.url}`);
+  try {
+    // Step 1: Login
+    console.log('🔐 Logging in...');
+    await page.goto('http://localhost:5000/');
+    await page.waitForSelector('input[type="email"]', { timeout: 10000 });
+    await page.type('input[type="email"]', 'demo@bookkeepai.com');
+    await page.type('input[type="password"]', 'password123');
+    await page.click('button[type="submit"]');
     
-    // Check for errors in console
-    const consoleErrors = await this.page.evaluate(() => {
-      const errors = [];
-      // This would capture any JavaScript errors on the page
-      return errors;
-    });
-    
-    // Check for broken interactive elements
-    const brokenElements = await this.findBrokenElements();
-    
-    // Check for missing data-testid attributes
-    const missingTestIds = await this.findMissingTestIds();
-    
-    // Check for accessibility issues
-    const a11yIssues = await this.findAccessibilityIssues();
-    
-    this.issuesFound.push({
-      page: pageInfo.name,
-      url: pageInfo.url,
-      brokenElements,
-      missingTestIds,
-      a11yIssues,
-      consoleErrors
-    });
-    
-    console.log(`  Found ${brokenElements.length} broken elements`);
-    console.log(`  Found ${missingTestIds.length} missing test IDs`);
-    console.log(`  Found ${a11yIssues.length} accessibility issues`);
-  }
+    // Wait for login to complete
+    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
+    console.log('✅ Login successful');
 
-  async findBrokenElements() {
-    return await this.page.evaluate(() => {
-      const issues = [];
-      
-      // Check buttons without proper handlers
-      document.querySelectorAll('button').forEach((btn, index) => {
-        if (btn.offsetParent !== null) { // visible
-          const hasHandler = btn.onclick || 
-                           btn.getAttribute('data-testid') || 
-                           btn.closest('form') ||
-                           btn.type === 'submit';
-          
-          if (!hasHandler && btn.textContent.trim()) {
-            issues.push({
-              type: 'button',
-              text: btn.textContent.trim(),
-              issue: 'No click handler',
-              selector: `button:nth-child(${index + 1})`
-            });
+    // Step 2: Navigate to transactions and monitor
+    console.log('📊 Navigating to transactions page...');
+    await page.goto('http://localhost:5000/transactions');
+    await page.waitForLoadState('networkidle');
+    
+    // Wait for data to load
+    await new Promise(resolve => setTimeout(resolve, 8000));
+    
+    // Step 3: Analyze the current state
+    const pageState = await page.evaluate(() => {
+      const result = {
+        url: window.location.href,
+        hasTable: !!document.querySelector('table'),
+        tableRows: document.querySelectorAll('tr').length,
+        bodyRows: document.querySelectorAll('tbody tr').length,
+        hasTransactionData: false,
+        hasDebugInfo: false,
+        debugText: null,
+        transactionCountText: null,
+        pageContent: document.body.innerText.substring(0, 800),
+        hasFilters: !!document.querySelector('[data-testid="filters"]'),
+        filtersVisible: false,
+        hasNoTransactionsMessage: false
+      };
+
+      // Check transaction count display
+      const countElements = document.querySelectorAll('p');
+      for (const el of countElements) {
+        if (el.innerText.includes('transactions')) {
+          result.transactionCountText = el.innerText;
+          break;
+        }
+      }
+
+      // Check for debug info
+      const debugEl = document.querySelector('.text-red-500');
+      if (debugEl) {
+        result.hasDebugInfo = true;
+        result.debugText = debugEl.innerText;
+      }
+
+      // Check if filters are visible
+      const filtersContainer = document.querySelector('[data-testid="filters"]');
+      if (filtersContainer) {
+        result.filtersVisible = window.getComputedStyle(filtersContainer).display !== 'none';
+      }
+
+      // Check for no transactions message
+      result.hasNoTransactionsMessage = document.body.innerText.includes('No transactions found');
+
+      // Check if table has actual data
+      const tableBody = document.querySelector('tbody');
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        for (const row of rows) {
+          if (row.innerText.includes('$') || row.innerText.includes('CAD') || 
+              row.innerText.match(/\d{4}-\d{2}-\d{2}/)) {
+            result.hasTransactionData = true;
+            break;
           }
         }
-      });
-      
-      // Check links without href
-      document.querySelectorAll('a').forEach((link, index) => {
-        if (link.offsetParent !== null && !link.href.includes('javascript:void')) {
-          if (!link.href || link.href === window.location.href + '#') {
-            issues.push({
-              type: 'link',
-              text: link.textContent.trim(),
-              issue: 'Missing or invalid href',
-              selector: `a:nth-child(${index + 1})`
-            });
-          }
-        }
-      });
-      
-      // Check forms without submit handlers
-      document.querySelectorAll('form').forEach((form, index) => {
-        if (!form.onsubmit && !form.action) {
-          issues.push({
-            type: 'form',
-            issue: 'No submit handler or action',
-            selector: `form:nth-child(${index + 1})`
-          });
-        }
-      });
-      
-      return issues;
-    });
-  }
+      }
 
-  async findMissingTestIds() {
-    return await this.page.evaluate(() => {
-      const issues = [];
-      
-      // Important interactive elements that should have test IDs
-      const importantSelectors = [
-        'button',
-        'input[type="submit"]',
-        'input[type="button"]',
-        'a[role="button"]',
-        '.upload',
-        '.filter',
-        '.add-button',
-        '.connect-button'
-      ];
-      
-      importantSelectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach((el, index) => {
-          if (el.offsetParent !== null && !el.getAttribute('data-testid')) {
-            issues.push({
-              selector: `${selector}:nth-child(${index + 1})`,
-              text: el.textContent.trim(),
-              recommendation: `Add data-testid attribute`
-            });
-          }
-        });
-      });
-      
-      return issues;
+      return result;
     });
-  }
 
-  async findAccessibilityIssues() {
-    return await this.page.evaluate(() => {
-      const issues = [];
-      
-      // Check for images without alt text
-      document.querySelectorAll('img').forEach((img, index) => {
-        if (!img.alt) {
-          issues.push({
-            type: 'img',
-            issue: 'Missing alt text',
-            selector: `img:nth-child(${index + 1})`
-          });
-        }
-      });
-      
-      // Check for buttons without accessible names
-      document.querySelectorAll('button').forEach((btn, index) => {
-        const hasAccessibleName = btn.textContent.trim() || 
-                                btn.getAttribute('aria-label') || 
-                                btn.getAttribute('title');
-        if (!hasAccessibleName) {
-          issues.push({
-            type: 'button',
-            issue: 'Missing accessible name',
-            selector: `button:nth-child(${index + 1})`
-          });
-        }
-      });
-      
-      // Check for form inputs without labels
-      document.querySelectorAll('input').forEach((input, index) => {
-        if (input.type !== 'hidden') {
-          const hasLabel = input.labels?.length > 0 || 
-                         input.getAttribute('aria-label') || 
-                         input.getAttribute('placeholder');
-          if (!hasLabel) {
-            issues.push({
-              type: 'input',
-              issue: 'Missing label',
-              selector: `input:nth-child(${index + 1})`
-            });
-          }
-        }
-      });
-      
-      return issues;
-    });
-  }
+    console.log('\n📋 TRANSACTION PAGE ANALYSIS:');
+    console.log('===============================');
+    console.log(`URL: ${pageState.url}`);
+    console.log(`Has table: ${pageState.hasTable}`);
+    console.log(`Table rows: ${pageState.tableRows}`);
+    console.log(`Body rows: ${pageState.bodyRows}`);
+    console.log(`Has transaction data: ${pageState.hasTransactionData}`);
+    console.log(`Transaction count: ${pageState.transactionCountText}`);
+    console.log(`Has debug info: ${pageState.hasDebugInfo}`);
+    console.log(`Debug text: ${pageState.debugText}`);
+    console.log(`No transactions message: ${pageState.hasNoTransactionsMessage}`);
 
-  async generateFixRecommendations() {
-    console.log('\n🔧 Generating fix recommendations...');
-    
-    const recommendations = [];
-    
-    this.issuesFound.forEach(pageIssues => {
-      pageIssues.brokenElements.forEach(issue => {
-        recommendations.push({
-          page: pageIssues.page,
-          priority: 'HIGH',
-          type: 'Functionality',
-          issue: `${issue.type} "${issue.text}" has ${issue.issue}`,
-          fix: `Add proper event handler or data-testid to ${issue.selector}`,
-          code: this.generateFixCode(issue)
-        });
-      });
-      
-      pageIssues.missingTestIds.forEach(issue => {
-        recommendations.push({
-          page: pageIssues.page,
-          priority: 'MEDIUM',
-          type: 'Testing',
-          issue: `Element missing test ID: ${issue.text}`,
-          fix: `Add data-testid="${this.generateTestId(issue.text)}"`,
-          code: `<element data-testid="${this.generateTestId(issue.text)}">`
-        });
-      });
-      
-      pageIssues.a11yIssues.forEach(issue => {
-        recommendations.push({
-          page: pageIssues.page,
-          priority: 'MEDIUM',
-          type: 'Accessibility',
-          issue: `${issue.type} has ${issue.issue}`,
-          fix: this.generateA11yFix(issue)
-        });
-      });
-    });
-    
-    this.fixesApplied = recommendations;
-    
-    console.log(`📋 Generated ${recommendations.length} fix recommendations`);
-    recommendations.forEach(rec => {
-      console.log(`  ${rec.priority}: ${rec.issue}`);
-    });
-  }
+    // Step 4: Take screenshot
+    await page.screenshot({ path: 'transaction-issue-analysis.png', fullPage: true });
+    console.log('📸 Screenshot saved: transaction-issue-analysis.png');
 
-  generateFixCode(issue) {
-    switch (issue.type) {
-      case 'button':
-        return `<Button onClick={handleClick} data-testid="${this.generateTestId(issue.text)}">${issue.text}</Button>`;
-      case 'link':
-        return `<Link href="/target-page" data-testid="${this.generateTestId(issue.text)}">${issue.text}</Link>`;
-      case 'form':
-        return `<form onSubmit={handleSubmit} data-testid="form">`;
-      default:
-        return `Add appropriate handler for ${issue.type}`;
+    // Step 5: Try clicking filters button to see if that reveals more info
+    if (pageState.hasFilters) {
+      console.log('🎛️ Testing filters button...');
+      await page.click('[data-testid="filters"]');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const afterFilters = await page.evaluate(() => {
+        return {
+          filtersVisible: !!document.querySelector('.filters') && 
+                         window.getComputedStyle(document.querySelector('.filters')).display !== 'none',
+          debugInfo: document.querySelector('.text-red-500')?.innerText || 'No debug info'
+        };
+      });
+      
+      console.log(`Filters now visible: ${afterFilters.filtersVisible}`);
+      console.log(`Debug info: ${afterFilters.debugInfo}`);
     }
-  }
 
-  generateTestId(text) {
-    return text.toLowerCase()
-              .replace(/[^a-z0-9\s]/g, '')
-              .replace(/\s+/g, '-')
-              .substring(0, 30);
-  }
+    // Step 6: Check browser console for any filtering debug info
+    console.log('\n🔍 Waiting for console debug information...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-  generateA11yFix(issue) {
-    switch (issue.issue) {
-      case 'Missing alt text':
-        return 'Add descriptive alt attribute to image';
-      case 'Missing accessible name':
-        return 'Add aria-label or visible text to button';
-      case 'Missing label':
-        return 'Add label element or aria-label to input';
-      default:
-        return 'Follow accessibility best practices';
+    console.log('\n📊 SUMMARY:');
+    if (pageState.hasTable && pageState.bodyRows === 0 && pageState.transactionCountText?.includes('615')) {
+      console.log('🎯 ISSUE IDENTIFIED: Data is fetched (615 transactions) but table body is empty');
+      console.log('🔧 LIKELY CAUSE: Filtering logic is removing all transactions');
+    } else if (!pageState.hasTransactionData && pageState.hasNoTransactionsMessage) {
+      console.log('🎯 ISSUE IDENTIFIED: "No transactions found" is showing despite data being available');
+    } else {
+      console.log('🤔 ISSUE UNCLEAR: Need to investigate further');
     }
-  }
 
-  async saveReport() {
-    const report = {
-      timestamp: new Date().toISOString(),
-      summary: {
-        pagesAnalyzed: this.issuesFound.length,
-        totalIssues: this.issuesFound.reduce((sum, page) => 
-          sum + page.brokenElements.length + page.missingTestIds.length + page.a11yIssues.length, 0),
-        fixesRecommended: this.fixesApplied.length
-      },
-      detailedAnalysis: this.issuesFound,
-      recommendations: this.fixesApplied,
-      actionLog: this.actionLog
-    };
-    
-    await require('fs').promises.writeFile(
-      'issue-analysis-report.json',
-      JSON.stringify(report, null, 2)
-    );
-    
-    console.log('\n📊 Issue Analysis Report Saved');
-    console.log(`Pages Analyzed: ${report.summary.pagesAnalyzed}`);
-    console.log(`Total Issues: ${report.summary.totalIssues}`);
-    console.log(`Fixes Recommended: ${report.summary.fixesRecommended}`);
+  } catch (error) {
+    console.error('💥 Analysis failed:', error);
+  } finally {
+    await browser.close();
   }
 }
 
-// Run the issue fixer
-async function runIssueFixer() {
-  const fixer = new IssueFixerAgent();
-  await fixer.analyzeAndFix();
-}
-
-if (require.main === module) {
-  runIssueFixer();
-}
-
-module.exports = IssueFixerAgent;
+identifyAndFixTransactionIssues().catch(console.error);

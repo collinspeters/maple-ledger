@@ -45,6 +45,9 @@ export default function Transactions() {
     autoUpdates: 'all'
   });
 
+  // Debug log when component mounts
+  console.log('🚀 Transactions component mounted with filters:', filters);
+
   // Data fetching
   const { data: transactions = [], isLoading, error } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -93,7 +96,17 @@ export default function Transactions() {
       totalTransactions: transactions.length, 
       filters, 
       activeFilterCount,
-      firstTransaction: transactions[0] || 'No transactions'
+      firstTransaction: transactions[0] || 'No transactions',
+      filterBreakdown: {
+        search: !!filters.search,
+        category: filters.category !== 'all',
+        status: filters.status !== 'all',
+        type: filters.type !== 'all',
+        account: filters.account !== 'all',
+        receiptStatus: filters.receiptStatus !== 'all',
+        dateRange: !!filters.dateRange?.from,
+        autoUpdates: filters.autoUpdates !== 'all'
+      }
     });
     
     let filtered = transactions.filter(transaction => {
@@ -149,7 +162,7 @@ export default function Transactions() {
       // Auto Updates filter (AI categorization) - fixed logic to match UI options
       if (filters.autoUpdates && filters.autoUpdates !== 'all') {
         if (filters.autoUpdates === 'categorizations' && !transaction.aiCategory) return false;
-        if (filters.autoUpdates === 'merges' && !transaction.isMerged) return false;
+        if (filters.autoUpdates === 'merges' && !(transaction as any).isMerged) return false;
         if (filters.autoUpdates === 'scanned_receipts' && transaction.receiptSource !== 'scan') return false;
       }
 
@@ -178,6 +191,12 @@ export default function Transactions() {
       }
       
       return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    console.log('✅ Final filtered results:', { 
+      originalCount: transactions.length,
+      filteredCount: filtered.length,
+      firstFiltered: filtered[0] || 'No filtered results'
     });
 
     return filtered;
@@ -418,17 +437,24 @@ export default function Transactions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAndSortedTransactions.map((transaction) => (
-                    <TransactionRow
-                      key={transaction.id}
-                      transaction={transaction}
-                      isSelected={selectedTransactions.has(transaction.id)}
-                      onSelect={(selected) => handleSelectTransaction(transaction.id, selected)}
-                      onUpdate={handleUpdateTransaction}
-                      categories={categories}
-                      accounts={accounts}
-                    />
-                  ))}
+                  {filteredAndSortedTransactions.map((transaction, index) => {
+                    console.log(`🔧 Rendering transaction ${index}:`, { 
+                      id: transaction.id, 
+                      description: transaction.description?.substring(0, 30),
+                      amount: transaction.amount 
+                    });
+                    return (
+                      <TransactionRow
+                        key={transaction.id}
+                        transaction={transaction}
+                        isSelected={selectedTransactions.has(transaction.id)}
+                        onSelect={(selected) => handleSelectTransaction(transaction.id, selected)}
+                        onUpdate={handleUpdateTransaction}
+                        categories={categories}
+                        accounts={accounts}
+                      />
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

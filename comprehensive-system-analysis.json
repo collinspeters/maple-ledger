@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-08-07T05:19:17.198Z",
+  "summary": {
+    "totalIssues": 2,
+    "criticalIssues": 1,
+    "highIssues": 1,
+    "mediumIssues": 0,
+    "screenshotsTaken": 2
+  },
+  "issues": [
+    {
+      "type": "console_error",
+      "severity": "high",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "page": "http://localhost:5000/",
+      "timestamp": "2025-08-07T05:19:10.903Z"
+    },
+    {
+      "type": "auth_failure",
+      "severity": "critical",
+      "message": "Login failed - user not redirected or authenticated",
+      "page": "http://localhost:5000/"
+    }
+  ],
+  "testResults": {
+    "authentication": {
+      "success": false,
+      "currentUrl": "http://localhost:5000/",
+      "hasLoginForm": true,
+      "timestamp": "2025-08-07T05:19:17.197Z"
+    }
+  },
+  "screenshots": [
+    {
+      "filename": "system-analysis-2025-08-07T05-19-12-758Z.png",
+      "description": "Login page loaded",
+      "timestamp": "2025-08-07T05-19-12-758Z"
+    },
+    {
+      "filename": "system-analysis-2025-08-07T05-19-16-985Z.png",
+      "description": "After login attempt",
+      "timestamp": "2025-08-07T05-19-16-985Z"
+    }
+  ],
+  "recommendations": [
+    "CRITICAL: Fix authentication and data display issues immediately"
+  ]
+}
