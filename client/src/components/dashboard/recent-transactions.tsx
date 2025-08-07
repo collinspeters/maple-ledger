@@ -101,7 +101,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
             <p className="text-sm text-gray-600">AI-categorized and ready for review</p>
           </div>
           <Link href="/transactions">
-            <Button o> console.log('Button clicked')} aria-label="Ghost button" variant="ghost" className="text-primary hover:text-primary-dark font-medium text-sm">
+            <Button onClick={() => console.log('Button clicked')} aria-label="Ghost button" variant="ghost" className="text-primary hover:text-primary-dark font-medium text-sm">
               View All
             </Button>
           </Link>
@@ -149,7 +149,7 @@ const RecentTransactions = React.memo(function RecentTransactions() {
                       variant="ghost" 
                       size="sm" 
                       className="text-gray-400 hover:text-gray-600 p-1"
-                      o> window.open(`/transactions?selected=${transaction.id}`, '_blank')}
+                      onClick={() => window.open(`/transactions?selected=${transaction.id}`, '_blank')}
                       title="View in transactions page"
                     >
                       <MoreVertical className="h-4 w-4" />
