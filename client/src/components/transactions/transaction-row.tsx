@@ -144,24 +144,26 @@ export function TransactionRow({
   // Add error boundary for this component
   try {
     return (
-    <tr className={`
-      border-b transition-colors hover:bg-muted/50
-      ${isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
-      ${transaction.needsReview ? 'border-l-4 border-l-orange-400' : ''}
-    `}>
+      <tr className={`
+        border-b transition-colors hover:bg-muted/50 min-h-[60px] bg-white
+        ${isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
+        ${transaction.needsReview ? 'border-l-4 border-l-orange-400' : ''}
+      `} style={{ minHeight: '60px', backgroundColor: '#f8f9fa' }}>
       {/* Selection Checkbox */}
-      <td className="w-12 p-4">
+      <td className="w-12 p-4" style={{ backgroundColor: '#e3f2fd', minHeight: '60px' }}>
         <Checkbox
           checked={isSelected}
           onCheckedChange={onSelect}
         />
+        <div className="text-xs text-blue-600">✓</div>
       </td>
 
       {/* Date */}
-      <td className="p-4">
-        <div className="text-sm">
+      <td className="p-4" style={{ backgroundColor: '#fff3e0' }}>
+        <div className="text-sm font-bold text-orange-800">
           {transaction.date ? format(new Date(transaction.date), 'MMM d, yyyy') : 'No date'}
         </div>
+        <div className="text-xs text-orange-600">DATE</div>
       </td>
 
       {/* Description */}
@@ -367,12 +369,12 @@ export function TransactionRow({
       </td>
     </tr>
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error(`❌ Error rendering transaction ${transaction.id}:`, error);
     return (
       <tr className="border-b bg-red-50">
         <td colSpan={7} className="p-4 text-red-600">
-          Error rendering transaction: {transaction.id} - {error.message}
+          Error rendering transaction: {transaction.id} - {error?.message || 'Unknown error'}
         </td>
       </tr>
     );
