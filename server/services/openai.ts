@@ -52,15 +52,19 @@ ${categoryList}
 INCOME CATEGORIES:
 ${incomeList}
 
-IMPORTANT RULES:
-- Use ONLY the category codes provided above (e.g., "OFFICE_EXPENSES", "MEALS_ENTERTAINMENT")
-- For income transactions (positive amounts/deposits), use ONLY "BUSINESS_INCOME" or "PROFESSIONAL_INCOME"
-- NEVER use expense categories like "OTHER_EXPENSES" for income transactions
-- For negative amounts (expenses), use appropriate expense categories but NEVER use income categories
-- Consider Canadian tax compliance and T2125 form requirements
-- Use enriched merchant context to improve accuracy
-- Set confidence higher (0.8+) when merchant context clearly indicates business type
-- Remember: MEALS_ENTERTAINMENT is only 50% deductible, VEHICLE_EXPENSES require business use logs
+CRITICAL CATEGORIZATION RULES:
+1. AMOUNT ANALYSIS: If amount > 0 (positive/deposit), this is INCOME - use ONLY "BUSINESS_INCOME" or "PROFESSIONAL_INCOME"
+2. AMOUNT ANALYSIS: If amount < 0 (negative/withdrawal), this is EXPENSE - use appropriate expense categories
+3. NEVER mix income and expense categories
+4. NEVER use "OTHER_EXPENSES" for positive amounts (income)
+5. For professional services income, use "PROFESSIONAL_INCOME"
+6. For sales/product income, use "BUSINESS_INCOME"
+7. Consider Canadian tax compliance and T2125 form requirements
+8. Use enriched merchant context to improve accuracy
+9. Set confidence higher (0.8+) when merchant context clearly indicates business type
+10. Remember: MEALS_ENTERTAINMENT is only 50% deductible, VEHICLE_EXPENSES require business use logs
+
+FIRST: Analyze if amount is positive (income) or negative (expense), then choose appropriate category type.
 
 Based on the transaction details and enriched context, determine the most accurate T2125 category.
 
@@ -84,12 +88,29 @@ Respond with JSON in this exact format:
     // Validate that the returned category exists in our T2125 categories
     const validCategory = T2125_CATEGORIES.find(cat => cat.code === result.category);
     
-    // For income transactions (positive amounts), ensure proper categorization
+    // CRITICAL: Validate income vs expense category matching
     const isIncomeAmount = amount > 0;
-    const fallbackCategory = isIncomeAmount ? "BUSINESS_INCOME" : "OTHER_EXPENSES";
+    const resultIsIncomeCategory = result.category && (result.category.includes('INCOME'));
+    
+    // Validate category type matches transaction type
+    let finalCategory = result.category;
+    if (validCategory) {
+      if (isIncomeAmount && !resultIsIncomeCategory) {
+        // Income transaction but expense category chosen - force to income
+        finalCategory = "BUSINESS_INCOME";
+        console.warn(`AI chose expense category ${result.category} for income amount ${amount} - corrected to BUSINESS_INCOME`);
+      } else if (!isIncomeAmount && resultIsIncomeCategory) {
+        // Expense transaction but income category chosen - force to expense
+        finalCategory = "OTHER_EXPENSES";
+        console.warn(`AI chose income category ${result.category} for expense amount ${amount} - corrected to OTHER_EXPENSES`);
+      }
+    } else {
+      // Invalid category, use appropriate fallback
+      finalCategory = isIncomeAmount ? "BUSINESS_INCOME" : "OTHER_EXPENSES";
+    }
     
     return {
-      category: validCategory ? result.category : fallbackCategory,
+      category: finalCategory,
       confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
       explanation: result.explanation || "Unable to categorize automatically",
       isExpense: !isIncomeAmount, // Income transactions are not expenses
