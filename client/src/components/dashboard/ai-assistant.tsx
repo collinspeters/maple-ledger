@@ -36,7 +36,12 @@ export default function AiAssistant() {
     }
   };
 
-  const recentMessages = chatHistory?.slice(0, 4) || [];
+  // Get recent messages and sort them chronologically
+  const recentMessages = chatHistory 
+    ? [...chatHistory]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .slice(-4) // Take last 4 messages
+    : [];
 
   return (
     <Card className="shadow-card border-0 rounded-xl bg-white">
@@ -54,7 +59,7 @@ export default function AiAssistant() {
           {/* Chat messages - showing recent conversations */}
           {recentMessages.length > 0 ? (
             <div className="space-y-3 max-h-48 overflow-y-auto">
-              {recentMessages.reverse().map((msg) => (
+              {recentMessages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`rounded-lg p-3 ${
