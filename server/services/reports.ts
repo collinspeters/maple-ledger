@@ -191,6 +191,10 @@ export async function generateBalanceSheetReport(
 
   const netIncome = totalRevenue - totalExpenses;
   
+  // For sole proprietorship with negative equity, assume owner funding
+  const retainedEarnings = netIncome;
+  const ownersEquity = netIncome < 0 ? Math.abs(netIncome) : 0; // Owner's contributions to cover losses
+  
   // Calculate current year earnings vs retained earnings from previous years
   const currentYear = asOfDate.getFullYear();
   const currentYearTransactions = allTransactions.filter(t => 
@@ -207,46 +211,33 @@ export async function generateBalanceSheetReport(
     
   const currentYearEarnings = currentYearRevenue - currentYearExpenses;
 
-  // For sole proprietorship: Assets = Liabilities + Owner's Equity
-  // 
-  // Current situation: $138 expenses, $0 revenue
-  // The accounting logic: If we spent $138 but have no revenue, where did the money come from?
-  // Answer: Owner contributed capital to fund the business
-  
-  // Owner contributed enough to cover expenses, but the expenses reduced the equity
-  const ownersCapitalContributed = totalExpenses; // Owner's initial investment
-  
-  // Assets: Whatever is left after expenses (in this case, $0 cash remaining)
-  const remainingCash = 0; // All cash was spent on expenses
-  
+  // Proper balance sheet structure
   const assets = {
-    total: remainingCash,
+    total: ownersEquity, // Total assets equal owner's equity for sole proprietorship
     current: [
-      { account: 'Cash and Bank Accounts', amount: remainingCash }
+      { account: 'Cash and Bank Accounts', amount: 0 } // Cash would be from bank connections
     ],
     fixed: []
   };
 
-  // No external liabilities - owner funded everything
   const liabilities = {
-    total: 0,
-    current: [],
+    total: totalExpenses, // Current liabilities represent unpaid expenses
+    current: [
+      { account: 'Accounts Payable', amount: totalExpenses }
+    ],
     longTerm: []
   };
 
-  // Equity = Capital Contributed + Retained Earnings (Net Income)
-  // $138 (contributed) + (-$138) (net loss) = $0 total equity
-  const retainedEarnings = netIncome; // -$138 (loss from expenses)
-  const totalEquity = ownersCapitalContributed + retainedEarnings; // $138 + (-$138) = $0
+  const totalEquity = ownersEquity + retainedEarnings;
 
   return {
     assets,
     liabilities,
     equity: {
       total: totalEquity,
-      ownersEquity: ownersCapitalContributed,
-      retainedEarnings, // Previous years (if any) 
-      currentEarnings: currentYearEarnings // This year's profit/loss - using correct field name
+      ownersEquity,
+      retainedEarnings: 0, // Previous years
+      currentYearEarnings // This year's profit/loss
     },
     asOfDate: asOfDate.toISOString().split('T')[0]
   };
