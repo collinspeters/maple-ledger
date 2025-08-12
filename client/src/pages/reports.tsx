@@ -632,24 +632,43 @@ export default function Reports() {
                       </div>
 
                       <div className="mt-6">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Equity</h5>
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">Owner's Equity</h5>
+                        <div className="flex justify-between py-1 pl-4">
+                          <span className="text-gray-600">Owner's Capital Contributed</span>
+                          <span>{formatCurrency(balanceSheet.equity.ownersEquity || 0)}</span>
+                        </div>
                         <div className="flex justify-between py-1 pl-4">
                           <span className="text-gray-600">Retained Earnings</span>
                           <span>{formatCurrency(balanceSheet.equity.retainedEarnings)}</span>
                         </div>
                         <div className="flex justify-between py-1 pl-4">
                           <span className="text-gray-600">Current Year Earnings</span>
-                          <span>{formatCurrency(balanceSheet.equity.currentYearEarnings || 0)}</span>
+                          <span className={`${(balanceSheet.equity.currentEarnings || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {formatCurrency(balanceSheet.equity.currentEarnings || 0)}
+                          </span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
-                          <span>Total Equity</span>
-                          <span>{formatCurrency(balanceSheet.equity.total)}</span>
+                          <span>Total Owner's Equity</span>
+                          <span className={`${balanceSheet.equity.total < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {formatCurrency(balanceSheet.equity.total)}
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex justify-between font-bold text-lg border-t-2 border-gray-300 pt-3 mt-4">
                         <span>Total Liabilities & Equity</span>
                         <span>{formatCurrency(balanceSheet.liabilities.total + balanceSheet.equity.total)}</span>
+                      </div>
+                      
+                      {/* Accounting equation check */}
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="text-sm font-medium text-blue-800 mb-1">Accounting Equation Check</div>
+                        <div className="text-xs text-blue-700">
+                          Assets ({formatCurrency(balanceSheet.assets.total)}) = Liabilities ({formatCurrency(balanceSheet.liabilities.total)}) + Equity ({formatCurrency(balanceSheet.equity.total)})
+                        </div>
+                        <div className={`text-xs mt-1 font-medium ${Math.abs(balanceSheet.assets.total - (balanceSheet.liabilities.total + balanceSheet.equity.total)) < 0.01 ? 'text-green-700' : 'text-red-700'}`}>
+                          {Math.abs(balanceSheet.assets.total - (balanceSheet.liabilities.total + balanceSheet.equity.total)) < 0.01 ? '✓ Balanced' : '⚠ Not Balanced'}
+                        </div>
                       </div>
                     </div>
                   </div>
