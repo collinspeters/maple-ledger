@@ -189,6 +189,10 @@ export default function Reports() {
   });
 
   const formatCurrency = (amount: number) => {
+    // Handle NaN, null, undefined values
+    if (isNaN(amount) || amount === null || amount === undefined) {
+      return '$0.00';
+    }
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
       currency: 'CAD'
@@ -635,7 +639,7 @@ export default function Reports() {
                         </div>
                         <div className="flex justify-between py-1 pl-4">
                           <span className="text-gray-600">Current Year Earnings</span>
-                          <span>{formatCurrency(balanceSheet.equity.currentEarnings)}</span>
+                          <span>{formatCurrency(balanceSheet.equity.currentYearEarnings || 0)}</span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
                           <span>Total Equity</span>
@@ -718,14 +722,14 @@ export default function Reports() {
 
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <div className={`text-2xl font-bold mb-2 ${taxSummary.netTaxOwing >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {formatCurrency(Math.abs(taxSummary.netTaxOwing))}
+                        <div className={`text-2xl font-bold mb-2 ${(taxSummary.netTaxOwing || 0) >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {formatCurrency(Math.abs(taxSummary.netTaxOwing || 0))}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {taxSummary.netTaxOwing >= 0 ? 'Tax Owing' : 'Tax Refund'}
+                          {(taxSummary.netTaxOwing || 0) >= 0 ? 'Tax Owing' : 'Tax Refund'}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {taxSummary.netTaxOwing >= 0 ? 'Amount to remit' : 'Amount to claim'}
+                          {(taxSummary.netTaxOwing || 0) >= 0 ? 'Amount to remit' : 'Amount to claim'}
                         </div>
                       </CardContent>
                     </Card>
@@ -739,7 +743,7 @@ export default function Reports() {
                         <div key={index} className="border rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <h5 className="font-medium">{province.province}</h5>
-                            <Badge variant="secondary">{province.rate}%</Badge>
+                            <Badge variant="secondary">{Math.round((province.rate || 0) * 100)}%</Badge>
                           </div>
                           <div className="grid grid-cols-3 gap-4 text-sm">
                             <div>
@@ -752,8 +756,8 @@ export default function Reports() {
                             </div>
                             <div>
                               <div className="text-gray-600">Net</div>
-                              <div className={`font-medium ${province.net >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                {formatCurrency(Math.abs(province.net))}
+                              <div className={`font-medium ${(province.net || 0) >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {formatCurrency(Math.abs(province.net || 0))}
                               </div>
                             </div>
                           </div>
