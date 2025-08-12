@@ -72,12 +72,12 @@ export default function AIAssistant() {
     scrollToBottom();
   }, [chatHistory, isTyping]);
 
-  // Sort messages chronologically - they already come with isFromUser flag from backend
+  // Sort messages chronologically - each record is already either user or AI message
   const allMessages = (chatHistory as ChatMessage[])
     .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     .map(msg => ({
       id: msg.id,
-      content: msg.message,
+      content: msg.message, // Use the message field which contains the actual content
       isFromUser: msg.isFromUser,
       timestamp: msg.createdAt,
     }));
