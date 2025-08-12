@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Brain, Send } from "lucide-react";
 import { ChatMessage } from "@shared/schema";
-import NaturalLanguageInput from "@/components/chat/natural-language-input";
 
 export default function AiAssistant() {
   const [message, setMessage] = useState("");
