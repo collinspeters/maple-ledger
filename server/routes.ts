@@ -697,6 +697,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Expense breakdown endpoint
+  app.get("/api/expense-breakdown", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const breakdown = await storage.getExpenseBreakdown(user.id);
+      res.json(breakdown);
+    } catch (error) {
+      console.error("Error fetching expense breakdown:", error);
+      res.status(500).json({ message: "Failed to fetch expense breakdown" });
+    }
+  });
+
+  // Monthly trends endpoint
+  app.get("/api/monthly-trends", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const trends = await storage.getMonthlyTrends(user.id);
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching monthly trends:", error);
+      res.status(500).json({ message: "Failed to fetch monthly trends" });
+    }
+  });
+
+  // AI insights endpoint
+  app.get("/api/ai-insights", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const insights = await storage.getAIInsights(user.id);
+      res.json(insights);
+    } catch (error) {
+      console.error("Error fetching AI insights:", error);
+      res.status(500).json({ message: "Failed to fetch AI insights" });
+    }
+  });
+
   // AI Chat route
   app.post("/api/chat", requireAuth, requireSubscription, async (req, res) => {
     try {
