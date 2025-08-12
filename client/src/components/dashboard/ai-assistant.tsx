@@ -52,15 +52,7 @@ export default function AiAssistant() {
       
       <CardContent className="p-6">
         <div className="space-y-4">
-          {/* Natural Language Input */}
-          <NaturalLanguageInput 
-            onTransactionAdded={() => {
-              queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-              queryClient.invalidateQueries({ queryKey: ["/api/financial-summary"] });
-            }} 
-          />
-          
-          {/* Chat messages */}
+          {/* Chat messages - showing recent conversations */}
           {recentMessages.length > 0 ? (
             <div className="space-y-3 max-h-48 overflow-y-auto">
               {recentMessages.reverse().map((msg) => (
@@ -69,17 +61,29 @@ export default function AiAssistant() {
                   className={`rounded-lg p-3 ${
                     msg.isFromUser 
                       ? "bg-gray-50 ml-4" 
-                      : "bg-primary/10 mr-4"
+                      : "bg-blue-50 mr-4"
                   }`}
                 >
                   <p className="text-sm text-gray-700">{msg.message}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {msg.createdAt ? new Date(msg.createdAt).toLocaleDateString('en-CA', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    }) : 'Just now'}
+                  </p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-primary/10 rounded-lg p-3">
-              <p className="text-sm text-gray-700">
-                Hello! I'm your AI assistant. Ask me anything about your business finances, like "How much did I spend on office supplies this month?"
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <Brain className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <p className="text-sm text-gray-700 mb-2 font-medium">
+                AI Assistant Ready
+              </p>
+              <p className="text-xs text-gray-600">
+                Ask me about your finances, expenses, or get business insights
               </p>
             </div>
           )}
@@ -96,7 +100,7 @@ export default function AiAssistant() {
             <Button 
               type="submit" 
               disabled={sendMessageMutation.isPending || !message.trim()}
-              className="bg-primary hover:bg-primary-dark"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {sendMessageMutation.isPending ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -105,6 +109,18 @@ export default function AiAssistant() {
               )}
             </Button>
           </form>
+
+          <div className="text-center">
+            <a href="/ai-assistant" className="inline-block">
+              <Button 
+                variant="link" 
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 text-xs"
+              >
+                Open full AI Assistant →
+              </Button>
+            </a>
+          </div>
         </div>
       </CardContent>
     </Card>
