@@ -643,8 +643,8 @@ export default function Reports() {
                         </div>
                         <div className="flex justify-between py-1 pl-4">
                           <span className="text-gray-600">Current Year Earnings</span>
-                          <span className={`${(balanceSheet.equity.currentYearEarnings || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {formatCurrency(balanceSheet.equity.currentYearEarnings || 0)}
+                          <span className={`${(balanceSheet.equity.currentEarnings || 0) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {formatCurrency(balanceSheet.equity.currentEarnings || 0)}
                           </span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
