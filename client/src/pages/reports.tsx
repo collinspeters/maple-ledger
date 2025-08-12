@@ -265,12 +265,11 @@ export default function Reports() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      {/* Header */}
+      {/* Header - Simplified to remove duplication */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Financial Reports</h1>
-          <p className="text-gray-600 mt-2">
-            Comprehensive financial reporting for your business
+          <p className="text-gray-600">
+            Generate financial reports and insights for your business
           </p>
         </div>
         

@@ -282,13 +282,28 @@ export async function generateTrialBalanceReport(
     asOfDate
   );
 
-  // Group transactions by account/category
+  // Group transactions by account/category and create proper accounting entries
   const accountBalances = new Map<string, { debit: number; credit: number; type: string }>();
+
+  // Initialize Owner's Equity account (for balancing manual transactions)
+  accountBalances.set("Owner's Equity", { 
+    debit: 0, 
+    credit: 0, 
+    type: 'equity'
+  });
+
+  // Initialize Cash account (for balancing all transactions)
+  accountBalances.set("Cash", { 
+    debit: 0, 
+    credit: 0, 
+    type: 'asset'
+  });
 
   transactions.forEach(transaction => {
     const account = transaction.category || 'Uncategorized';
     const amount = parseFloat(transaction.amount);
     
+    // Create account if it doesn't exist
     if (!accountBalances.has(account)) {
       accountBalances.set(account, { 
         debit: 0, 
@@ -298,22 +313,34 @@ export async function generateTrialBalanceReport(
     }
 
     const accountData = accountBalances.get(account)!;
+    const cashAccount = accountBalances.get("Cash")!;
+    const equityAccount = accountBalances.get("Owner's Equity")!;
     
     if (transaction.isExpense) {
-      // Expenses are debits
+      // Expense Transaction: Debit Expense, Credit Cash (or Credit Owner's Equity for manual entries)
       accountData.debit += amount;
+      
+      // For manual transactions without a funding source, balance with Owner's Equity
+      if (!transaction.bankTransactionId) {
+        equityAccount.credit += amount; // Owner funded the expense
+      } else {
+        cashAccount.credit += amount; // Cash was used for the expense
+      }
     } else {
-      // Revenue is credit
+      // Revenue Transaction: Debit Cash, Credit Revenue
       accountData.credit += amount;
+      cashAccount.debit += amount;
     }
   });
 
-  const accounts = Array.from(accountBalances.entries()).map(([accountName, data]) => ({
-    accountName,
-    accountType: data.type as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
-    debit: data.debit,
-    credit: data.credit
-  }));
+  const accounts = Array.from(accountBalances.entries())
+    .filter(([_, data]) => data.debit !== 0 || data.credit !== 0) // Only show accounts with balances
+    .map(([accountName, data]) => ({
+      accountName,
+      accountType: data.type as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
+      debit: data.debit,
+      credit: data.credit
+    }));
 
   const totalDebits = accounts.reduce((sum, acc) => sum + acc.debit, 0);
   const totalCredits = accounts.reduce((sum, acc) => sum + acc.credit, 0);
