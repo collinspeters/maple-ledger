@@ -39,7 +39,8 @@ export default function AiAssistant() {
   // Get recent messages and sort them chronologically
   const recentMessages = chatHistory 
     ? [...chatHistory]
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .filter(msg => msg.createdAt) // Filter out messages without createdAt
+      .sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime())
       .slice(-4) // Take last 4 messages
     : [];
 

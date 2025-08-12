@@ -1,6 +1,6 @@
 import FinancialCards from "@/components/dashboard/financial-cards";
 import RecentTransactions from "@/components/dashboard/recent-transactions";
-import AiAssistant from "@/components/dashboard/ai-assistant";
+
 import ReceiptUpload from "@/components/dashboard/receipt-upload";
 import QuickActions from "@/components/dashboard/quick-actions";
 import TransactionReviewQueue from "@/components/transactions/transaction-review-queue";
@@ -40,7 +40,6 @@ export default function Dashboard() {
           </div>
           
           <div className="space-y-6">
-            <AiAssistant />
             <ReceiptUpload />
             <QuickActions />
           </div>
