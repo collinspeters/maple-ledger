@@ -1014,21 +1014,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use new sync method that follows Plaid's quickstart pattern
           const syncData = await syncTransactions(connection.plaidAccessToken);
           
-          // Process added transactions
+          // Process added transactions using advanced AI categorization
           for (const transaction of syncData.added) {
             try {
+              // Step 1: Get user's account IDs for transfer detection
+              const userAccountIds = connections.map(conn => conn.accountId);
+              
+              // Step 2: Use advanced Canadian transaction processing with transfer detection
+              const [processedTransaction] = await processCanadianTransactions([transaction], userAccountIds);
+              
+              // Step 3: For non-transfers, enhance with merchant enrichment and AI categorization
+              let finalCategory = processedTransaction.category;
+              let confidence = processedTransaction.aiConfidence;
+              let aiExplanation = '';
+              
+              if (!processedTransaction.isTransfer) {
+                try {
+                  // Merchant enrichment for better context
+                  const enrichmentResult = await getCachedEnrichment(transaction.name) || 
+                                          await enrichMerchantDescription(transaction.name, Math.abs(transaction.amount));
+                  
+                  // Cache the enrichment result
+                  if (!await getCachedEnrichment(transaction.name)) {
+                    setCachedEnrichment(transaction.name, enrichmentResult);
+                  }
+                  
+                  // Advanced AI categorization with enriched context
+                  const aiResult = await categorizeTransaction(
+                    processedTransaction.merchant,
+                    Math.abs(transaction.amount),
+                    transaction.name,
+                    enrichmentResult.enrichedContext
+                  );
+                  
+                  // Use AI results if confidence is higher than rule-based
+                  if (aiResult.confidence > confidence) {
+                    finalCategory = aiResult.category;
+                    confidence = aiResult.confidence;
+                    aiExplanation = aiResult.explanation;
+                  }
+                } catch (aiError) {
+                  console.log(`AI categorization failed for ${transaction.name}, using rule-based categorization:`, aiError);
+                  // Fallback to the processed transaction's categorization
+                }
+              }
+
               const transactionData = {
                 userId: user.id,
-                description: transaction.name,
-                vendor: transaction.merchant_name || transaction.name,
-                amount: Math.abs(transaction.amount).toString(),
-                date: new Date(transaction.date),
-                category: transaction.category?.[0] || 'Other',
-                isExpense: transaction.amount > 0, // Plaid uses positive for outflows
+                description: processedTransaction.description,
+                vendor: processedTransaction.merchant,
+                amount: processedTransaction.amount,
+                date: processedTransaction.date,
+                category: finalCategory,
+                isExpense: processedTransaction.isExpense,
+                isTransfer: processedTransaction.isTransfer,
+                transferType: processedTransaction.transferType,
                 bankTransactionId: transaction.transaction_id,
                 bankConnectionId: connection.id,
-                needsReview: false,
-                isReviewed: true,
+                aiCategory: finalCategory,
+                aiConfidence: confidence,
+                aiExplanation: aiExplanation || undefined,
+                needsReview: confidence < 0.8, // Flag low confidence transactions for review
+                isReviewed: confidence >= 0.8, // Auto-approve high confidence transactions
+                plaidCategory: transaction.category?.[0] || null,
+                paymentChannel: processedTransaction.paymentChannel,
+                location: processedTransaction.location ? JSON.stringify(processedTransaction.location) : undefined,
               };
 
               await storage.createTransaction(transactionData);
@@ -1039,19 +1089,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Process modified transactions
+          // Process modified transactions using advanced AI categorization
           for (const transaction of syncData.modified) {
             try {
               // Update existing transaction if it exists
               const existingTransaction = await storage.getTransactionByPlaidId(transaction.transaction_id);
               if (existingTransaction) {
+                // Use the same advanced processing for updates
+                const userAccountIds = connections.map(conn => conn.accountId);
+                const [processedTransaction] = await processCanadianTransactions([transaction], userAccountIds);
+                
+                // Enhanced categorization for non-transfers
+                let finalCategory = processedTransaction.category;
+                let confidence = processedTransaction.aiConfidence;
+                let aiExplanation = '';
+                
+                if (!processedTransaction.isTransfer) {
+                  try {
+                    const enrichmentResult = await getCachedEnrichment(transaction.name) || 
+                                            await enrichMerchantDescription(transaction.name, Math.abs(transaction.amount));
+                    
+                    const aiResult = await categorizeTransaction(
+                      processedTransaction.merchant,
+                      Math.abs(transaction.amount),
+                      transaction.name,
+                      enrichmentResult.enrichedContext
+                    );
+                    
+                    if (aiResult.confidence > confidence) {
+                      finalCategory = aiResult.category;
+                      confidence = aiResult.confidence;
+                      aiExplanation = aiResult.explanation;
+                    }
+                  } catch (aiError) {
+                    console.log(`AI categorization failed for updated ${transaction.name}, using rule-based:`, aiError);
+                  }
+                }
+
                 const updatedData = {
-                  description: transaction.name,
-                  amount: Math.abs(transaction.amount).toString(),
-                  date: new Date(transaction.date),
-                  category: transaction.category?.[0] || 'Other',
-                  isExpense: transaction.amount > 0,
+                  description: processedTransaction.description,
+                  vendor: processedTransaction.merchant,
+                  amount: processedTransaction.amount,
+                  date: processedTransaction.date,
+                  category: finalCategory,
+                  isExpense: processedTransaction.isExpense,
+                  isTransfer: processedTransaction.isTransfer,
+                  transferType: processedTransaction.transferType,
+                  aiCategory: finalCategory,
+                  aiConfidence: confidence,
+                  aiExplanation: aiExplanation || undefined,
+                  needsReview: confidence < 0.8,
+                  isReviewed: confidence >= 0.8,
+                  plaidCategory: transaction.category?.[0] || null,
+                  paymentChannel: processedTransaction.paymentChannel,
                 };
+                
                 await storage.updateTransaction(existingTransaction.id, updatedData);
               }
             } catch (error) {
