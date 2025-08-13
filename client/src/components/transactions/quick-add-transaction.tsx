@@ -195,19 +195,9 @@ export default function QuickAddTransaction() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="vendor">Vendor (Optional)</Label>
-            <Input
-              id="vendor"
-              placeholder="e.g., Tim Hortons"
-              value={vendor}
-              onChange={(e) => setVendor(e.target.value)}
-            />
-          </div>
-
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             disabled={createTransactionMutation.isPending || !amount || !description || !date || !accountId}
           >
             {createTransactionMutation.isPending ? (
