@@ -40,7 +40,9 @@ import {
   type ExpenseCategory,
   type InsertExpenseCategory,
   type RecurringTransaction,
-  type InsertRecurringTransaction
+  type InsertRecurringTransaction,
+  type ChartOfAccount,
+  type InsertChartOfAccount
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
@@ -114,8 +116,8 @@ export interface IStorage {
   markInvoicePaid(id: string): Promise<Invoice>;
   
   // Chart of Accounts methods
-  getChartOfAccounts(userId: string): Promise<any[]>;
-  createChartOfAccountsEntry(userId: string, account: any): Promise<any>;
+  getChartOfAccounts(userId: string): Promise<ChartOfAccount[]>;
+  createChartOfAccountsEntry(userId: string, account: InsertChartOfAccount): Promise<ChartOfAccount>;
   getBankAccountsForChartOfAccounts(userId: string): Promise<any[]>;
 
   // Estimate methods
@@ -647,14 +649,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Chart of Accounts methods
-  async getChartOfAccounts(userId: string): Promise<any[]> {
+  async getChartOfAccounts(userId: string): Promise<ChartOfAccount[]> {
     return await db
       .select()
       .from(chartOfAccounts)
       .where(eq(chartOfAccounts.userId, userId));
   }
 
-  async createChartOfAccountsEntry(userId: string, account: any): Promise<any> {
+  async createChartOfAccountsEntry(userId: string, account: InsertChartOfAccount): Promise<ChartOfAccount> {
     const [created] = await db
       .insert(chartOfAccounts)
       .values({
