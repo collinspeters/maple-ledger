@@ -83,14 +83,7 @@ export interface IStorage {
     totalExpenses: number;
     netProfit: number;
     gstOwing: number;
-    revenueChange?: number;
-    expenseChange?: number;
-    profitMargin?: number;
-    transactionCount?: number;
   }>;
-  getExpenseBreakdown(userId: string): Promise<any[]>;
-  getMonthlyTrends(userId: string): Promise<any[]>;
-  getAIInsights(userId: string): Promise<any[]>;
   
   // Bank connections
   getBankConnections(userId: string): Promise<BankConnection[]>;
@@ -343,16 +336,11 @@ export class DatabaseStorage implements IStorage {
     totalExpenses: number;
     netProfit: number;
     gstOwing: number;
-    revenueChange?: number;
-    expenseChange?: number;
-    profitMargin?: number;
-    transactionCount?: number;
   }> {
     const result = await db
       .select({
-        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN is_expense = false AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
-        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
-        transactionCount: sql<number>`COUNT(*)`,
+        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN is_expense = false THEN amount::numeric ELSE 0 END), 0)`,
+        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true THEN amount::numeric ELSE 0 END), 0)`,
       })
       .from(transactions)
       .where(
@@ -363,35 +351,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const { totalRevenue, totalExpenses, transactionCount } = result[0] || { totalRevenue: 0, totalExpenses: 0, transactionCount: 0 };
-
-    // Calculate previous period for comparison
-    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const prevStartDate = new Date(startDate);
-    prevStartDate.setDate(prevStartDate.getDate() - daysDiff);
-    const prevEndDate = new Date(startDate);
-    
-    const prevResult = await db
-      .select({
-        totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN is_expense = false AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
-        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          gte(transactions.date, prevStartDate),
-          lte(transactions.date, prevEndDate)
-        )
-      );
-
-    const { totalRevenue: prevRevenue, totalExpenses: prevExpenses } = prevResult[0] || { totalRevenue: 0, totalExpenses: 0 };
-
-    // Calculate changes and metrics
-    const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
-    const expenseChange = prevExpenses > 0 ? ((totalExpenses - prevExpenses) / prevExpenses) * 100 : 0;
-    const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue) * 100 : 0;
-
+    const { totalRevenue, totalExpenses } = result[0] || { totalRevenue: 0, totalExpenses: 0 };
     const netProfit = totalRevenue - totalExpenses;
     const gstOwing = totalRevenue * 0.13; // Assuming 13% GST/HST for Ontario
 
@@ -400,10 +360,6 @@ export class DatabaseStorage implements IStorage {
       totalExpenses,
       netProfit,
       gstOwing,
-      revenueChange,
-      expenseChange,
-      profitMargin,
-      transactionCount,
     };
   }
 
@@ -690,126 +646,6 @@ export class DatabaseStorage implements IStorage {
       taxSettings: { taxable: false, exempt: true, zeroRated: false },
       balance: 0 // Will be updated with real balance later
     }));
-  }
-
-  // Get expense breakdown by category
-  async getExpenseBreakdown(userId: string): Promise<any[]> {
-    const expenseData = await db
-      .select({
-        category: transactions.category,
-        amount: sql<number>`sum(cast(${transactions.amount} as decimal))`.as('amount'),
-        count: sql<number>`count(*)`.as('count')
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          eq(transactions.isExpense, true),
-          eq(transactions.isTransfer, false)
-        )
-      )
-      .groupBy(transactions.category)
-      .orderBy(sql`sum(cast(${transactions.amount} as decimal)) desc`);
-
-    const total = expenseData.reduce((sum, t) => sum + t.amount, 0);
-    
-    return expenseData.map(t => ({
-      category: t.category || 'Uncategorized',
-      amount: t.amount,
-      count: t.count,
-      percentage: total > 0 ? (t.amount / total) * 100 : 0
-    }));
-  }
-
-  // Get monthly trends
-  async getMonthlyTrends(userId: string): Promise<any[]> {
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    const monthlyData = await db
-      .select({
-        month: sql<string>`to_char(${transactions.date}, 'Mon YYYY')`.as('month'),
-        yearMonth: sql<string>`to_char(${transactions.date}, 'YYYY-MM')`.as('year_month'),
-        revenue: sql<number>`sum(case when ${transactions.isExpense} = false and ${transactions.isTransfer} = false then cast(${transactions.amount} as decimal) else 0 end)`.as('revenue'),
-        expenses: sql<number>`sum(case when ${transactions.isExpense} = true and ${transactions.isTransfer} = false then cast(${transactions.amount} as decimal) else 0 end)`.as('expenses')
-      })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          gte(transactions.date, sixMonthsAgo)
-        )
-      )
-      .groupBy(sql`to_char(${transactions.date}, 'YYYY-MM')`, sql`to_char(${transactions.date}, 'Mon YYYY')`)
-      .orderBy(sql`to_char(${transactions.date}, 'YYYY-MM')`);
-
-    return monthlyData.map(m => ({
-      month: m.month,
-      revenue: m.revenue,
-      expenses: m.expenses,
-      profit: m.revenue - m.expenses
-    }));
-  }
-
-  // Get AI insights
-  async getAIInsights(userId: string): Promise<any[]> {
-    // Get recent transactions and analyze patterns
-    const recentTransactions = await this.getTransactions(userId, 50);
-    const insights = [];
-
-    // Calculate expense trends
-    const thisMonth = new Date();
-    const lastMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth() - 1, 1);
-    const thisMonthExpenses = recentTransactions
-      .filter(t => t.isExpense && new Date(t.date) >= lastMonth)
-      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-    const prevMonthExpenses = recentTransactions
-      .filter(t => t.isExpense && new Date(t.date) < lastMonth)
-      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-
-    // Expense increase warning
-    if (thisMonthExpenses > prevMonthExpenses * 1.2) {
-      insights.push({
-        type: 'warning',
-        title: 'Expense Increase Alert',
-        description: `Your expenses increased by ${((thisMonthExpenses - prevMonthExpenses) / prevMonthExpenses * 100).toFixed(1)}% this month.`,
-        impact: 'high',
-        confidence: 0.9,
-        category: 'Expense Management'
-      });
-    }
-
-    // Categorization opportunity
-    const uncategorized = recentTransactions.filter(t => !t.category && !t.aiCategory).length;
-    if (uncategorized > 5) {
-      insights.push({
-        type: 'opportunity',
-        title: 'Improve Categorization',
-        description: `You have ${uncategorized} uncategorized transactions. Better categorization improves tax compliance.`,
-        impact: 'medium',
-        confidence: 0.95,
-        category: 'Tax Compliance'
-      });
-    }
-
-    // Revenue achievement
-    const revenue = recentTransactions
-      .filter(t => !t.isExpense && !t.isTransfer)
-      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-    
-    if (revenue > 10000) {
-      insights.push({
-        type: 'achievement',
-        title: 'Strong Revenue Performance',
-        description: `Great job! You've generated $${revenue.toLocaleString()} in revenue recently.`,
-        impact: 'high',
-        confidence: 1.0,
-        category: 'Business Growth'
-      });
-    }
-
-    return insights;
   }
 }
 

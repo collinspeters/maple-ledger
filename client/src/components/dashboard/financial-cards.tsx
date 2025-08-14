@@ -1,16 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, Receipt, TrendingUp, FileText, ArrowUp, ArrowDown } from "lucide-react";
+import { DollarSign, Receipt, TrendingUp, FileText, ArrowUp } from "lucide-react";
 
 interface FinancialSummary {
   totalRevenue: number;
   totalExpenses: number;
   netProfit: number;
   gstOwing: number;
-  revenueChange?: number;
-  expenseChange?: number;
-  profitMargin?: number;
-  transactionCount?: number;
 }
 
 export default function FinancialCards() {
@@ -36,46 +32,42 @@ export default function FinancialCards() {
     );
   }
 
-  const revenueChange = summary?.revenueChange || 0;
-  const expenseChange = summary?.expenseChange || 0;
-  const profitMargin = summary?.profitMargin || 0;
-  
   const cards = [
     {
       title: "This Month Revenue",
       value: `$${summary?.totalRevenue?.toLocaleString() || '0'}`,
-      change: `${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}% vs last month`,
-      changeType: revenueChange >= 0 ? "positive" : "negative",
+      change: "+15.3% vs last month",
+      changeType: "positive",
       icon: DollarSign,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
+      iconBg: "bg-secondary/10",
+      iconColor: "text-secondary",
     },
     {
-      title: "This Month Expenses", 
+      title: "This Month Expenses",
       value: `$${summary?.totalExpenses?.toLocaleString() || '0'}`,
-      change: `${expenseChange >= 0 ? '+' : ''}${expenseChange.toFixed(1)}% vs last month`,
-      changeType: expenseChange <= 0 ? "positive" : "negative",
+      change: "+8.2% vs last month",
+      changeType: "negative",
       icon: Receipt,
-      iconBg: "bg-orange-50",
-      iconColor: "text-orange-600",
+      iconBg: "bg-error/10",
+      iconColor: "text-error",
     },
     {
       title: "Net Profit",
       value: `$${summary?.netProfit?.toLocaleString() || '0'}`,
-      change: `${profitMargin.toFixed(1)}% profit margin`,
-      changeType: (summary?.netProfit || 0) >= 0 ? "positive" : "negative",
+      change: "73.6% profit margin",
+      changeType: "positive",
       icon: TrendingUp,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
     },
     {
       title: "GST/HST Owing",
       value: `$${summary?.gstOwing?.toLocaleString() || '0'}`,
-      change: "Due Mar 31, 2025",
+      change: "Due Mar 31, 2024",
       changeType: "neutral",
       icon: FileText,
-      iconBg: "bg-purple-50", 
-      iconColor: "text-purple-600",
+      iconBg: "bg-accent/10",
+      iconColor: "text-accent",
     },
   ];
 
@@ -89,12 +81,13 @@ export default function FinancialCards() {
                 <p className="text-sm font-medium text-gray-600">{card.title}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
                 <p className={`text-sm mt-1 flex items-center ${
-                  card.changeType === "positive" ? "text-emerald-600" :
-                  card.changeType === "negative" ? "text-red-600" : 
-                  "text-gray-600"
+                  card.changeType === "positive" ? "text-secondary" :
+                  card.changeType === "negative" ? "text-error" : 
+                  "text-accent"
                 }`}>
-                  {card.changeType === "positive" && <ArrowUp className="mr-1 h-3 w-3" />}
-                  {card.changeType === "negative" && <ArrowDown className="mr-1 h-3 w-3" />}
+                  {card.changeType !== "neutral" && (
+                    <ArrowUp className="mr-1 h-3 w-3" />
+                  )}
                   {card.change}
                 </p>
               </div>

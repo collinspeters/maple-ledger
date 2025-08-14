@@ -72,15 +72,21 @@ export default function AIAssistant() {
     scrollToBottom();
   }, [chatHistory, isTyping]);
 
-  // Sort messages chronologically - each record is already either user or AI message
-  const allMessages = (chatHistory as ChatMessage[])
-    .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    .map(msg => ({
-      id: msg.id,
-      content: msg.message, // Use the message field which contains the actual content
-      isFromUser: msg.isFromUser,
-      timestamp: msg.createdAt,
-    }));
+  // Flatten and sort messages chronologically
+  const allMessages = (chatHistory as ChatMessage[]).flatMap((chat: ChatMessage) => [
+    {
+      id: `${chat.id}-user`,
+      content: chat.message,
+      isFromUser: true,
+      timestamp: chat.createdAt,
+    },
+    {
+      id: `${chat.id}-assistant`,
+      content: chat.response,
+      isFromUser: false,
+      timestamp: chat.createdAt,
+    },
+  ]).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-4rem)]">
