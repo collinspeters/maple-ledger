@@ -36,7 +36,6 @@ export interface Transaction {
   aiConfidence?: number;
   accountId?: string;
   bankConnectionId?: string;
-  chartAccountId?: string;
 }
 
 interface TransactionRowProps {
@@ -125,21 +124,11 @@ export function TransactionRow({
     return `${isExpense ? '-' : '+'}$${formatted}`;
   };
 
-  // Get account name from bankConnectionId or chartAccountId
+  // Get account name from bankConnectionId
   const getAccountName = () => {
-    // First check if it's a manual transaction with chartAccountId
-    if (transaction.chartAccountId) {
-      const chartAccount = accounts.find(acc => acc.id === transaction.chartAccountId);
-      if (chartAccount) return chartAccount.name;
-    }
-    
-    // Then check if it's a bank transaction with bankConnectionId
-    if (transaction.bankConnectionId) {
-      const bankAccount = accounts.find(acc => acc.id === transaction.bankConnectionId);
-      if (bankAccount) return bankAccount.name;
-    }
-    
-    return 'Manual Entry';
+    if (!transaction.bankConnectionId) return 'Manual Entry';
+    const account = accounts.find(acc => acc.id === transaction.bankConnectionId);
+    return account ? account.name : 'Unknown Account';
   };
 
   // Debug log removed - transactions now rendering properly

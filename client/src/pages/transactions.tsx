@@ -58,10 +58,6 @@ export default function Transactions() {
     queryKey: ["/api/bank-connections"],
   });
 
-  const { data: chartOfAccounts = [] } = useQuery<any[]>({
-    queryKey: ["/api/chart-of-accounts"],
-  });
-
   // Generate categories from existing transactions
   const categories = useMemo(() => {
     const cats = new Set<string>();
@@ -72,20 +68,13 @@ export default function Transactions() {
     return Array.from(cats).sort();
   }, [transactions]);
 
-  // Transform bank connections and chart of accounts to unified accounts format
-  const accounts = useMemo(() => {
-    const bankAccounts = bankConnections.map((bc: any) => ({
+  // Transform bank connections to accounts format
+  const accounts = useMemo(() => 
+    bankConnections.map((bc: any) => ({
       id: bc.id,
       name: `${bc.bankName} ${bc.accountName} (${bc.accountMask})`
-    }));
-    
-    const chartAccounts = chartOfAccounts.map((ca: any) => ({
-      id: ca.id,
-      name: ca.name
-    }));
-    
-    return [...bankAccounts, ...chartAccounts];
-  }, [bankConnections, chartOfAccounts]
+    })), 
+    [bankConnections]
   );
 
   // Count active filters (must be before filteredAndSortedTransactions)
