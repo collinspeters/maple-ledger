@@ -187,8 +187,7 @@ export function getIncomeCategories(): T2125Category[] {
 }
 
 // Mapping common transaction descriptions to T2125 categories
-// Enhanced merchant mappings for Canadian businesses - used in hybrid categorization
-export const MERCHANT_MAPPINGS: Record<string, string> = {
+export const TRANSACTION_MAPPINGS: Record<string, string> = {
   // Office and supplies
   'staples': 'OFFICE_EXPENSES',
   'office depot': 'OFFICE_EXPENSES', 

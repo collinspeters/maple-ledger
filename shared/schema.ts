@@ -34,7 +34,7 @@ export const transactions = pgTable("transactions", {
   userOverride: boolean("user_override").default(false),
   isReviewed: boolean("is_reviewed").default(false),
   isExpense: boolean("is_expense").default(true),
-  receiptId: varchar("receipt_id"), // Will reference receipts.id  
+  receiptId: varchar("receipt_id").references(() => receipts.id),
   receiptAttached: boolean("receipt_attached").default(false),
   receiptSource: text("receipt_source"), // upload, bank_feed, manual
   bankTransactionId: text("bank_transaction_id"),
@@ -46,13 +46,8 @@ export const transactions = pgTable("transactions", {
   extractedTaxData: jsonb("extracted_tax_data"), // GST/HST/PST breakdown
   auditReady: boolean("audit_ready").default(false),
   notes: text("notes"),
-  // Additional categorization fields
-  plaidCategory: text("plaid_category"), // Original Plaid category
-  paymentChannel: text("payment_channel"), // online, in-store, etc.
-  location: text("location"), // JSON string of transaction location
-  categorizationMethod: text("categorization_method"), // transfer_detection, merchant_mapping, plaid_rules, ai_enhanced, ai_fallback
-  // Double-entry accounting fields  
-  journalEntryId: varchar("journal_entry_id"), // Will reference journalEntries.id when defined
+  // Double-entry accounting fields
+  journalEntryId: varchar("journal_entry_id").references(() => journalEntries.id),
   isPosted: boolean("is_posted").default(false), // Whether double-entry posting is complete
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -223,8 +223,8 @@ export function categorizePlaidTransaction(transaction: any, userAccounts: strin
     };
   }
   
-  // Separate mappings for income vs expense transactions
-  const expenseMappings: Record<string, string> = {
+  // Map Plaid categories to T2125 business categories (like Wave Accounting)
+  const categoryMappings: Record<string, string> = {
     'Food and Drink': 'MEALS_ENTERTAINMENT',
     'Shops': 'OFFICE_EXPENSES',
     'Transportation': 'VEHICLE_EXPENSES', 
@@ -237,6 +237,8 @@ export function categorizePlaidTransaction(transaction: any, userAccounts: strin
     'Gas Stations': 'VEHICLE_EXPENSES',
     'Software': 'OFFICE_EXPENSES',
     'Hardware Stores': 'OFFICE_EXPENSES',
+    'Payment': 'BUSINESS_INCOME',
+    'Deposit': 'BUSINESS_INCOME',
     'Service': 'PROFESSIONAL_FEES',
     'Entertainment': 'MEALS_ENTERTAINMENT',
     'Recreation': 'MEALS_ENTERTAINMENT',
@@ -250,28 +252,8 @@ export function categorizePlaidTransaction(transaction: any, userAccounts: strin
     'Tax': 'BUSINESS_TAX'
   };
 
-  const incomeMappings: Record<string, string> = {
-    'Payment': 'BUSINESS_INCOME',
-    'Deposit': 'BUSINESS_INCOME',
-    'Payroll': 'BUSINESS_INCOME',
-    'Transfer': 'BUSINESS_INCOME', // Only for incoming transfers from clients
-    'Interest': 'BUSINESS_INCOME', // Interest earned
-    'Refund': 'BUSINESS_INCOME',
-    'Professional Services': 'PROFESSIONAL_INCOME'
-  };
-
   const primaryCategory = category?.[0] || '';
-  
-  // Determine category based on transaction direction and type
-  let mappedCategory: string;
-  
-  if (!isExpense) {
-    // Incoming money - check income mappings first
-    mappedCategory = incomeMappings[primaryCategory] || 'BUSINESS_INCOME';
-  } else {
-    // Outgoing money - check expense mappings
-    mappedCategory = expenseMappings[primaryCategory] || 'OTHER_EXPENSES';
-  }
+  const mappedCategory = categoryMappings[primaryCategory] || 'OTHER_EXPENSES';
   
   return {
     category: mappedCategory,

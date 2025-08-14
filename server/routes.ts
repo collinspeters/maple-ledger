@@ -13,7 +13,6 @@ import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRema
 import { categorizeTransaction, processFinancialQuery, extractReceiptData, parseNaturalLanguageTransaction } from "./services/openai";
 import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } from "./services/merchant-enrichment";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
-import { categorizeTransactionHybrid } from "./services/hybrid-categorization";
 import { processReceiptOCR, findTransactionMatches } from "./services/ocr";
 import { doubleEntryService } from "./services/double-entry";
 import { getDashboardData } from "./routes/dashboard";
@@ -1015,79 +1014,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use new sync method that follows Plaid's quickstart pattern
           const syncData = await syncTransactions(connection.plaidAccessToken);
           
-          // Process added transactions using hybrid categorization system
+          // Process added transactions using advanced AI categorization
           for (const transaction of syncData.added) {
             try {
-              // Get user's account IDs for transfer detection
+              // Step 1: Get user's account IDs for transfer detection
               const userAccountIds = connections.map(conn => conn.accountId);
               
-              // Use hybrid categorization system (Transfer → Merchant → Plaid → AI)
-              const categorizationResult = await categorizeTransactionHybrid(transaction, userAccountIds);
+              // Step 2: Use advanced Canadian transaction processing with transfer detection
+              const [processedTransaction] = await processCanadianTransactions([transaction], userAccountIds);
               
+              // Step 3: For non-transfers, enhance with merchant enrichment and AI categorization
+              let finalCategory = processedTransaction.category;
+              let confidence = processedTransaction.aiConfidence;
+              let aiExplanation = '';
+              
+              if (!processedTransaction.isTransfer) {
+                try {
+                  // Merchant enrichment for better context
+                  const enrichmentResult = await getCachedEnrichment(transaction.name) || 
+                                          await enrichMerchantDescription(transaction.name, Math.abs(transaction.amount));
+                  
+                  // Cache the enrichment result
+                  if (!await getCachedEnrichment(transaction.name)) {
+                    setCachedEnrichment(transaction.name, enrichmentResult);
+                  }
+                  
+                  // Advanced AI categorization with enriched context
+                  const aiResult = await categorizeTransaction(
+                    processedTransaction.merchant,
+                    Math.abs(transaction.amount),
+                    transaction.name,
+                    enrichmentResult.enrichedContext
+                  );
+                  
+                  // Use AI results if confidence is higher than rule-based
+                  if (aiResult.confidence > confidence) {
+                    finalCategory = aiResult.category;
+                    confidence = aiResult.confidence;
+                    aiExplanation = aiResult.explanation;
+                  }
+                } catch (aiError) {
+                  console.log(`AI categorization failed for ${transaction.name}, using rule-based categorization:`, aiError);
+                  // Fallback to the processed transaction's categorization
+                }
+              }
+
               const transactionData = {
                 userId: user.id,
-                description: transaction.name,
-                vendor: transaction.merchant_name || transaction.name,
-                amount: Math.abs(transaction.amount).toString(),
-                date: new Date(transaction.date),
-                category: categorizationResult.category,
-                isExpense: categorizationResult.isExpense,
-                isTransfer: categorizationResult.isTransfer,
-                transferType: categorizationResult.transferType || null,
+                description: processedTransaction.description,
+                vendor: processedTransaction.merchant,
+                amount: processedTransaction.amount,
+                date: processedTransaction.date,
+                category: finalCategory,
+                isExpense: processedTransaction.isExpense,
+                isTransfer: processedTransaction.isTransfer,
+                transferType: processedTransaction.transferType,
                 bankTransactionId: transaction.transaction_id,
                 bankConnectionId: connection.id,
-                aiCategory: categorizationResult.category,
-                aiConfidence: categorizationResult.confidence.toString(),
-                aiExplanation: categorizationResult.explanation || null,
-                needsReview: categorizationResult.confidence < 0.8, // Flag low confidence for review
-                isReviewed: categorizationResult.confidence >= 0.8, // Auto-approve high confidence
+                aiCategory: finalCategory,
+                aiConfidence: confidence,
+                aiExplanation: aiExplanation || undefined,
+                needsReview: confidence < 0.8, // Flag low confidence transactions for review
+                isReviewed: confidence >= 0.8, // Auto-approve high confidence transactions
                 plaidCategory: transaction.category?.[0] || null,
-                paymentChannel: transaction.payment_channel || null,
-                location: transaction.location ? JSON.stringify(transaction.location) : null,
-                categorizationMethod: categorizationResult.method,
+                paymentChannel: processedTransaction.paymentChannel,
+                location: processedTransaction.location ? JSON.stringify(processedTransaction.location) : undefined,
               };
 
               await storage.createTransaction(transactionData);
               totalSynced++;
-              
-              console.log(`Categorized ${transaction.name} as ${categorizationResult.category} using ${categorizationResult.method} (${Math.round(categorizationResult.confidence * 100)}% confidence)`);
             } catch (error) {
               // Skip duplicates (likely existing transactions)
               console.log("Skipping duplicate transaction:", transaction.transaction_id);
             }
           }
 
-          // Process modified transactions using hybrid categorization system
+          // Process modified transactions using advanced AI categorization
           for (const transaction of syncData.modified) {
             try {
               // Update existing transaction if it exists
               const existingTransaction = await storage.getTransactionByPlaidId(transaction.transaction_id);
               if (existingTransaction) {
-                // Use hybrid categorization for updates
+                // Use the same advanced processing for updates
                 const userAccountIds = connections.map(conn => conn.accountId);
-                const categorizationResult = await categorizeTransactionHybrid(transaction, userAccountIds);
+                const [processedTransaction] = await processCanadianTransactions([transaction], userAccountIds);
+                
+                // Enhanced categorization for non-transfers
+                let finalCategory = processedTransaction.category;
+                let confidence = processedTransaction.aiConfidence;
+                let aiExplanation = '';
+                
+                if (!processedTransaction.isTransfer) {
+                  try {
+                    const enrichmentResult = await getCachedEnrichment(transaction.name) || 
+                                            await enrichMerchantDescription(transaction.name, Math.abs(transaction.amount));
+                    
+                    const aiResult = await categorizeTransaction(
+                      processedTransaction.merchant,
+                      Math.abs(transaction.amount),
+                      transaction.name,
+                      enrichmentResult.enrichedContext
+                    );
+                    
+                    if (aiResult.confidence > confidence) {
+                      finalCategory = aiResult.category;
+                      confidence = aiResult.confidence;
+                      aiExplanation = aiResult.explanation;
+                    }
+                  } catch (aiError) {
+                    console.log(`AI categorization failed for updated ${transaction.name}, using rule-based:`, aiError);
+                  }
+                }
 
                 const updatedData = {
-                  description: transaction.name,
-                  vendor: transaction.merchant_name || transaction.name,
-                  amount: Math.abs(transaction.amount).toString(),
-                  date: new Date(transaction.date),
-                  category: categorizationResult.category,
-                  isExpense: categorizationResult.isExpense,
-                  isTransfer: categorizationResult.isTransfer,
-                  transferType: categorizationResult.transferType || null,
-                  aiCategory: categorizationResult.category,
-                  aiConfidence: categorizationResult.confidence.toString(),
-                  aiExplanation: categorizationResult.explanation || null,
-                  needsReview: categorizationResult.confidence < 0.8,
-                  isReviewed: categorizationResult.confidence >= 0.8,
+                  description: processedTransaction.description,
+                  vendor: processedTransaction.merchant,
+                  amount: processedTransaction.amount,
+                  date: processedTransaction.date,
+                  category: finalCategory,
+                  isExpense: processedTransaction.isExpense,
+                  isTransfer: processedTransaction.isTransfer,
+                  transferType: processedTransaction.transferType,
+                  aiCategory: finalCategory,
+                  aiConfidence: confidence,
+                  aiExplanation: aiExplanation || undefined,
+                  needsReview: confidence < 0.8,
+                  isReviewed: confidence >= 0.8,
                   plaidCategory: transaction.category?.[0] || null,
-                  paymentChannel: transaction.payment_channel || null,
-                  categorizationMethod: categorizationResult.method,
+                  paymentChannel: processedTransaction.paymentChannel,
                 };
                 
                 await storage.updateTransaction(existingTransaction.id, updatedData);
-                console.log(`Updated ${transaction.name} as ${categorizationResult.category} using ${categorizationResult.method}`);
               }
             } catch (error) {
               console.log("Error updating transaction:", transaction.transaction_id, error);
