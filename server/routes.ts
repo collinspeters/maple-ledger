@@ -1020,13 +1020,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const connection = await storage.createBankConnection(connectionData);
         connections.push(connection);
+        
+        // AUTOMATED PROCESS 1: Create corresponding chart of accounts entry
+        const chartAccountData = {
+          userId: user.id,
+          code: `10${connections.length.toString().padStart(2, '0')}`, // 1001, 1002, etc.
+          name: `${connection.bankName} ${connection.accountName}`,
+          category: 'Assets',
+          subcategory: 'Current Assets',
+          description: `Bank account: ${connection.accountName} (${connection.accountMask})`,
+          isDeductible: false,
+          isActive: true,
+          isBankAccount: true,
+          bankConnectionId: connection.id,
+          plaidAccountId: connection.accountId,
+          balance: (account.balances?.current || 0).toString()
+        };
+        
+        await storage.createChartOfAccountsEntry(user.id, chartAccountData);
+      }
+
+      // AUTOMATED PROCESS 2: Trigger initial transaction sync
+      console.log(`Starting initial transaction sync for ${connections.length} accounts...`);
+      
+      try {
+        // Sync transactions immediately after connecting
+        const syncData = await syncTransactions(tokenData.accessToken);
+        let syncedCount = 0;
+        
+        // Process added transactions using hybrid categorization system
+        for (const transaction of syncData.added) {
+          try {
+            // Get user's account IDs for transfer detection
+            const userAccountIds = connections.map(conn => conn.accountId);
+            
+            // Use hybrid categorization system
+            const categorizationResult = await categorizeTransactionHybrid(transaction, userAccountIds);
+            
+            const transactionData = {
+              userId: (req.user as User).id,
+              description: transaction.name,
+              vendor: transaction.merchant_name || transaction.name,
+              amount: Math.abs(transaction.amount).toString(),
+              date: new Date(transaction.date),
+              category: categorizationResult.category,
+              isExpense: categorizationResult.isExpense,
+              isTransfer: categorizationResult.isTransfer,
+              transferType: categorizationResult.transferType || null,
+              bankTransactionId: transaction.transaction_id,
+              bankConnectionId: connections.find(c => c.accountId === transaction.account_id)?.id,
+              aiCategory: categorizationResult.category,
+              aiConfidence: categorizationResult.confidence.toString(),
+              aiExplanation: categorizationResult.explanation || null,
+              needsReview: categorizationResult.confidence < 0.8,
+              isReviewed: categorizationResult.confidence >= 0.8,
+              plaidCategory: transaction.category?.[0] || null,
+              paymentChannel: transaction.payment_channel || null,
+              location: transaction.location ? JSON.stringify(transaction.location) : null,
+              categorizationMethod: categorizationResult.method,
+            };
+
+            await storage.createTransaction(transactionData);
+            syncedCount++;
+          } catch (error) {
+            console.log("Skipping duplicate transaction:", transaction.transaction_id);
+          }
+        }
+        
+        console.log(`Initial sync completed: ${syncedCount} transactions imported`);
+      } catch (syncError) {
+        console.error("Initial transaction sync failed:", syncError);
       }
 
       res.json({ 
         message: "Bank accounts connected successfully", 
         connections: connections.length,
         itemId: tokenData.itemId,
-        requestId: tokenData.requestId
+        requestId: tokenData.requestId,
+        chartAccountsCreated: connections.length,
+        initialSyncTriggered: true
       });
     } catch (error) {
       console.error("Error exchanging public token:", error);
