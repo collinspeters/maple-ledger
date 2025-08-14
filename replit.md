@@ -128,6 +128,31 @@ The application follows a monorepo structure with shared TypeScript types and sc
 
 ## Recent Changes
 
+### August 12, 2025 - Advanced Hybrid Transaction Categorization System (COMPLETED)
+
+**MAJOR CATEGORIZATION SYSTEM OVERHAUL:**
+- ✅ **FIXED CRITICAL DISCONNECT**: Connected advanced AI categorization to Plaid transaction sync
+- ✅ **IMPLEMENTED HYBRID INTELLIGENCE**: 4-tier fallback system (Transfer → Merchant → Rules → AI)
+- ✅ **ENHANCED INCOME/EXPENSE DETECTION**: Fixed Plaid mapping to properly handle income vs expense transactions
+- ✅ **INTEGRATED MERCHANT ENRICHMENT**: Web search context for unknown merchants improving AI accuracy
+- ✅ **OPTIMIZED PERFORMANCE**: Rule-based for obvious transactions, AI only for complex cases
+- ✅ **COMPREHENSIVE LOGGING**: Detailed categorization method tracking and confidence scoring
+- ✅ **DATABASE SCHEMA UPGRADE**: Added new fields for categorization method, Plaid category, payment channel, location
+
+**INTELLIGENT CATEGORIZATION FLOW:**
+1. **Transfer Detection** (Instant) - Identifies e-transfers, internal transfers, payments with 95% confidence
+2. **Known Merchant Mapping** (Instant) - 200+ Canadian business patterns (Tim Hortons, Rogers, etc.)  
+3. **Enhanced Plaid Rules** (Instant) - Improved category mapping with proper income/expense handling
+4. **AI with Enrichment** (2-3 seconds) - OpenAI GPT-4 with merchant context for complex transactions
+5. **Auto-Review Flagging** - Low confidence transactions (<80%) flagged for manual review
+
+**TECHNICAL IMPROVEMENTS:**
+- Fixed forward reference issues in database schema
+- Added hybrid categorization service with comprehensive error handling
+- Enhanced merchant enrichment caching to reduce API calls
+- Improved T2125 Canadian tax compliance with confidence explanations
+- Added categorization method tracking for audit trails
+
 ### August 7, 2025 - Optimized Interactive Agent System (COMPLETED)
 
 **MAJOR SYSTEM OPTIMIZATION:**

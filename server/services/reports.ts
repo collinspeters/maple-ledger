@@ -33,6 +33,7 @@ export interface BalanceSheetReport {
     total: number;
     ownersEquity: number;
     retainedEarnings: number;
+    currentYearEarnings?: number;
   };
   asOfDate: string;
 }
@@ -173,47 +174,70 @@ export async function generateBalanceSheetReport(
     asOfDate
   );
 
-  // Calculate retained earnings (cumulative net income)
+  // Calculate retained earnings (cumulative net income) with proper NaN handling
   const totalRevenue = allTransactions
-    .filter(t => !t.isExpense)
-    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+    .filter(t => !t.isExpense && !t.isTransfer)
+    .reduce((acc, t) => {
+      const amount = parseFloat(t.amount);
+      return acc + (isNaN(amount) ? 0 : amount);
+    }, 0);
     
   const totalExpenses = allTransactions
-    .filter(t => t.isExpense)
+    .filter(t => t.isExpense && !t.isTransfer)
+    .reduce((acc, t) => {
+      const amount = parseFloat(t.amount);
+      return acc + (isNaN(amount) ? 0 : amount);
+    }, 0);
+
+  const netIncome = totalRevenue - totalExpenses;
+  
+  // For sole proprietorship with negative equity, assume owner funding
+  const retainedEarnings = netIncome;
+  const ownersEquity = netIncome < 0 ? Math.abs(netIncome) : 0; // Owner's contributions to cover losses
+  
+  // Calculate current year earnings vs retained earnings from previous years
+  const currentYear = asOfDate.getFullYear();
+  const currentYearTransactions = allTransactions.filter(t => 
+    new Date(t.date).getFullYear() === currentYear
+  );
+  
+  const currentYearRevenue = currentYearTransactions
+    .filter(t => !t.isExpense && !t.isTransfer)
     .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+    
+  const currentYearExpenses = currentYearTransactions
+    .filter(t => t.isExpense && !t.isTransfer)
+    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+    
+  const currentYearEarnings = currentYearRevenue - currentYearExpenses;
 
-  const retainedEarnings = totalRevenue - totalExpenses;
-
-  // For sole proprietorship, assets primarily come from cash and accounts receivable
-  // Liabilities from accounts payable and loans
-  // This is a simplified implementation - in practice, you'd have a chart of accounts
-
+  // Proper balance sheet structure
   const assets = {
-    total: Math.max(retainedEarnings, 0), // Simplified: positive equity suggests assets
+    total: ownersEquity, // Total assets equal owner's equity for sole proprietorship
     current: [
-      { account: 'Cash and Bank Accounts', amount: Math.max(retainedEarnings * 0.8, 0) },
-      { account: 'Accounts Receivable', amount: Math.max(retainedEarnings * 0.2, 0) }
+      { account: 'Cash and Bank Accounts', amount: 0 } // Cash would be from bank connections
     ],
     fixed: []
   };
 
   const liabilities = {
-    total: Math.max(-retainedEarnings, 0), // Simplified: negative equity suggests liabilities
+    total: totalExpenses, // Current liabilities represent unpaid expenses
     current: [
-      { account: 'Accounts Payable', amount: Math.max(-retainedEarnings * 0.6, 0) }
+      { account: 'Accounts Payable', amount: totalExpenses }
     ],
-    longTerm: [
-      { account: 'Long-term Debt', amount: Math.max(-retainedEarnings * 0.4, 0) }
-    ]
+    longTerm: []
   };
+
+  const totalEquity = ownersEquity + retainedEarnings;
 
   return {
     assets,
     liabilities,
     equity: {
-      total: retainedEarnings,
-      ownersEquity: 0, // For sole proprietorship, this would be initial capital
-      retainedEarnings
+      total: totalEquity,
+      ownersEquity,
+      retainedEarnings: 0, // Previous years
+      currentYearEarnings // This year's profit/loss
     },
     asOfDate: asOfDate.toISOString().split('T')[0]
   };
@@ -242,28 +266,39 @@ export async function generateTaxSummaryReport(
       return acc + (parseFloat(taxData?.tax || '0'));
     }, 0);
 
+  // For Canadian businesses, calculate estimated tax on transactions
+  // Since we don't have actual tax data, estimate based on transaction amounts
+  const hstRate = 0.13; // 13% HST for Ontario
+  
+  // Estimate tax collected on revenue (would be charged to customers)
+  const estimatedTaxCollected = transactions
+    .filter(t => !t.isExpense && !t.isTransfer)
+    .reduce((acc, t) => acc + (parseFloat(t.amount) * hstRate), 0);
+    
+  // Estimate tax paid on expenses (Input Tax Credits)
+  const estimatedTaxPaid = transactions
+    .filter(t => t.isExpense && !t.isTransfer)
+    .reduce((acc, t) => acc + (parseFloat(t.amount) * hstRate), 0);
+
+  const finalTaxCollected = taxCollected > 0 ? taxCollected : estimatedTaxCollected;
+  const finalTaxPaid = taxPaid > 0 ? taxPaid : estimatedTaxPaid;
+  const netOwing = finalTaxCollected - finalTaxPaid;
+
   // For Canadian businesses, assume HST/GST rates by province
   const provincialBreakdown = [
     {
       province: 'Ontario',
-      rate: 13, // HST
-      collected: taxCollected * 0.8, // Assume most business in Ontario
-      paid: taxPaid * 0.8,
-      net: (taxCollected - taxPaid) * 0.8
-    },
-    {
-      province: 'Other Provinces',
-      rate: 5, // GST only
-      collected: taxCollected * 0.2,
-      paid: taxPaid * 0.2,
-      net: (taxCollected - taxPaid) * 0.2
+      rate: 0.13, // HST as decimal
+      collected: finalTaxCollected,
+      paid: finalTaxPaid,
+      net: isNaN(netOwing) ? 0 : netOwing
     }
   ];
 
   return {
-    taxCollected,
-    taxPaid,
-    netTaxOwing: taxCollected - taxPaid,
+    taxCollected: isNaN(finalTaxCollected) ? 0 : finalTaxCollected,
+    taxPaid: isNaN(finalTaxPaid) ? 0 : finalTaxPaid,
+    netTaxOwing: isNaN(netOwing) ? 0 : netOwing,
     gstHstBreakdown: provincialBreakdown,
     period: {
       startDate: startDate.toISOString().split('T')[0],
@@ -282,13 +317,28 @@ export async function generateTrialBalanceReport(
     asOfDate
   );
 
-  // Group transactions by account/category
+  // Group transactions by account/category and create proper accounting entries
   const accountBalances = new Map<string, { debit: number; credit: number; type: string }>();
+
+  // Initialize Owner's Equity account (for balancing manual transactions)
+  accountBalances.set("Owner's Equity", { 
+    debit: 0, 
+    credit: 0, 
+    type: 'equity'
+  });
+
+  // Initialize Cash account (for balancing all transactions)
+  accountBalances.set("Cash", { 
+    debit: 0, 
+    credit: 0, 
+    type: 'asset'
+  });
 
   transactions.forEach(transaction => {
     const account = transaction.category || 'Uncategorized';
     const amount = parseFloat(transaction.amount);
     
+    // Create account if it doesn't exist
     if (!accountBalances.has(account)) {
       accountBalances.set(account, { 
         debit: 0, 
@@ -298,22 +348,34 @@ export async function generateTrialBalanceReport(
     }
 
     const accountData = accountBalances.get(account)!;
+    const cashAccount = accountBalances.get("Cash")!;
+    const equityAccount = accountBalances.get("Owner's Equity")!;
     
     if (transaction.isExpense) {
-      // Expenses are debits
+      // Expense Transaction: Debit Expense, Credit Cash (or Credit Owner's Equity for manual entries)
       accountData.debit += amount;
+      
+      // For manual transactions without a funding source, balance with Owner's Equity
+      if (!transaction.bankTransactionId) {
+        equityAccount.credit += amount; // Owner funded the expense
+      } else {
+        cashAccount.credit += amount; // Cash was used for the expense
+      }
     } else {
-      // Revenue is credit
+      // Revenue Transaction: Debit Cash, Credit Revenue
       accountData.credit += amount;
+      cashAccount.debit += amount;
     }
   });
 
-  const accounts = Array.from(accountBalances.entries()).map(([accountName, data]) => ({
-    accountName,
-    accountType: data.type as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
-    debit: data.debit,
-    credit: data.credit
-  }));
+  const accounts = Array.from(accountBalances.entries())
+    .filter(([_, data]) => data.debit !== 0 || data.credit !== 0) // Only show accounts with balances
+    .map(([accountName, data]) => ({
+      accountName,
+      accountType: data.type as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
+      debit: data.debit,
+      credit: data.credit
+    }));
 
   const totalDebits = accounts.reduce((sum, acc) => sum + acc.debit, 0);
   const totalCredits = accounts.reduce((sum, acc) => sum + acc.credit, 0);

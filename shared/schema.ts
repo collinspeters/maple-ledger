@@ -34,7 +34,7 @@ export const transactions = pgTable("transactions", {
   userOverride: boolean("user_override").default(false),
   isReviewed: boolean("is_reviewed").default(false),
   isExpense: boolean("is_expense").default(true),
-  receiptId: varchar("receipt_id").references(() => receipts.id),
+  receiptId: varchar("receipt_id"), // Will reference receipts.id  
   receiptAttached: boolean("receipt_attached").default(false),
   receiptSource: text("receipt_source"), // upload, bank_feed, manual
   bankTransactionId: text("bank_transaction_id"),
@@ -46,9 +46,16 @@ export const transactions = pgTable("transactions", {
   extractedTaxData: jsonb("extracted_tax_data"), // GST/HST/PST breakdown
   auditReady: boolean("audit_ready").default(false),
   notes: text("notes"),
-  // Double-entry accounting fields
-  journalEntryId: varchar("journal_entry_id").references(() => journalEntries.id),
+  // Additional categorization fields
+  plaidCategory: text("plaid_category"), // Original Plaid category
+  paymentChannel: text("payment_channel"), // online, in-store, etc.
+  location: text("location"), // JSON string of transaction location
+  categorizationMethod: text("categorization_method"), // transfer_detection, merchant_mapping, plaid_rules, ai_enhanced, ai_fallback
+  // Double-entry accounting fields  
+  journalEntryId: varchar("journal_entry_id"), // Will reference journalEntries.id when defined
   isPosted: boolean("is_posted").default(false), // Whether double-entry posting is complete
+  // Chart of accounts reference
+  chartAccountId: varchar("chart_account_id"), // Reference to chart_of_accounts.id
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -117,6 +124,30 @@ export const chatMessages = pgTable("chat_messages", {
   response: text("response"),
   isFromUser: boolean("is_from_user").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const chartOfAccounts = pgTable("chart_of_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  category: text("category").notNull(), // Assets, Liabilities, Equity, Revenue, Expenses
+  subcategory: text("subcategory"),
+  description: text("description"),
+  isDeductible: boolean("is_deductible").default(false),
+  deductionRate: decimal("deduction_rate", { precision: 5, scale: 2 }),
+  t2125Category: text("t2125_category"),
+  isActive: boolean("is_active").default(true),
+  parentId: varchar("parent_id"), // For sub-accounts
+  isBankAccount: boolean("is_bank_account").default(false),
+  bankConnectionId: varchar("bank_connection_id").references(() => bankConnections.id),
+  plaidAccountId: text("plaid_account_id"),
+  taxable: boolean("taxable").default(false),
+  exempt: boolean("exempt").default(false),
+  zeroRated: boolean("zero_rated").default(false),
+  balance: decimal("balance", { precision: 15, scale: 2 }).default("0.00"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Invoicing tables - Wave-inspired
@@ -224,30 +255,7 @@ export const recurringTransactions = pgTable("recurring_transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Chart of Accounts table
-export const chartOfAccounts = pgTable("chart_of_accounts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  code: text("code").notNull(),
-  name: text("name").notNull(),
-  category: text("category").notNull(), // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
-  subcategory: text("subcategory"),
-  description: text("description"),
-  isDeductible: boolean("is_deductible").default(false),
-  deductionRate: decimal("deduction_rate", { precision: 3, scale: 2 }), // 0.50 for 50% meals
-  t2125Category: text("t2125_category"),
-  isActive: boolean("is_active").default(true),
-  parentId: varchar("parent_id"),
-  isBankAccount: boolean("is_bank_account").default(false),
-  bankConnectionId: varchar("bank_connection_id").references(() => bankConnections.id),
-  plaidAccountId: text("plaid_account_id"),
-  taxable: boolean("taxable").default(false),
-  exempt: boolean("exempt").default(true),
-  zeroRated: boolean("zero_rated").default(false),
-  balance: decimal("balance", { precision: 15, scale: 2 }).default("0"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+
 
 // Journal Entries for double-entry accounting
 export const journalEntries = pgTable("journal_entries", {
@@ -402,6 +410,12 @@ export const insertBankConnectionSchema = createInsertSchema(bankConnections).om
   createdAt: true,
 });
 
+export const insertChartOfAccountsSchema = createInsertSchema(chartOfAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
   createdAt: true,
@@ -465,3 +479,5 @@ export type ExpenseCategory = typeof expenseCategories.$inferSelect;
 export type InsertExpenseCategory = z.infer<typeof insertExpenseCategorySchema>;
 export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
 export type InsertRecurringTransaction = z.infer<typeof insertRecurringTransactionSchema>;
+export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
+export type InsertChartOfAccount = z.infer<typeof insertChartOfAccountsSchema>;
