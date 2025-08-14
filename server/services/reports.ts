@@ -33,7 +33,6 @@ export interface BalanceSheetReport {
     total: number;
     ownersEquity: number;
     retainedEarnings: number;
-    currentYearEarnings?: number;
   };
   asOfDate: string;
 }
@@ -174,70 +173,47 @@ export async function generateBalanceSheetReport(
     asOfDate
   );
 
-  // Calculate retained earnings (cumulative net income) with proper NaN handling
+  // Calculate retained earnings (cumulative net income)
   const totalRevenue = allTransactions
-    .filter(t => !t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => {
-      const amount = parseFloat(t.amount);
-      return acc + (isNaN(amount) ? 0 : amount);
-    }, 0);
+    .filter(t => !t.isExpense)
+    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
     
   const totalExpenses = allTransactions
-    .filter(t => t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => {
-      const amount = parseFloat(t.amount);
-      return acc + (isNaN(amount) ? 0 : amount);
-    }, 0);
-
-  const netIncome = totalRevenue - totalExpenses;
-  
-  // For sole proprietorship with negative equity, assume owner funding
-  const retainedEarnings = netIncome;
-  const ownersEquity = netIncome < 0 ? Math.abs(netIncome) : 0; // Owner's contributions to cover losses
-  
-  // Calculate current year earnings vs retained earnings from previous years
-  const currentYear = asOfDate.getFullYear();
-  const currentYearTransactions = allTransactions.filter(t => 
-    new Date(t.date).getFullYear() === currentYear
-  );
-  
-  const currentYearRevenue = currentYearTransactions
-    .filter(t => !t.isExpense && !t.isTransfer)
+    .filter(t => t.isExpense)
     .reduce((acc, t) => acc + parseFloat(t.amount), 0);
-    
-  const currentYearExpenses = currentYearTransactions
-    .filter(t => t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
-    
-  const currentYearEarnings = currentYearRevenue - currentYearExpenses;
 
-  // Proper balance sheet structure
+  const retainedEarnings = totalRevenue - totalExpenses;
+
+  // For sole proprietorship, assets primarily come from cash and accounts receivable
+  // Liabilities from accounts payable and loans
+  // This is a simplified implementation - in practice, you'd have a chart of accounts
+
   const assets = {
-    total: ownersEquity, // Total assets equal owner's equity for sole proprietorship
+    total: Math.max(retainedEarnings, 0), // Simplified: positive equity suggests assets
     current: [
-      { account: 'Cash and Bank Accounts', amount: 0 } // Cash would be from bank connections
+      { account: 'Cash and Bank Accounts', amount: Math.max(retainedEarnings * 0.8, 0) },
+      { account: 'Accounts Receivable', amount: Math.max(retainedEarnings * 0.2, 0) }
     ],
     fixed: []
   };
 
   const liabilities = {
-    total: totalExpenses, // Current liabilities represent unpaid expenses
+    total: Math.max(-retainedEarnings, 0), // Simplified: negative equity suggests liabilities
     current: [
-      { account: 'Accounts Payable', amount: totalExpenses }
+      { account: 'Accounts Payable', amount: Math.max(-retainedEarnings * 0.6, 0) }
     ],
-    longTerm: []
+    longTerm: [
+      { account: 'Long-term Debt', amount: Math.max(-retainedEarnings * 0.4, 0) }
+    ]
   };
-
-  const totalEquity = ownersEquity + retainedEarnings;
 
   return {
     assets,
     liabilities,
     equity: {
-      total: totalEquity,
-      ownersEquity,
-      retainedEarnings: 0, // Previous years
-      currentYearEarnings // This year's profit/loss
+      total: retainedEarnings,
+      ownersEquity: 0, // For sole proprietorship, this would be initial capital
+      retainedEarnings
     },
     asOfDate: asOfDate.toISOString().split('T')[0]
   };
@@ -266,39 +242,28 @@ export async function generateTaxSummaryReport(
       return acc + (parseFloat(taxData?.tax || '0'));
     }, 0);
 
-  // For Canadian businesses, calculate estimated tax on transactions
-  // Since we don't have actual tax data, estimate based on transaction amounts
-  const hstRate = 0.13; // 13% HST for Ontario
-  
-  // Estimate tax collected on revenue (would be charged to customers)
-  const estimatedTaxCollected = transactions
-    .filter(t => !t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => acc + (parseFloat(t.amount) * hstRate), 0);
-    
-  // Estimate tax paid on expenses (Input Tax Credits)
-  const estimatedTaxPaid = transactions
-    .filter(t => t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => acc + (parseFloat(t.amount) * hstRate), 0);
-
-  const finalTaxCollected = taxCollected > 0 ? taxCollected : estimatedTaxCollected;
-  const finalTaxPaid = taxPaid > 0 ? taxPaid : estimatedTaxPaid;
-  const netOwing = finalTaxCollected - finalTaxPaid;
-
   // For Canadian businesses, assume HST/GST rates by province
   const provincialBreakdown = [
     {
       province: 'Ontario',
-      rate: 0.13, // HST as decimal
-      collected: finalTaxCollected,
-      paid: finalTaxPaid,
-      net: isNaN(netOwing) ? 0 : netOwing
+      rate: 13, // HST
+      collected: taxCollected * 0.8, // Assume most business in Ontario
+      paid: taxPaid * 0.8,
+      net: (taxCollected - taxPaid) * 0.8
+    },
+    {
+      province: 'Other Provinces',
+      rate: 5, // GST only
+      collected: taxCollected * 0.2,
+      paid: taxPaid * 0.2,
+      net: (taxCollected - taxPaid) * 0.2
     }
   ];
 
   return {
-    taxCollected: isNaN(finalTaxCollected) ? 0 : finalTaxCollected,
-    taxPaid: isNaN(finalTaxPaid) ? 0 : finalTaxPaid,
-    netTaxOwing: isNaN(netOwing) ? 0 : netOwing,
+    taxCollected,
+    taxPaid,
+    netTaxOwing: taxCollected - taxPaid,
     gstHstBreakdown: provincialBreakdown,
     period: {
       startDate: startDate.toISOString().split('T')[0],
