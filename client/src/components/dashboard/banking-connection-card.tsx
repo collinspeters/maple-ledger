@@ -95,8 +95,8 @@ export default function BankingConnectionCard() {
                 </div>
               ))}
               {connections.length > 2 && (
-                <p className="text-sm text-gray-500 text-center">
-                  +{connections.length - 2} more connection{connections.length > 3 ? 's' : ''}
+                <p className="text-sm text-gray-500 text-center whitespace-nowrap">
+                  +{connections.length - 2} more {connections.length - 2 === 1 ? 'connection' : 'connections'}
                 </p>
               )}
             </div>

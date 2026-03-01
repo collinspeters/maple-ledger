@@ -1125,8 +1125,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoices", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
-      const invoices = await storage.getInvoices(user.id);
-      res.json(invoices);
+      const [invoices, clientList] = await Promise.all([
+        storage.getInvoices(user.id),
+        storage.getClients(user.id),
+      ]);
+      const clientMap = new Map(clientList.map(c => [c.id, c]));
+      const enriched = invoices.map(inv => ({
+        ...inv,
+        client: clientMap.get(inv.clientId) ?? null,
+      }));
+      res.json(enriched);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
