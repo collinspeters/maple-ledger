@@ -14,8 +14,11 @@ interface FinancialSummary {
 }
 
 export default function FinancialCards() {
+  const lastYear = new Date().getFullYear() - 1;
+  const startDate = new Date(lastYear, 0, 1).toISOString();
+  const endDate = new Date(lastYear, 11, 31, 23, 59, 59).toISOString();
   const { data: summary, isLoading } = useQuery<FinancialSummary>({
-    queryKey: ["/api/financial-summary"],
+    queryKey: [`/api/financial-summary?startDate=${startDate}&endDate=${endDate}`],
   });
 
   if (isLoading) {
@@ -42,18 +45,18 @@ export default function FinancialCards() {
   
   const cards = [
     {
-      title: "This Month Revenue",
+      title: `${lastYear} Revenue`,
       value: `$${summary?.totalRevenue?.toLocaleString() || '0'}`,
-      change: `${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}% vs last month`,
+      change: `${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}% vs prior year`,
       changeType: revenueChange >= 0 ? "positive" : "negative",
       icon: DollarSign,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
     },
     {
-      title: "This Month Expenses", 
+      title: `${lastYear} Expenses`,
       value: `$${summary?.totalExpenses?.toLocaleString() || '0'}`,
-      change: `${expenseChange >= 0 ? '+' : ''}${expenseChange.toFixed(1)}% vs last month`,
+      change: `${expenseChange >= 0 ? '+' : ''}${expenseChange.toFixed(1)}% vs prior year`,
       changeType: expenseChange <= 0 ? "positive" : "negative",
       icon: Receipt,
       iconBg: "bg-orange-50",

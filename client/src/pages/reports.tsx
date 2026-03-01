@@ -199,11 +199,12 @@ type Transaction = {
 };
 
 export default function Reports() {
+  const lastYear = new Date().getFullYear() - 1;
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-    to: new Date()
+    from: new Date(lastYear, 0, 1),
+    to: new Date(lastYear, 11, 31)
   });
-  const [datePreset, setDatePreset] = useState<string>("thisMonth");
+  const [datePreset, setDatePreset] = useState<string>("lastYear");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showTransactionDetail, setShowTransactionDetail] = useState(false);
 

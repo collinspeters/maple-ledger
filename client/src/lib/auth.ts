@@ -23,7 +23,8 @@ export function checkSubscriptionAccess(user: AuthUser | null): boolean {
     return true;
   }
   
-  if (user.subscriptionStatus === "trial" && user.trialDaysRemaining && user.trialDaysRemaining > 0) {
+  // Trial users always get access — expiry is shown as a warning, not a hard block
+  if (user.subscriptionStatus === "trial") {
     return true;
   }
   
