@@ -365,7 +365,10 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const { totalRevenue, totalExpenses, transactionCount } = result[0] || { totalRevenue: 0, totalExpenses: 0, transactionCount: 0 };
+    const raw = result[0] || { totalRevenue: 0, totalExpenses: 0, transactionCount: 0 };
+    const totalRevenue = parseFloat(String(raw.totalRevenue)) || 0;
+    const totalExpenses = parseFloat(String(raw.totalExpenses)) || 0;
+    const transactionCount = Number(raw.transactionCount) || 0;
 
     // Calculate previous period for comparison
     const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -387,7 +390,9 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const { totalRevenue: prevRevenue, totalExpenses: prevExpenses } = prevResult[0] || { totalRevenue: 0, totalExpenses: 0 };
+    const prevRaw = prevResult[0] || { totalRevenue: 0, totalExpenses: 0 };
+    const prevRevenue = parseFloat(String(prevRaw.totalRevenue)) || 0;
+    const prevExpenses = parseFloat(String(prevRaw.totalExpenses)) || 0;
 
     // Calculate changes and metrics
     const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;

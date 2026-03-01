@@ -54,12 +54,16 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session setup
+  const sessionSecret = process.env.SESSION_SECRET || "dev-secret-do-not-use-in-production";
+  if (!process.env.SESSION_SECRET) {
+    console.warn("WARNING: SESSION_SECRET environment variable is not set. Using insecure default.");
+  }
   app.use(session({
-    secret: process.env.SESSION_SECRET || "default-secret-change-in-production",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: { 
-      secure: false, // Set to false for development, true for production
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax'
@@ -910,7 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { asOfDate } = req.query;
       
       const asOf = asOfDate ? new Date(asOfDate as string) : new Date();
-      const transactions = await storage.getTransactionsByDateRange(user.id, new Date(2020, 0, 1), asOf);
+      const transactions = await storage.getTransactionsByDateRange(user.id, new Date('2000-01-01'), asOf);
       
       // Calculate cash position from all non-transfer transactions
       const cashPosition = transactions
