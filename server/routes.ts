@@ -1590,6 +1590,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // T2125 CRA export — JSON
+  app.get("/api/reports/t2125", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+
+      const { generateT2125Report } = await import('./services/t2125-report');
+      const report = await generateT2125Report(user.id, startDate, endDate);
+
+      res.json(report);
+    } catch (error) {
+      console.error("T2125 report error:", error);
+      res.status(500).json({ message: "Failed to generate T2125 report" });
+    }
+  });
+
+  // T2125 CSV download
+  app.get("/api/reports/t2125/export/csv", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+
+      const { generateT2125Report, reportToCSV } = await import('./services/t2125-report');
+      const report = await generateT2125Report(user.id, startDate, endDate);
+      const csv = reportToCSV(report);
+
+      const filename = `T2125_${report.taxYear}_${report.period.startDate}_${report.period.endDate}.csv`;
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("T2125 CSV export error:", error);
+      res.status(500).json({ message: "Failed to export T2125 as CSV" });
+    }
+  });
+
+  // T2125 JSON download
+  app.get("/api/reports/t2125/export/json", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+
+      const { generateT2125Report } = await import('./services/t2125-report');
+      const report = await generateT2125Report(user.id, startDate, endDate);
+
+      const filename = `T2125_${report.taxYear}_${report.period.startDate}_${report.period.endDate}.json`;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(report);
+    } catch (error) {
+      console.error("T2125 JSON export error:", error);
+      res.status(500).json({ message: "Failed to export T2125 as JSON" });
+    }
+  });
+
   app.post("/api/invoices/:id/mark-paid", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;

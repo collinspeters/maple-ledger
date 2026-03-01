@@ -140,6 +140,37 @@ type GeneralLedgerReport = {
   };
 };
 
+// T2125 CRA Report types
+type T2125LineItem = {
+  code: string;
+  lineNumber: string;
+  name: string;
+  description: string;
+  isFullyDeductible: boolean;
+  notes?: string;
+  grossAmount: number;
+  deductibleAmount: number;
+  transactionCount: number;
+  currency: 'CAD';
+};
+
+type T2125Section = {
+  label: string;
+  items: T2125LineItem[];
+  total: number;
+};
+
+type T2125Report = {
+  taxYear: number;
+  period: { startDate: string; endDate: string };
+  grossIncome: T2125Section;
+  expenses: T2125Section;
+  totalDeductibleExpenses: number;
+  netBusinessIncome: number;
+  unmappedExpenses: { description: string; amount: number; category: string | null }[];
+  generatedAt: string;
+};
+
 // Transaction detail for drill-down
 type Transaction = {
   id: string;
@@ -181,6 +212,10 @@ export default function Reports() {
 
   const { data: generalLedger, isLoading: glLoading } = useQuery<GeneralLedgerReport>({
     queryKey: [`/api/reports/general-ledger?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
+  });
+
+  const { data: t2125Report, isLoading: t2125Loading } = useQuery<T2125Report>({
+    queryKey: [`/api/reports/t2125?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
 
   // Get all transactions for category drill-down
@@ -396,7 +431,7 @@ export default function Reports() {
 
       {/* Reports Tabs */}
       <Tabs defaultValue="profit-loss" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profit-loss" className="flex items-center gap-2">
             <PieChart className="h-4 w-4" />
             P&L
@@ -416,6 +451,10 @@ export default function Reports() {
           <TabsTrigger value="general-ledger" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             General Ledger
+          </TabsTrigger>
+          <TabsTrigger value="t2125" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            T2125
           </TabsTrigger>
         </TabsList>
 
@@ -970,6 +1009,201 @@ export default function Reports() {
                 <div className="text-center py-8">
                   <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">No ledger data available for selected period</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* T2125 CRA Tax Report */}
+        <TabsContent value="t2125">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-red-600" />
+                    T2125 – Statement of Business Activities
+                  </CardTitle>
+                  <p className="text-sm text-gray-500 mt-1">
+                    CRA-compliant export for tax year {t2125Report?.taxYear ?? new Date().getFullYear()}
+                    {t2125Report && ` · ${t2125Report.period.startDate} to ${t2125Report.period.endDate}`}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/api/reports/t2125/export/csv?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`, '_blank')}
+                    disabled={!t2125Report}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/api/reports/t2125/export/json?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`, '_blank')}
+                    disabled={!t2125Report}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    JSON
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {t2125Loading ? (
+                <div className="text-center py-8 text-gray-500">Loading T2125 report…</div>
+              ) : t2125Report ? (
+                <div className="space-y-6">
+
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                      <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Gross Income</p>
+                      <p className="text-2xl font-bold text-green-800 mt-1">
+                        {formatCurrency(t2125Report.grossIncome.total)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                      <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Deductible Expenses</p>
+                      <p className="text-2xl font-bold text-red-800 mt-1">
+                        {formatCurrency(t2125Report.totalDeductibleExpenses)}
+                      </p>
+                    </div>
+                    <div className={`rounded-lg border p-4 ${t2125Report.netBusinessIncome >= 0 ? 'border-blue-200 bg-blue-50' : 'border-orange-200 bg-orange-50'}`}>
+                      <p className={`text-xs font-medium uppercase tracking-wide ${t2125Report.netBusinessIncome >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                        Net Business Income
+                      </p>
+                      <p className={`text-2xl font-bold mt-1 ${t2125Report.netBusinessIncome >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+                        {formatCurrency(t2125Report.netBusinessIncome)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Income section */}
+                  {t2125Report.grossIncome.items.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        Income
+                      </h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gray-50">
+                            <TableHead className="w-20">Line</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead className="text-right">Amount (CAD)</TableHead>
+                            <TableHead className="text-right w-24">Transactions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {t2125Report.grossIncome.items.map((item) => (
+                            <TableRow key={item.code}>
+                              <TableCell className="font-mono text-gray-500 text-sm">{item.lineNumber}</TableCell>
+                              <TableCell>
+                                <div className="font-medium">{item.name}</div>
+                                {item.notes && <div className="text-xs text-gray-500">{item.notes}</div>}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold text-green-700">
+                                {formatCurrency(item.grossAmount)}
+                              </TableCell>
+                              <TableCell className="text-right text-gray-500">{item.transactionCount}</TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow className="bg-green-50 font-bold">
+                            <TableCell colSpan={2} className="text-right">Total Income</TableCell>
+                            <TableCell className="text-right text-green-700">{formatCurrency(t2125Report.grossIncome.total)}</TableCell>
+                            <TableCell />
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  {/* Expenses section */}
+                  {t2125Report.expenses.items.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <TrendingDown className="h-4 w-4 text-red-600" />
+                        Expenses
+                      </h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gray-50">
+                            <TableHead className="w-20">Line</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead className="text-right">Gross (CAD)</TableHead>
+                            <TableHead className="text-right">Deductible %</TableHead>
+                            <TableHead className="text-right">Deductible (CAD)</TableHead>
+                            <TableHead className="text-right w-24">Txns</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {t2125Report.expenses.items.map((item) => {
+                            const pct = item.grossAmount > 0
+                              ? Math.round((item.deductibleAmount / item.grossAmount) * 100)
+                              : 100;
+                            return (
+                              <TableRow key={item.code}>
+                                <TableCell className="font-mono text-gray-500 text-sm">{item.lineNumber}</TableCell>
+                                <TableCell>
+                                  <div className="font-medium">{item.name}</div>
+                                  {item.notes && <div className="text-xs text-gray-500">{item.notes}</div>}
+                                  {!item.isFullyDeductible && (
+                                    <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 mt-1">
+                                      Partial deduction
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right text-gray-700">{formatCurrency(item.grossAmount)}</TableCell>
+                                <TableCell className="text-right">
+                                  <Badge variant={pct === 100 ? 'secondary' : 'outline'} className={pct < 100 ? 'text-orange-600 border-orange-300' : ''}>
+                                    {pct}%
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right font-semibold text-red-700">
+                                  {formatCurrency(item.deductibleAmount)}
+                                </TableCell>
+                                <TableCell className="text-right text-gray-500">{item.transactionCount}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          <TableRow className="bg-red-50 font-bold">
+                            <TableCell colSpan={4} className="text-right">Total Deductible Expenses</TableCell>
+                            <TableCell className="text-right text-red-700">{formatCurrency(t2125Report.totalDeductibleExpenses)}</TableCell>
+                            <TableCell />
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  {/* Net summary row */}
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 flex justify-between items-center">
+                    <span className="font-semibold text-gray-700">Net Business Income (Line 9946)</span>
+                    <span className={`text-xl font-bold ${t2125Report.netBusinessIncome >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                      {formatCurrency(t2125Report.netBusinessIncome)}
+                    </span>
+                  </div>
+
+                  {/* Unmapped note */}
+                  {t2125Report.unmappedExpenses.length > 0 && (
+                    <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                      <strong>{t2125Report.unmappedExpenses.length} uncategorised transaction(s)</strong> were placed in
+                      Other Expenses (line 8018). Assign categories to improve accuracy.
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-400 text-right">
+                    Generated {new Date(t2125Report.generatedAt).toLocaleString('en-CA')} · All amounts in CAD
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No T2125 data available for selected period</p>
                 </div>
               )}
             </CardContent>
