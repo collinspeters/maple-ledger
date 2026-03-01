@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
@@ -17,24 +18,33 @@ import {
   Users,
   Calculator,
   BookOpen,
-  TrendingUp
 } from "lucide-react";
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
 
+  const { data: reviewQueue = [] } = useQuery<any[]>({
+    queryKey: ["/api/transactions/review-queue"],
+  });
+
+  const { data: unmatchedReceipts = [] } = useQuery<any[]>({
+    queryKey: ["/api/receipts/unmatched"],
+  });
+
+  const txBadge = reviewQueue.length > 0 ? String(reviewQueue.length) : undefined;
+  const receiptBadge = unmatchedReceipts.length > 0 ? String(unmatchedReceipts.length) : undefined;
+
   const menuItems = [
     { href: "/", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/clients", icon: Users, label: "Clients" },
     { href: "/invoices", icon: FileText, label: "Invoices" },
     { href: "/estimates", icon: Calculator, label: "Estimates" },
-    { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: "3" },
-    { href: "/receipts", icon: Receipt, label: "Receipts", badge: "2" },
+    { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: txBadge },
+    { href: "/receipts", icon: Receipt, label: "Receipts", badge: receiptBadge },
     { href: "/chart-of-accounts", icon: BookOpen, label: "Chart of Accounts" },
-
     { href: "/reports", icon: ChartLine, label: "Reports" },
-    { href: "/banking", icon: Building2, label: "🏦 Connect Bank", highlight: true },
+    { href: "/banking", icon: Building2, label: "Banking" },
     { href: "/ai-assistant", icon: MessageSquare, label: "AI Assistant" },
     { href: "/settings", icon: Settings, label: "Settings" },
   ];
@@ -86,8 +96,6 @@ export default function Sidebar() {
             <div className={`animate-slide-in flex items-center space-x-3 px-3 py-3 rounded-xl font-medium transition-all duration-200 hover:shadow-sm ${
               isActive(item.href)
                 ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border border-primary/20 shadow-sm"
-                : item.highlight
-                ? "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200 hover:from-green-100 hover:to-emerald-100 shadow-sm animate-pulse-soft"
                 : "text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm"
             }`}
             style={{ animationDelay: `${index * 0.05}s` }}>
@@ -96,13 +104,13 @@ export default function Sidebar() {
               }`} />
               <span className="flex-1">{item.label}</span>
               {item.badge && (
-                <span className={`text-white text-xs px-2 py-1 rounded-full shadow-sm animate-pulse-soft ${
-                  item.label === "Transactions" ? "bg-gradient-to-r from-orange-500 to-orange-600" : "bg-gradient-to-r from-blue-500 to-blue-600"
+                <span className={`text-white text-xs px-2 py-1 rounded-full shadow-sm ${
+                  item.label === "Transactions" ? "bg-orange-500" : "bg-blue-500"
                 }`}>
                   {item.badge}
                 </span>
               )}
-              {item.highlight && !isActive(item.href) && (
+              {false && (
                 <span className="text-green-600 text-xs font-bold animate-pulse">
                   NEW!
                 </span>

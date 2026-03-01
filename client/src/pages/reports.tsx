@@ -198,14 +198,14 @@ type Transaction = {
   receiptAttached: boolean;
 };
 
-const DEMO_YEAR = 2025;
-
 export default function Reports() {
+  const currentYear = new Date().getFullYear();
+  const lastYear = currentYear - 1;
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(DEMO_YEAR, 0, 1),
-    to: new Date(DEMO_YEAR, 11, 31)
+    from: new Date(lastYear, 0, 1),
+    to: new Date(lastYear, 11, 31)
   });
-  const [datePreset, setDatePreset] = useState<string>(`year-${DEMO_YEAR}`);
+  const [datePreset, setDatePreset] = useState<string>("lastYear");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showTransactionDetail, setShowTransactionDetail] = useState(false);
 
@@ -293,6 +293,18 @@ export default function Reports() {
     }
 
     switch (preset) {
+      case "lastYear":
+        setDateRange({
+          from: new Date(currentYear - 1, 0, 1),
+          to: new Date(currentYear - 1, 11, 31)
+        });
+        break;
+      case "thisYear":
+        setDateRange({
+          from: new Date(currentYear, 0, 1),
+          to: new Date(currentYear, 11, 31)
+        });
+        break;
       case "thisMonth":
         setDateRange({
           from: new Date(currentYear, currentMonth, 1),
@@ -336,10 +348,12 @@ export default function Reports() {
         {/* Date Range Controls */}
         <div className="flex items-center gap-4">
           <Select value={datePreset} onValueChange={handleDatePresetChange}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="lastYear">Last Year ({lastYear})</SelectItem>
+              <SelectItem value="thisYear">This Year ({currentYear})</SelectItem>
               <SelectItem value="year-2025">2025 (Full Year)</SelectItem>
               <SelectItem value="year-2024">2024 (Full Year)</SelectItem>
               <SelectItem value="year-2023">2023 (Full Year)</SelectItem>

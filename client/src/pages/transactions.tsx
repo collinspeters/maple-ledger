@@ -553,22 +553,20 @@ export default function Transactions() {
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Show:</span>
                 <Select value={itemsPerPage.toString()} onValueChange={(value) => {
                   setItemsPerPage(parseInt(value));
                   setCurrentPage(1);
                 }}>
-                  <SelectTrigger className="w-20 h-8">
-                    <SelectValue />
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="Rows per page" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="200">200</SelectItem>
+                    <SelectItem value="25">25 per page</SelectItem>
+                    <SelectItem value="50">50 per page</SelectItem>
+                    <SelectItem value="100">100 per page</SelectItem>
+                    <SelectItem value="200">200 per page</SelectItem>
                   </SelectContent>
                 </Select>
-                <span>per page</span>
               </div>
             </div>
           </div>

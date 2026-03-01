@@ -216,15 +216,6 @@ export default function Banking() {
         </div>
       </div>
 
-      {/* Enhanced Plaid Features Alert */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Enhanced Banking Integration:</strong> Now using Plaid's official quickstart patterns 
-          with Canadian tax integration, real-time sync, and improved security.
-        </AlertDescription>
-      </Alert>
-
       {connections.length === 0 ? (
         <Card>
           <CardHeader>
