@@ -124,23 +124,23 @@ export default function Clients() {
         {clients && clients.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow">
+              <Card key={client.id} className="hover:shadow-lg transition-shadow overflow-hidden">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{client.businessName}</CardTitle>
-                    <Badge variant={client.isActive ? "default" : "secondary"}>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-lg leading-tight break-words min-w-0">{client.businessName}</CardTitle>
+                    <Badge variant={client.isActive ? "default" : "secondary"} className="flex-shrink-0">
                       {client.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   {client.contactName && (
-                    <p className="text-sm text-gray-600">{client.contactName}</p>
+                    <p className="text-sm text-gray-600 truncate">{client.contactName}</p>
                   )}
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{client.email}</span>
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 truncate">{client.email}</span>
                     </div>
                     
                     {client.phone && (

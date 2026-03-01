@@ -55,7 +55,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl border-r border-gray-200 flex flex-col sidebar navigation" data-testid="sidebar">
+    <div className="w-64 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 flex flex-col sidebar navigation z-10 relative" data-testid="sidebar">
       {/* Logo and branding */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">

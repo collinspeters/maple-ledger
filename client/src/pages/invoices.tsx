@@ -169,7 +169,7 @@ export default function Invoices() {
               <Card 
                 key={invoice.id} 
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
+                onClick={() => { setSelectedInvoice(invoice); setShowInvoiceModal(true); }}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">

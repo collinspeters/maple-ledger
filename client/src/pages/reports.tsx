@@ -337,18 +337,16 @@ export default function Reports() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      {/* Header - Simplified to remove duplication */}
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-gray-600">
-            Generate financial reports and insights for your business
-          </p>
-        </div>
+      {/* Header */}
+      <div className="flex flex-wrap gap-3 items-center justify-between">
+        <p className="text-gray-600">
+          Generate financial reports and insights for your business
+        </p>
         
         {/* Date Range Controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
           <Select value={datePreset} onValueChange={handleDatePresetChange}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-52 min-w-[13rem]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -550,11 +548,13 @@ export default function Reports() {
                         </TableRow>
                         {profitLoss.revenue.categories.map((category, index) => (
                           <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
-                            <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
-                              {category.category.replace(/_/g, ' ')}
-                              <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <TableCell className="pl-6 group-hover:text-blue-600 max-w-0 w-full">
+                              <div className="flex items-center min-w-0">
+                                <span className="truncate capitalize" title={category.category.replace(/_/g, ' ')}>{category.category.replace(/_/g, ' ')}</span>
+                                <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
                             </TableCell>
-                            <TableCell className="text-right font-medium text-green-600">{formatCurrency(category.amount)}</TableCell>
+                            <TableCell className="text-right font-medium text-green-600 whitespace-nowrap">{formatCurrency(category.amount)}</TableCell>
                           </TableRow>
                         ))}
                         <TableRow className="border-t border-green-200 bg-green-50">
@@ -568,11 +568,13 @@ export default function Reports() {
                         </TableRow>
                         {profitLoss.expenses.categories.map((category, index) => (
                           <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
-                            <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
-                              {category.category.replace(/_/g, ' ')}
-                              <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <TableCell className="pl-6 group-hover:text-blue-600 max-w-0 w-full">
+                              <div className="flex items-center min-w-0">
+                                <span className="truncate capitalize" title={category.category.replace(/_/g, ' ')}>{category.category.replace(/_/g, ' ')}</span>
+                                <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
                             </TableCell>
-                            <TableCell className="text-right font-medium text-red-600">{formatCurrency(category.amount)}</TableCell>
+                            <TableCell className="text-right font-medium text-red-600 whitespace-nowrap">{formatCurrency(category.amount)}</TableCell>
                           </TableRow>
                         ))}
                         <TableRow className="border-t border-red-200 bg-red-50">
