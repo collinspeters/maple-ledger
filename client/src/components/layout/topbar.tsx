@@ -7,6 +7,7 @@ import TransactionModal from "@/components/transaction-modal";
 
 const pageNames: Record<string, { title: string; description: string }> = {
   "/": { title: "Dashboard", description: "Welcome back! Here's your business overview." },
+  "/dashboard": { title: "Dashboard", description: "Welcome back! Here's your business overview." },
   "/clients": { title: "Clients", description: "Manage your client relationships and information." },
   "/invoices": { title: "Invoices", description: "Create and track your customer invoices." },
   "/estimates": { title: "Estimates", description: "Generate professional quotes for potential clients." },
@@ -14,6 +15,8 @@ const pageNames: Record<string, { title: string; description: string }> = {
   "/receipts": { title: "Receipts", description: "Upload and manage your business receipts." },
   "/reports": { title: "Reports", description: "Generate financial reports and insights." },
   "/banking": { title: "Banking", description: "Connect and manage your bank accounts." },
+  "/chart-of-accounts": { title: "Chart of Accounts", description: "Manage your bookkeeping account structure." },
+  "/ai-assistant": { title: "AI Assistant", description: "Ask questions about your finances and get AI-powered insights." },
   "/settings": { title: "Settings", description: "Configure your account and preferences." },
 };
 

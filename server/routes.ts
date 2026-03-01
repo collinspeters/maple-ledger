@@ -13,7 +13,7 @@ import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
 import { categorizeTransaction, processFinancialQuery, extractReceiptData, parseNaturalLanguageTransaction } from "./services/openai";
 import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } from "./services/merchant-enrichment";
-import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
+import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions, getInstitutionName } from "./services/plaid";
 import { categorizeTransactionHybrid } from "./services/hybrid-categorization";
 import { syncAllConnections, syncEventEmitter } from "./services/bank-sync";
 import { processReceiptOCR, findTransactionMatches } from "./services/ocr";
@@ -925,7 +925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id,
           plaidItemId: tokenData.itemId,
           plaidAccessToken: tokenData.accessToken,
-          bankName: accountsData.item.institution_id || "Unknown Bank",
+          bankName: await getInstitutionName(accountsData.item.institution_id || "") || "Unknown Bank",
           accountType: account.type,
           accountId: account.account_id,
           accountName: account.name,

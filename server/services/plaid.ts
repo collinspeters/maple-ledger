@@ -14,6 +14,26 @@ import {
   CreditAccountSubtype
 } from 'plaid';
 
+// Fallback map for well-known Canadian institution IDs
+const INSTITUTION_NAMES: Record<string, string> = {
+  ins_39:   "RBC Royal Bank",
+  ins_9:    "TD Canada Trust",
+  ins_6:    "Bank of Montreal (BMO)",
+  ins_7:    "CIBC",
+  ins_8:    "Scotiabank",
+  ins_14:   "National Bank of Canada",
+  ins_40:   "Desjardins",
+  ins_117:  "Tangerine",
+  ins_132:  "Simplii Financial",
+  ins_43:   "ATB Financial",
+  ins_130:  "EQ Bank",
+  ins_1:    "Chase",
+  ins_2:    "Wells Fargo",
+  ins_3:    "US Bank",
+  ins_4:    "Citibank",
+  ins_5:    "Capital One",
+};
+
 // Validate required environment variables
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET = process.env.PLAID_SECRET;
@@ -149,6 +169,22 @@ export async function getAccounts(accessToken: string) {
   } catch (error) {
     console.error('Error fetching Plaid accounts:', error);
     throw new Error('Failed to fetch bank accounts from Plaid');
+  }
+}
+
+// Resolve a Plaid institution_id to a human-readable name
+export async function getInstitutionName(institutionId: string): Promise<string> {
+  if (INSTITUTION_NAMES[institutionId]) {
+    return INSTITUTION_NAMES[institutionId];
+  }
+  try {
+    const response = await plaidClient.institutionsGetById({
+      institution_id: institutionId,
+      country_codes: [CountryCode.Ca, CountryCode.Us],
+    });
+    return response.data.institution.name;
+  } catch {
+    return institutionId;
   }
 }
 

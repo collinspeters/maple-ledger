@@ -465,32 +465,34 @@ export default function Reports() {
 
       {/* Reports Tabs */}
       <Tabs defaultValue="profit-loss" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="profit-loss" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            P&L
-          </TabsTrigger>
-          <TabsTrigger value="balance-sheet" className="flex items-center gap-2">
-            <Scale className="h-4 w-4" />
-            Balance Sheet
-          </TabsTrigger>
-          <TabsTrigger value="tax-summary" className="flex items-center gap-2">
-            <Receipt className="h-4 w-4" />
-            Tax Summary
-          </TabsTrigger>
-          <TabsTrigger value="trial-balance" className="flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            Trial Balance
-          </TabsTrigger>
-          <TabsTrigger value="general-ledger" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            General Ledger
-          </TabsTrigger>
-          <TabsTrigger value="t2125" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            T2125
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="inline-flex min-w-max">
+            <TabsTrigger value="profit-loss" className="flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              P&L
+            </TabsTrigger>
+            <TabsTrigger value="balance-sheet" className="flex items-center gap-2">
+              <Scale className="h-4 w-4" />
+              Balance Sheet
+            </TabsTrigger>
+            <TabsTrigger value="tax-summary" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Tax Summary
+            </TabsTrigger>
+            <TabsTrigger value="trial-balance" className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Trial Balance
+            </TabsTrigger>
+            <TabsTrigger value="general-ledger" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              General Ledger
+            </TabsTrigger>
+            <TabsTrigger value="t2125" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              T2125
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Profit & Loss Report */}
         <TabsContent value="profit-loss">
