@@ -141,6 +141,20 @@ type GeneralLedgerReport = {
 };
 
 // T2125 CRA Report types
+type MonthlyPLRow = {
+  month: string;
+  label: string;
+  revenue: number;
+  expenses: number;
+  netProfit: number;
+};
+
+type MonthlyPLReport = {
+  year: number;
+  months: MonthlyPLRow[];
+  totals: { revenue: number; expenses: number; netProfit: number };
+};
+
 type T2125LineItem = {
   code: string;
   lineNumber: string;
@@ -216,6 +230,14 @@ export default function Reports() {
 
   const { data: t2125Report, isLoading: t2125Loading } = useQuery<T2125Report>({
     queryKey: [`/api/reports/t2125?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
+  });
+
+  const [plView, setPlView] = useState<'summary' | 'monthly' | 'annual'>('summary');
+  const plYear = dateRange.from.getFullYear();
+
+  const { data: monthlyPL, isLoading: monthlyPLLoading } = useQuery<MonthlyPLReport>({
+    queryKey: [`/api/reports/profit-loss/monthly?year=${plYear}`],
+    enabled: plView === 'monthly' || plView === 'annual',
   });
 
   // Get all transactions for category drill-down
@@ -466,107 +488,207 @@ export default function Reports() {
                 <PieChart className="h-5 w-5 text-blue-600" />
                 Profit & Loss Statement
               </CardTitle>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <div className="flex rounded-md border divide-x text-sm overflow-hidden">
+                  {(['summary', 'monthly', 'annual'] as const).map(v => (
+                    <button
+                      key={v}
+                      onClick={() => setPlView(v)}
+                      className={`px-3 py-1.5 capitalize transition-colors ${plView === v ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
                 <Button variant="outline" size="sm" onClick={() => exportReport('profit-loss')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                <Button variant="outline" size="sm">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Email
-                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {plLoading ? (
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              ) : profitLoss ? (
-                <div className="bg-white">
-                  <div className="text-center border-b-2 pb-4 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {formatDateRange(dateRange.from, dateRange.to)}
-                    </h3>
+              {/* SUMMARY view */}
+              {plView === 'summary' && (
+                plLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                   </div>
-                  
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-b-2">
-                        <TableHead className="font-bold text-left w-3/4">Account</TableHead>
-                        <TableHead className="font-bold text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {/* Revenue Section */}
-                      <TableRow className="bg-green-50">
-                        <TableCell className="font-bold text-green-800 py-3">REVENUE</TableCell>
-                        <TableCell></TableCell>
-                      </TableRow>
-                      {profitLoss.revenue.categories.map((category, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
-                          <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
-                            {category.category.replace(/_/g, ' ')}
-                            <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-green-600">
-                            {formatCurrency(category.amount)}
+                ) : profitLoss ? (
+                  <div className="bg-white">
+                    <div className="text-center border-b-2 pb-4 mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {formatDateRange(dateRange.from, dateRange.to)}
+                      </h3>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b-2">
+                          <TableHead className="font-bold text-left w-3/4">Account</TableHead>
+                          <TableHead className="font-bold text-right">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow className="bg-green-50">
+                          <TableCell className="font-bold text-green-800 py-3">REVENUE</TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                        {profitLoss.revenue.categories.map((category, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
+                            <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
+                              {category.category.replace(/_/g, ' ')}
+                              <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-green-600">{formatCurrency(category.amount)}</TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-t border-green-200 bg-green-50">
+                          <TableCell className="font-bold pl-6">Total Revenue</TableCell>
+                          <TableCell className="text-right font-bold text-green-600">{formatCurrency(profitLoss.revenue.total)}</TableCell>
+                        </TableRow>
+                        <TableRow><TableCell colSpan={2} className="h-4"></TableCell></TableRow>
+                        <TableRow className="bg-red-50">
+                          <TableCell className="font-bold text-red-800 py-3">EXPENSES</TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                        {profitLoss.expenses.categories.map((category, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
+                            <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
+                              {category.category.replace(/_/g, ' ')}
+                              <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-red-600">{formatCurrency(category.amount)}</TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-t border-red-200 bg-red-50">
+                          <TableCell className="font-bold pl-6">Total Expenses</TableCell>
+                          <TableCell className="text-right font-bold text-red-600">{formatCurrency(profitLoss.expenses.total)}</TableCell>
+                        </TableRow>
+                        <TableRow><TableCell colSpan={2} className="h-4"></TableCell></TableRow>
+                        <TableRow className="border-t-2 border-gray-400 bg-blue-50">
+                          <TableCell className="font-bold text-lg">NET PROFIT</TableCell>
+                          <TableCell className={`text-right font-bold text-lg ${profitLoss.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(profitLoss.netProfit)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                      <TableRow className="border-t border-green-200 bg-green-50">
-                        <TableCell className="font-bold pl-6">Total Revenue</TableCell>
-                        <TableCell className="text-right font-bold text-green-600">
-                          {formatCurrency(profitLoss.revenue.total)}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Spacing */}
-                      <TableRow><TableCell colSpan={2} className="h-4"></TableCell></TableRow>
-                      
-                      {/* Expenses Section */}
-                      <TableRow className="bg-red-50">
-                        <TableCell className="font-bold text-red-800 py-3">EXPENSES</TableCell>
-                        <TableCell></TableCell>
-                      </TableRow>
-                      {profitLoss.expenses.categories.map((category, index) => (
-                        <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
-                          <TableCell className="pl-6 group-hover:text-blue-600 flex items-center">
-                            {category.category.replace(/_/g, ' ')}
-                            <ChevronRight className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-red-600">
-                            {formatCurrency(category.amount)}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No data available for selected period</p>
+                  </div>
+                )
+              )}
+
+              {/* MONTHLY view */}
+              {plView === 'monthly' && (
+                monthlyPLLoading ? (
+                  <div className="animate-pulse space-y-3">
+                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-4 bg-gray-200 rounded"></div>)}
+                  </div>
+                ) : monthlyPL ? (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-4">Monthly breakdown for {monthlyPL.year}</p>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Month</TableHead>
+                          <TableHead className="text-right">Revenue</TableHead>
+                          <TableHead className="text-right">Expenses</TableHead>
+                          <TableHead className="text-right">Net Profit</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {monthlyPL.months.map(row => (
+                          <TableRow key={row.month} className={row.revenue === 0 && row.expenses === 0 ? 'opacity-40' : ''}>
+                            <TableCell className="font-medium">{row.label}</TableCell>
+                            <TableCell className="text-right text-green-600">{formatCurrency(row.revenue)}</TableCell>
+                            <TableCell className="text-right text-red-600">{formatCurrency(row.expenses)}</TableCell>
+                            <TableCell className={`text-right font-semibold ${row.netProfit >= 0 ? 'text-blue-700' : 'text-orange-600'}`}>
+                              {formatCurrency(row.netProfit)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-t-2 font-bold bg-gray-50">
+                          <TableCell>Annual Total</TableCell>
+                          <TableCell className="text-right text-green-700">{formatCurrency(monthlyPL.totals.revenue)}</TableCell>
+                          <TableCell className="text-right text-red-700">{formatCurrency(monthlyPL.totals.expenses)}</TableCell>
+                          <TableCell className={`text-right ${monthlyPL.totals.netProfit >= 0 ? 'text-blue-700' : 'text-orange-600'}`}>
+                            {formatCurrency(monthlyPL.totals.netProfit)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                      <TableRow className="border-t border-red-200 bg-red-50">
-                        <TableCell className="font-bold pl-6">Total Expenses</TableCell>
-                        <TableCell className="text-right font-bold text-red-600">
-                          {formatCurrency(profitLoss.expenses.total)}
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* Spacing */}
-                      <TableRow><TableCell colSpan={2} className="h-4"></TableCell></TableRow>
-                      
-                      {/* Net Profit */}
-                      <TableRow className="border-t-2 border-gray-400 bg-blue-50">
-                        <TableCell className="font-bold text-lg">NET PROFIT</TableCell>
-                        <TableCell className={`text-right font-bold text-lg ${profitLoss.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(profitLoss.netProfit)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No data available for selected period</p>
-                </div>
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : <p className="text-gray-500 text-center py-8">No monthly data available.</p>
+              )}
+
+              {/* ANNUAL view — YoY comparison: current year vs prior year */}
+              {plView === 'annual' && (
+                monthlyPLLoading ? (
+                  <div className="animate-pulse space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-4 bg-gray-200 rounded"></div>)}
+                  </div>
+                ) : monthlyPL ? (
+                  <div className="space-y-6">
+                    <p className="text-sm text-gray-500">Annual summary for {monthlyPL.year}</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                        <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Total Revenue</p>
+                        <p className="text-2xl font-bold text-green-800 mt-1">{formatCurrency(monthlyPL.totals.revenue)}</p>
+                      </div>
+                      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                        <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Total Expenses</p>
+                        <p className="text-2xl font-bold text-red-800 mt-1">{formatCurrency(monthlyPL.totals.expenses)}</p>
+                      </div>
+                      <div className={`rounded-lg border p-4 ${monthlyPL.totals.netProfit >= 0 ? 'border-blue-200 bg-blue-50' : 'border-orange-200 bg-orange-50'}`}>
+                        <p className={`text-xs font-medium uppercase tracking-wide ${monthlyPL.totals.netProfit >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>Net Profit</p>
+                        <p className={`text-2xl font-bold mt-1 ${monthlyPL.totals.netProfit >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+                          {formatCurrency(monthlyPL.totals.netProfit)}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Profit Margin</p>
+                      <div className="h-3 rounded-full bg-gray-200 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500"
+                          style={{ width: `${monthlyPL.totals.revenue > 0 ? Math.min(100, Math.max(0, (monthlyPL.totals.netProfit / monthlyPL.totals.revenue) * 100)) : 0}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {monthlyPL.totals.revenue > 0
+                          ? `${((monthlyPL.totals.netProfit / monthlyPL.totals.revenue) * 100).toFixed(1)}% net margin`
+                          : 'No revenue recorded'}
+                      </p>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Month</TableHead>
+                          <TableHead className="text-right">Revenue</TableHead>
+                          <TableHead className="text-right">Expenses</TableHead>
+                          <TableHead className="text-right">Net</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {monthlyPL.months.filter(r => r.revenue > 0 || r.expenses > 0).map(row => (
+                          <TableRow key={row.month}>
+                            <TableCell>{row.label}</TableCell>
+                            <TableCell className="text-right text-green-600">{formatCurrency(row.revenue)}</TableCell>
+                            <TableCell className="text-right text-red-600">{formatCurrency(row.expenses)}</TableCell>
+                            <TableCell className={`text-right font-medium ${row.netProfit >= 0 ? 'text-blue-700' : 'text-orange-600'}`}>
+                              {formatCurrency(row.netProfit)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : <p className="text-gray-500 text-center py-8">No annual data available.</p>
               )}
             </CardContent>
           </Card>
@@ -924,13 +1046,13 @@ export default function Reports() {
                 General Ledger
               </CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => exportReport('general-ledger')}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/api/reports/general-ledger/export/csv?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`, '_blank')}
+                >
                   <Download className="h-4 w-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Email
+                  Export CSV
                 </Button>
               </div>
             </CardHeader>

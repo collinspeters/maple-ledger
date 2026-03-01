@@ -37,7 +37,8 @@ Preferred communication style: Simple, everyday language.
 - **Receipt Processing**: File upload handling, OCR data extraction, automatic matching to transactions, unmatched receipt queue.
 - **AI Integration**: OpenAI GPT-4 for categorization and natural language queries, confidence scoring, Canadian tax compliance.
 - **Subscription Management**: Stripe integration for payments, 14-day free trial, access control, upgrade prompts.
-- **Reporting**: Profit & Loss statements, financial summaries, dashboards, CRA-compliant formats, export functionality.
+- **Reporting**: Profit & Loss statements (summary, monthly, and annual views), financial summaries, dashboards, CRA-compliant formats. General Ledger CSV export. T2125 Statement of Business Activities tab with CSV + JSON download for tax software import. Audit log events tracked for sync, review, and categorization actions.
+- **Audit Log**: Immutable `audit_logs` table tracking sync.started, sync.completed, transaction.reviewed, transaction.categorized, and transaction.bulk_categorized events. Accessible at `GET /api/audit-logs`.
 - **Banking**: Multi-account management for same-bank connections, intelligent transfer detection, transfer activity dashboard, account disconnection.
 - **Interactive Agent System**: Comprehensive web automation system for UI analysis, interaction testing, and automated issue resolution, similar to ChatGPT's agent capabilities.
 

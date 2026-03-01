@@ -354,6 +354,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      const { logAuditEvent: logBulkCat } = await import('./services/audit-log');
+      const successCount = results.filter(r => r.status === 'success').length;
+      if (successCount > 0) {
+        await logBulkCat(user.id, 'transaction.bulk_categorized', 'transaction', undefined, {
+          total: results.length,
+          success: successCount,
+          errors: results.filter(r => r.status === 'error').length,
+        });
+      }
+
       res.json({ 
         message: `Processed ${results.length} transactions`,
         results: results,
@@ -559,15 +569,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           break;
 
-        case 'review':
+        case 'review': {
+          const { logAuditEvent: logReview } = await import('./services/audit-log');
           for (const id of transactionIds) {
             const transaction = await storage.updateTransaction(id, { 
               isReviewed: true,
               needsReview: false
             });
             results.push(transaction);
+            await logReview(user.id, 'transaction.reviewed', 'transaction', id);
           }
           break;
+        }
 
         case 'delete':
           for (const id of transactionIds) {
@@ -619,6 +632,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const transaction = await storage.updateTransaction(id, updates);
+
+      // Emit audit event
+      const { logAuditEvent: logPatch } = await import('./services/audit-log');
+      if (updates.isReviewed) {
+        await logPatch(user.id, 'transaction.reviewed', 'transaction', id);
+      } else if (updates.category || updates.aiCategory) {
+        await logPatch(user.id, 'transaction.categorized', 'transaction', id, {
+          category: updates.category ?? updates.aiCategory,
+        });
+      }
+
       res.json(transaction);
     } catch (error) {
       console.error("Transaction update error:", error);
@@ -1119,7 +1143,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use mock data when Plaid is not configured or when explicitly requested
       const useMock = req.body?.useMock !== false;
+
+      const { logAuditEvent } = await import('./services/audit-log');
+      await logAuditEvent(user.id, 'sync.started', 'bank_connection', undefined, { connections: connections.length });
+
       const summary = await syncAllConnections(user.id, useMock);
+
+      await logAuditEvent(user.id, 'sync.completed', 'bank_connection', undefined, {
+        added: summary.totalAdded,
+        modified: summary.totalModified,
+        duplicatesSkipped: summary.totalDuplicatesSkipped,
+      });
 
       res.json({
         message: `Sync complete: ${summary.totalAdded} new, ${summary.totalModified} updated, ${summary.totalDuplicatesSkipped} duplicates skipped`,
@@ -1587,6 +1621,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("General ledger report error:", error);
       res.status(500).json({ message: "Failed to generate general ledger report" });
+    }
+  });
+
+  // Monthly P&L breakdown
+  app.get("/api/reports/profit-loss/monthly", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const year = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
+      const { generateMonthlyPLReport } = await import('./services/reports');
+      const report = await generateMonthlyPLReport(user.id, year);
+      res.json(report);
+    } catch (error) {
+      console.error("Monthly P&L report error:", error);
+      res.status(500).json({ message: "Failed to generate monthly P&L report" });
+    }
+  });
+
+  // General Ledger CSV export
+  app.get("/api/reports/general-ledger/export/csv", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+
+      const { generateGeneralLedgerReport, generalLedgerToCSV } = await import('./services/reports');
+      const report = await generateGeneralLedgerReport(user.id, startDate, endDate);
+      const csv = generalLedgerToCSV(report);
+
+      const filename = `GeneralLedger_${report.period.startDate}_${report.period.endDate}.csv`;
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("General ledger CSV export error:", error);
+      res.status(500).json({ message: "Failed to export general ledger as CSV" });
+    }
+  });
+
+  // Audit log read endpoint
+  app.get("/api/audit-logs", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const { db } = await import('./db');
+      const { auditLogs } = await import('@shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
+
+      const logs = await db
+        .select()
+        .from(auditLogs)
+        .where(eq(auditLogs.userId, user.id))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit);
+
+      res.json(logs);
+    } catch (error) {
+      console.error("Audit log error:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
     }
   });
 

@@ -454,6 +454,110 @@ export async function generateGeneralLedgerReport(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Monthly P&L report — one row per calendar month within the year
+// ---------------------------------------------------------------------------
+
+export interface MonthlyPLRow {
+  month: string;    // "2025-01"
+  label: string;    // "January 2025"
+  revenue: number;
+  expenses: number;
+  netProfit: number;
+}
+
+export interface MonthlyPLReport {
+  year: number;
+  months: MonthlyPLRow[];
+  totals: { revenue: number; expenses: number; netProfit: number };
+}
+
+export async function generateMonthlyPLReport(
+  userId: string,
+  year: number
+): Promise<MonthlyPLReport> {
+  const startDate = new Date(year, 0, 1);
+  const endDate = new Date(year, 11, 31, 23, 59, 59);
+  const txns = await storage.getTransactionsByDateRange(userId, startDate, endDate);
+
+  const buckets: Record<string, { revenue: number; expenses: number }> = {};
+  for (let m = 1; m <= 12; m++) {
+    const key = `${year}-${String(m).padStart(2, '0')}`;
+    buckets[key] = { revenue: 0, expenses: 0 };
+  }
+
+  for (const t of txns) {
+    if (t.isTransfer) continue;
+    const d = new Date(t.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!buckets[key]) continue;
+    const amount = parseFloat(t.amount) || 0;
+    if (t.isExpense) {
+      buckets[key].expenses += amount;
+    } else {
+      buckets[key].revenue += amount;
+    }
+  }
+
+  const monthNames = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December'
+  ];
+
+  const months: MonthlyPLRow[] = Object.entries(buckets).map(([key, val], idx) => ({
+    month: key,
+    label: `${monthNames[idx]} ${year}`,
+    revenue: Math.round(val.revenue * 100) / 100,
+    expenses: Math.round(val.expenses * 100) / 100,
+    netProfit: Math.round((val.revenue - val.expenses) * 100) / 100,
+  }));
+
+  const totals = months.reduce(
+    (acc, m) => ({
+      revenue: acc.revenue + m.revenue,
+      expenses: acc.expenses + m.expenses,
+      netProfit: acc.netProfit + m.netProfit,
+    }),
+    { revenue: 0, expenses: 0, netProfit: 0 }
+  );
+
+  return { year, months, totals };
+}
+
+// ---------------------------------------------------------------------------
+// General Ledger CSV export
+// ---------------------------------------------------------------------------
+
+export function generalLedgerToCSV(report: GeneralLedgerReport): string {
+  const lines: string[] = [];
+  const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+
+  lines.push('General Ledger');
+  lines.push(`Period,${report.period.startDate} to ${report.period.endDate}`);
+  lines.push('');
+
+  for (const account of report.accounts) {
+    lines.push(`Account,${esc(account.accountName)}`);
+    lines.push(`Type,${esc(account.accountType)}`);
+    lines.push(`Beginning Balance,${account.beginningBalance.toFixed(2)}`);
+    lines.push('Date,Description,Reference,Debit,Credit,Balance');
+    for (const txn of account.transactions) {
+      lines.push([
+        esc(txn.date),
+        esc(txn.description),
+        esc(txn.reference),
+        esc(txn.debit > 0 ? txn.debit.toFixed(2) : ''),
+        esc(txn.credit > 0 ? txn.credit.toFixed(2) : ''),
+        esc(txn.balance.toFixed(2)),
+      ].join(','));
+    }
+    lines.push(`Ending Balance,,,,, ${account.endingBalance.toFixed(2)}`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 // Utility function to get common date ranges
 export function getDateRanges() {
   const now = new Date();
