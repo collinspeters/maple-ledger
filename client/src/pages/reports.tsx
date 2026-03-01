@@ -198,13 +198,14 @@ type Transaction = {
   receiptAttached: boolean;
 };
 
+const DEMO_YEAR = 2025;
+
 export default function Reports() {
-  const lastYear = new Date().getFullYear() - 1;
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(lastYear, 0, 1),
-    to: new Date(lastYear, 11, 31)
+    from: new Date(DEMO_YEAR, 0, 1),
+    to: new Date(DEMO_YEAR, 11, 31)
   });
-  const [datePreset, setDatePreset] = useState<string>("lastYear");
+  const [datePreset, setDatePreset] = useState<string>(`year-${DEMO_YEAR}`);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showTransactionDetail, setShowTransactionDetail] = useState(false);
 
@@ -285,6 +286,12 @@ export default function Reports() {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
 
+    if (preset.startsWith("year-")) {
+      const year = parseInt(preset.split("-")[1], 10);
+      setDateRange({ from: new Date(year, 0, 1), to: new Date(year, 11, 31) });
+      return;
+    }
+
     switch (preset) {
       case "thisMonth":
         setDateRange({
@@ -298,24 +305,15 @@ export default function Reports() {
           to: new Date(currentYear, currentMonth, 0)
         });
         break;
-      case "thisQuarter":
+      case "thisQuarter": {
         const quarterStart = Math.floor(currentMonth / 3) * 3;
         setDateRange({
           from: new Date(currentYear, quarterStart, 1),
           to: new Date(currentYear, quarterStart + 3, 0)
         });
         break;
-      case "thisYear":
-        setDateRange({
-          from: new Date(currentYear, 0, 1),
-          to: new Date(currentYear, 11, 31)
-        });
-        break;
-      case "lastYear":
-        setDateRange({
-          from: new Date(currentYear - 1, 0, 1),
-          to: new Date(currentYear - 1, 11, 31)
-        });
+      }
+      case "custom":
         break;
     }
   };
@@ -338,15 +336,16 @@ export default function Reports() {
         {/* Date Range Controls */}
         <div className="flex items-center gap-4">
           <Select value={datePreset} onValueChange={handleDatePresetChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Date Range" />
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="year-2025">2025 (Full Year)</SelectItem>
+              <SelectItem value="year-2024">2024 (Full Year)</SelectItem>
+              <SelectItem value="year-2023">2023 (Full Year)</SelectItem>
               <SelectItem value="thisMonth">This Month</SelectItem>
               <SelectItem value="lastMonth">Last Month</SelectItem>
               <SelectItem value="thisQuarter">This Quarter</SelectItem>
-              <SelectItem value="thisYear">This Year</SelectItem>
-              <SelectItem value="lastYear">Last Year</SelectItem>
               <SelectItem value="custom">Custom Range</SelectItem>
             </SelectContent>
           </Select>
@@ -1149,7 +1148,7 @@ export default function Reports() {
                     T2125 – Statement of Business Activities
                   </CardTitle>
                   <p className="text-sm text-gray-500 mt-1">
-                    CRA-compliant export for tax year {t2125Report?.taxYear ?? new Date().getFullYear()}
+                    CRA-compliant export for tax year {t2125Report?.taxYear ?? dateRange.from.getFullYear()}
                     {t2125Report && ` · ${t2125Report.period.startDate} to ${t2125Report.period.endDate}`}
                   </p>
                 </div>

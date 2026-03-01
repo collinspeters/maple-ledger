@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { usePlaidLink } from "react-plaid-link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Building2, CreditCard, RefreshCw, Trash2, Plus } from "lucide-react";
+import { AlertCircle, Building2, CreditCard, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -30,6 +31,7 @@ export default function Banking() {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   // Fetch bank connections
   const { data: connections = [], isLoading } = useQuery<BankConnection[]>({
@@ -248,20 +250,12 @@ export default function Banking() {
                   onClick={handleConnectBank} 
                   disabled={isLinking}
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg transform transition-transform hover:scale-105"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg"
                   data-testid="connect-bank"
                 >
                   <Building2 className="w-5 h-5 mr-3" />
-                  {isLinking ? "Preparing Connection..." : "🏦 Connect Bank Account"}
+                  {isLinking ? "Preparing Connection..." : "Connect Bank Account"}
                 </Button>
-                
-                {/* Debug: Show current button state */}
-                <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
-                  <p>Debug Info:</p>
-                  <p>isLinking: {isLinking ? "true" : "false"}</p>
-                  <p>linkToken: {linkToken ? "present" : "null"}</p>
-                  <p>Button should be visible and clickable</p>
-                </div>
               </div>
               
               <Separator />
@@ -305,10 +299,10 @@ export default function Banking() {
         <div className="grid gap-4 bank-connections" data-testid="bank-connections">
           {connections.map((connection) => (
             <Card key={connection.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
+                    <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                       {connection.accountType === 'credit' ? (
                         <CreditCard className="h-5 w-5 text-blue-600" />
                       ) : (
@@ -316,35 +310,48 @@ export default function Banking() {
                       )}
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{connection.accountName}</CardTitle>
-                      <CardDescription>
-                        {connection.bankName} •••• {connection.accountMask}
-                      </CardDescription>
+                      <p className="font-semibold text-gray-900">{connection.accountName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {connection.bankName} &bull; {connection.accountType.charAt(0).toUpperCase() + connection.accountType.slice(1)} &bull; &bull;&bull;&bull;&bull; {connection.accountMask}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Last synced: {connection.lastSyncAt
+                          ? new Date(connection.lastSyncAt).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })
+                          : "Never"}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                     <Badge variant={connection.isActive ? "default" : "secondary"}>
                       {connection.isActive ? "Active" : "Inactive"}
                     </Badge>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDeleteConnection(connection.id)}
+                      onClick={() => navigate("/transactions")}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4 mr-1.5" />
+                      View Transactions
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSyncTransactions}
+                      disabled={isSyncing}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                      Sync Now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteConnection(connection.id)}
+                      className="text-red-600 hover:text-red-700 hover:border-red-300"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      Disconnect
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Account Type: {connection.accountType}</span>
-                  <span>
-                    Last Sync: {connection.lastSyncAt 
-                      ? new Date(connection.lastSyncAt).toLocaleDateString()
-                      : "Never"
-                    }
-                  </span>
                 </div>
               </CardContent>
             </Card>
