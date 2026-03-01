@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import Stripe from "stripe";
@@ -53,19 +54,26 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session setup
+  // Session setup — use PostgreSQL store so sessions survive server restarts
+  const PgSession = connectPgSimple(session);
   const sessionSecret = process.env.SESSION_SECRET || "dev-secret-do-not-use-in-production";
   if (!process.env.SESSION_SECRET) {
     console.warn("WARNING: SESSION_SECRET environment variable is not set. Using insecure default.");
   }
   app.use(session({
+    store: new PgSession({
+      conString: process.env.DATABASE_URL,
+      tableName: "session",
+      createTableIfMissing: true,
+      pruneSessionInterval: 60 * 15, // prune expired sessions every 15 minutes
+    }),
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: { 
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       sameSite: 'lax'
     }
   }));
