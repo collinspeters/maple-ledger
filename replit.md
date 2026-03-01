@@ -31,6 +31,7 @@ Preferred communication style: Simple, everyday language.
 - **Schema**: Centralized schema definition for full-stack type safety.
 
 ### Key Features
+- **Bank Feeds & Transaction Sync**: "Sync Now" button triggers a backend pipeline: delta fetches via cursor-based pagination (mock dataset for dev), idempotent upsert with stable hash de-duplication (SHA-256 on bankTransactionId or description+amount+date), running balance recalculation per account, and real-time `transactions.synced` event emitted via SSE. UI shows New/Reviewed status badges and filters. Tests cover cursor advancement, de-dup, hash stability, and balance calculation (16 tests, 100% pass).
 - **Authentication**: Session-based, user registration with business profiles, trial and subscription tracking.
 - **Transaction Management**: Automatic categorization using AI, manual entry, bank feed integration, confidence scoring, review workflow for unverified transactions. Includes a 4-tier hybrid categorization system (Transfer, Merchant, Rules, AI) with merchant enrichment and comprehensive logging.
 - **Receipt Processing**: File upload handling, OCR data extraction, automatic matching to transactions, unmatched receipt queue.

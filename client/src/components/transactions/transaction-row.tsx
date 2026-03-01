@@ -420,29 +420,31 @@ export function TransactionRow({
 
       {/* Status & Actions */}
       <td className="p-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {transaction.isReviewed ? (
+            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              Reviewed
+            </Badge>
+          ) : (transaction as any).receiptSource === 'bank_feed' || (transaction as any).bankTransactionId ? (
+            <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              New
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs">
+              Unreviewed
+            </Badge>
+          )}
+
           {transaction.needsReview && !transaction.isReviewed && (
             <Button
               size="sm"
               variant="outline"
               onClick={handleMarkReviewed}
-              className="text-xs"
+              className="text-xs h-6 px-2"
               aria-label="Mark transaction as reviewed"
             >
               Mark Reviewed
             </Button>
-          )}
-          
-          {transaction.isReviewed && (
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-              Reviewed
-            </Badge>
-          )}
-
-          {!transaction.isReviewed && !transaction.needsReview && (
-            <Badge variant="outline" className="text-xs">
-              Unreviewed
-            </Badge>
           )}
         </div>
       </td>

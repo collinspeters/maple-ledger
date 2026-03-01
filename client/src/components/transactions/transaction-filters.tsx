@@ -120,6 +120,7 @@ export function TransactionFiltersComponent({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="new">New (from bank feed)</SelectItem>
               <SelectItem value="reviewed">Reviewed</SelectItem>
               <SelectItem value="unreviewed">Unreviewed</SelectItem>
               <SelectItem value="needs_review">Needs Review</SelectItem>

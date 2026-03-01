@@ -113,6 +113,7 @@ export const bankConnections = pgTable("bank_connections", {
   accountName: text("account_name").notNull(),
   accountMask: text("account_mask"),
   lastSyncAt: timestamp("last_sync_at"),
+  syncCursor: text("sync_cursor"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

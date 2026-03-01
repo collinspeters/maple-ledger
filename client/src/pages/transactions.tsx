@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { TransactionFiltersComponent, TransactionFilters } from "@/components/tr
 import { BulkActions, BulkAction } from "@/components/transactions/bulk-actions";
 import { TransactionRow, Transaction } from "@/components/transactions/transaction-row";
 import BulkCategorizeButton from "@/components/transactions/bulk-categorize-button";
+import { useToast } from "@/hooks/use-toast";
 type DateRange = {
   from?: Date;
   to?: Date;
@@ -22,15 +23,20 @@ import {
   BarChart3,
   Filter,
   ChevronDown,
-  FileText
+  FileText,
+  Loader2,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Transactions() {
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
   // State management
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
+  const [lastSyncResult, setLastSyncResult] = useState<{ added: number; skipped: number } | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -128,6 +134,7 @@ export default function Transactions() {
         if (filters.status === 'reviewed' && !transaction.isReviewed) return false;
         if (filters.status === 'unreviewed' && (transaction.isReviewed || transaction.needsReview)) return false;
         if (filters.status === 'needs_review' && !transaction.needsReview) return false;
+        if (filters.status === 'new' && (transaction.isReviewed || !(transaction as any).bankTransactionId)) return false;
       }
 
       // Type filter
@@ -208,6 +215,41 @@ export default function Transactions() {
   };
 
 
+
+  // SSE: listen for transactions.synced events and auto-refresh
+  useEffect(() => {
+    const evtSource = new EventSource('/api/events/transactions');
+    evtSource.addEventListener('transactions.synced', () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+    });
+    evtSource.onerror = () => evtSource.close();
+    return () => evtSource.close();
+  }, [queryClient]);
+
+  // Sync Now mutation
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('/api/plaid/sync-transactions', {
+        method: 'POST',
+        body: JSON.stringify({ useMock: true }),
+      });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      setLastSyncResult({ added: data.totalAdded ?? 0, skipped: data.totalDuplicatesSkipped ?? 0 });
+      toast({
+        title: 'Sync complete',
+        description: data.message ?? `${data.totalAdded} new transactions imported`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Sync failed',
+        description: 'Could not sync transactions. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Mutations
   const updateTransactionMutation = useMutation({
@@ -384,6 +426,20 @@ export default function Transactions() {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            data-testid="sync-now"
+          >
+            {syncMutation.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            {syncMutation.isPending ? 'Syncing…' : 'Sync Now'}
+          </Button>
           <Button variant="outline" size="sm">
             <Upload className="h-4 w-4 mr-2" />
             Import
@@ -402,6 +458,18 @@ export default function Transactions() {
           </Button>
         </div>
       </div>
+
+      {/* Sync Result Banner */}
+      {lastSyncResult && (
+        <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950 px-4 py-2 text-sm text-green-800 dark:text-green-200">
+          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+          <span>
+            Sync complete — <strong>{lastSyncResult.added}</strong> new transactions imported
+            {lastSyncResult.skipped > 0 && `, ${lastSyncResult.skipped} duplicates skipped`}.
+          </span>
+          <button className="ml-auto text-green-600 hover:text-green-900" onClick={() => setLastSyncResult(null)}>✕</button>
+        </div>
+      )}
 
       {/* AI Categorization Section */}
       <BulkCategorizeButton />

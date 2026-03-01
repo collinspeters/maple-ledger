@@ -14,6 +14,7 @@ import { categorizeTransaction, processFinancialQuery, extractReceiptData, parse
 import { enrichMerchantDescription, getCachedEnrichment, setCachedEnrichment } from "./services/merchant-enrichment";
 import { createLinkToken, exchangePublicToken, getAccounts, syncTransactions } from "./services/plaid";
 import { categorizeTransactionHybrid } from "./services/hybrid-categorization";
+import { syncAllConnections, syncEventEmitter } from "./services/bank-sync";
 import { processReceiptOCR, findTransactionMatches } from "./services/ocr";
 import { doubleEntryService } from "./services/double-entry";
 import { getDashboardData } from "./routes/dashboard";
@@ -1106,135 +1107,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bank feed sync endpoint — triggers delta sync pipeline with cursor advancement and de-dup
   app.post("/api/plaid/sync-transactions", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
       const connections = await storage.getBankConnections(user.id);
-      
+
       if (connections.length === 0) {
-        return res.status(400).json({ message: "No bank connections found" });
+        return res.status(400).json({ message: "No bank connections found. Please connect a bank account first." });
       }
 
-      let totalSynced = 0;
-      const syncResults = [];
-      
-      for (const connection of connections) {
-        try {
-          // Use new sync method that follows Plaid's quickstart pattern
-          const syncData = await syncTransactions(connection.plaidAccessToken);
-          
-          // Process added transactions using hybrid categorization system
-          for (const transaction of syncData.added) {
-            try {
-              // Get user's account IDs for transfer detection
-              const userAccountIds = connections.map(conn => conn.accountId);
-              
-              // Use hybrid categorization system (Transfer → Merchant → Plaid → AI)
-              const categorizationResult = await categorizeTransactionHybrid(transaction, userAccountIds);
-              
-              const transactionData = {
-                userId: user.id,
-                description: transaction.name,
-                vendor: transaction.merchant_name || transaction.name,
-                amount: Math.abs(transaction.amount).toString(),
-                date: new Date(transaction.date),
-                category: categorizationResult.category,
-                isExpense: categorizationResult.isExpense,
-                isTransfer: categorizationResult.isTransfer,
-                transferType: categorizationResult.transferType || null,
-                bankTransactionId: transaction.transaction_id,
-                bankConnectionId: connection.id,
-                aiCategory: categorizationResult.category,
-                aiConfidence: categorizationResult.confidence.toString(),
-                aiExplanation: categorizationResult.explanation || null,
-                needsReview: categorizationResult.confidence < 0.8, // Flag low confidence for review
-                isReviewed: categorizationResult.confidence >= 0.8, // Auto-approve high confidence
-                plaidCategory: transaction.category?.[0] || null,
-                paymentChannel: transaction.payment_channel || null,
-                location: transaction.location ? JSON.stringify(transaction.location) : null,
-                categorizationMethod: categorizationResult.method,
-              };
+      // Use mock data when Plaid is not configured or when explicitly requested
+      const useMock = req.body?.useMock !== false;
+      const summary = await syncAllConnections(user.id, useMock);
 
-              await storage.createTransaction(transactionData);
-              totalSynced++;
-              
-              console.log(`Categorized ${transaction.name} as ${categorizationResult.category} using ${categorizationResult.method} (${Math.round(categorizationResult.confidence * 100)}% confidence)`);
-            } catch (error) {
-              // Skip duplicates (likely existing transactions)
-              console.log("Skipping duplicate transaction:", transaction.transaction_id);
-            }
-          }
-
-          // Process modified transactions using hybrid categorization system
-          for (const transaction of syncData.modified) {
-            try {
-              // Update existing transaction if it exists
-              const existingTransaction = await storage.getTransactionByPlaidId(transaction.transaction_id);
-              if (existingTransaction) {
-                // Use hybrid categorization for updates
-                const userAccountIds = connections.map(conn => conn.accountId);
-                const categorizationResult = await categorizeTransactionHybrid(transaction, userAccountIds);
-
-                const updatedData = {
-                  description: transaction.name,
-                  vendor: transaction.merchant_name || transaction.name,
-                  amount: Math.abs(transaction.amount).toString(),
-                  date: new Date(transaction.date),
-                  category: categorizationResult.category,
-                  isExpense: categorizationResult.isExpense,
-                  isTransfer: categorizationResult.isTransfer,
-                  transferType: categorizationResult.transferType || null,
-                  aiCategory: categorizationResult.category,
-                  aiConfidence: categorizationResult.confidence.toString(),
-                  aiExplanation: categorizationResult.explanation || null,
-                  needsReview: categorizationResult.confidence < 0.8,
-                  isReviewed: categorizationResult.confidence >= 0.8,
-                  plaidCategory: transaction.category?.[0] || null,
-                  paymentChannel: transaction.payment_channel || null,
-                  categorizationMethod: categorizationResult.method,
-                };
-                
-                await storage.updateTransaction(existingTransaction.id, updatedData);
-                console.log(`Updated ${transaction.name} as ${categorizationResult.category} using ${categorizationResult.method}`);
-              }
-            } catch (error) {
-              console.log("Error updating transaction:", transaction.transaction_id, error);
-            }
-          }
-
-          // Update last sync date
-          await storage.updateBankConnection(connection.id, {
-            lastSyncAt: new Date()
-          });
-
-          syncResults.push({
-            connectionId: connection.id,
-            bankName: connection.bankName,
-            added: syncData.added.length,
-            modified: syncData.modified.length,
-            removed: syncData.removed.length,
-            hasMore: syncData.hasMore
-          });
-
-        } catch (error) {
-          console.error(`Error syncing transactions for connection ${connection.id}:`, error);
-          syncResults.push({
-            connectionId: connection.id,
-            bankName: connection.bankName,
-            error: error instanceof Error ? error.message : 'Unknown error'
-          });
-        }
-      }
-
-      res.json({ 
-        message: `Successfully synced ${totalSynced} new transactions`,
-        syncedCount: totalSynced,
-        results: syncResults
+      res.json({
+        message: `Sync complete: ${summary.totalAdded} new, ${summary.totalModified} updated, ${summary.totalDuplicatesSkipped} duplicates skipped`,
+        totalAdded: summary.totalAdded,
+        totalModified: summary.totalModified,
+        totalRemoved: summary.totalRemoved,
+        totalDuplicatesSkipped: summary.totalDuplicatesSkipped,
+        results: summary.results,
+        completedAt: summary.completedAt,
       });
     } catch (error) {
       console.error("Error syncing transactions:", error);
       res.status(500).json({ message: "Failed to sync transactions" });
     }
+  });
+
+  // SSE endpoint for real-time transactions.synced events
+  app.get("/api/events/transactions", requireAuth, (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const user = req.user as User;
+
+    const listener = (payload: any) => {
+      if (payload.userId === user.id) {
+        res.write(`event: transactions.synced\ndata: ${JSON.stringify(payload)}\n\n`);
+      }
+    };
+
+    syncEventEmitter.on('transactions.synced', listener);
+
+    req.on('close', () => {
+      syncEventEmitter.off('transactions.synced', listener);
+    });
   });
 
   // Bank connections management

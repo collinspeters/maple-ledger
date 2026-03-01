@@ -242,3 +242,6 @@ export const MERCHANT_MAPPINGS: Record<string, string> = {
 export function findCategoryByCode(code: string): T2125Category | undefined {
   return T2125_CATEGORIES.find(cat => cat.code === code);
 }
+
+// Alias for MERCHANT_MAPPINGS — used in transaction categorization
+export const TRANSACTION_MAPPINGS = MERCHANT_MAPPINGS;
