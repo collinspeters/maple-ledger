@@ -1258,8 +1258,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (updatedReceipt) {
                 const matches = await findTransactionMatches(updatedReceipt, user.id);
                 if (matches.length > 0) {
+                  const topMatch = matches[0] as any;
+                  if (topMatch.__autoLink) {
+                    // High-confidence auto-link: mark receipt matched and link to transaction
+                    await storage.updateReceipt(receipt.id, {
+                      suggestedMatches: matches,
+                      isMatched: true,
+                      matchedTransactionId: topMatch.id,
+                      matchConfidence: String(topMatch.matchScore / 100),
+                      status: "matched",
+                      updatedAt: new Date(),
+                    });
+                    await storage.updateTransaction(topMatch.id, {
+                      receiptAttached: true,
+                      receiptId: receipt.id,
+                    });
+                  } else {
+                    await storage.updateReceipt(receipt.id, {
+                      suggestedMatches: matches,
+                      status: "unmatched",
+                      updatedAt: new Date()
+                    });
+                  }
+                } else {
                   await storage.updateReceipt(receipt.id, {
-                    suggestedMatches: matches,
+                    status: "unmatched",
                     updatedAt: new Date()
                   });
                 }
@@ -1659,8 +1682,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/estimates", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
-      const estimates = await storage.getEstimates(user.id);
-      res.json(estimates);
+      const [estimateList, clientList] = await Promise.all([
+        storage.getEstimates(user.id),
+        storage.getClients(user.id),
+      ]);
+      const clientMap = new Map(clientList.map(c => [c.id, c]));
+      const enriched = estimateList.map(est => ({
+        ...est,
+        client: clientMap.get(est.clientId) ?? null,
+      }));
+      res.json(enriched);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

@@ -149,74 +149,101 @@ export async function findTransactionMatches(receipt: any, userId: string): Prom
         continue;
       }
       
-      // Amount matching (40 points)
+      // Amount matching — weight 55 pts (spec: 0.55)
+      let amountScore = 0;
       if (receipt.extractedAmount && transaction.amount) {
         const receiptAmount = parseFloat(receipt.extractedAmount);
         const transactionAmount = Math.abs(parseFloat(transaction.amount));
         const amountDiff = Math.abs(receiptAmount - transactionAmount);
-        
-        if (amountDiff <= 1.00) {
-          score += 40;
+        const pctDiff = receiptAmount > 0 ? amountDiff / receiptAmount : 1;
+
+        if (amountDiff <= 0.01) {
+          amountScore = 55;
           factors.push('Exact amount match');
+        } else if (pctDiff <= 0.01) {
+          amountScore = Math.round(55 * 0.95);
+          factors.push('Amount within 1%');
+        } else if (amountDiff <= 1.00) {
+          amountScore = Math.round(55 * 0.75);
+          factors.push('Amount within $1');
         } else if (amountDiff <= 5.00) {
-          score += 20;
+          amountScore = Math.round(55 * 0.40);
           factors.push('Similar amount');
         }
       }
-      
-      // Vendor matching (35 points)
-      if (receipt.extractedVendor && (transaction.vendor || transaction.description)) {
-        const receiptVendor = receipt.extractedVendor.toLowerCase().trim();
-        const transactionVendor = (transaction.vendor || transaction.description).toLowerCase().trim();
-        
-        // Check for substring matches
-        if (receiptVendor.includes(transactionVendor) || transactionVendor.includes(receiptVendor)) {
-          score += 35;
-          factors.push('Vendor match');
-        } else {
-          // Check for word overlap
-          const receiptWords = receiptVendor.split(/\s+/);
-          const transactionWords = transactionVendor.split(/\s+/);
-          const commonWords = receiptWords.filter(word => 
-            word.length > 2 && transactionWords.some(tWord => tWord.includes(word) || word.includes(tWord))
-          );
-          
-          if (commonWords.length > 0) {
-            score += 15;
-            factors.push('Partial vendor match');
-          }
-        }
-      }
-      
-      // Date matching (25 points)
+
+      // Date matching — weight 25 pts (spec: 0.25)
+      let dateScore = 0;
       if (receipt.extractedDate && transaction.date) {
         const receiptDate = new Date(receipt.extractedDate);
         const transactionDate = new Date(transaction.date);
         const daysDiff = Math.abs((receiptDate.getTime() - transactionDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (daysDiff <= 1) {
-          score += 25;
-          factors.push('Same date');
+
+        if (daysDiff < 1) {
+          dateScore = 25;
+          factors.push('Same day');
+        } else if (daysDiff <= 1) {
+          dateScore = Math.round(25 * 0.8);
+          factors.push('Within 1 day');
         } else if (daysDiff <= 3) {
-          score += 15;
+          dateScore = Math.round(25 * 0.5);
           factors.push('Within 3 days');
+        } else if (daysDiff <= 7) {
+          dateScore = Math.round(25 * 0.2);
+          factors.push('Within 7 days');
         }
       }
-      
-      // Only include matches with reasonable confidence
+
+      // Vendor matching — weight 20 pts (spec: 0.20)
+      let vendorScore = 0;
+      if (receipt.extractedVendor && (transaction.vendor || transaction.description)) {
+        const receiptVendor = receipt.extractedVendor.toLowerCase().trim();
+        const transactionVendor = (transaction.vendor || transaction.description).toLowerCase().trim();
+
+        if (receiptVendor === transactionVendor) {
+          vendorScore = 20;
+          factors.push('Exact vendor match');
+        } else if (receiptVendor.includes(transactionVendor) || transactionVendor.includes(receiptVendor)) {
+          vendorScore = Math.round(20 * 0.9);
+          factors.push('Vendor substring match');
+        } else {
+          const receiptWords = receiptVendor.split(/\s+/);
+          const transactionWords = transactionVendor.split(/\s+/);
+          const commonWords = receiptWords.filter(w =>
+            w.length > 2 && transactionWords.some(t => t.includes(w) || w.includes(t))
+          );
+          if (commonWords.length > 0) {
+            vendorScore = Math.round(20 * 0.5);
+            factors.push('Partial vendor match');
+          }
+        }
+      }
+
+      score = amountScore + dateScore + vendorScore;
+
+      // Include candidates with at least 30% overall confidence
       if (score >= 30) {
         matches.push({
           ...transaction,
           matchScore: Math.min(score, 100),
-          matchFactors: factors
+          scoreAmount: amountScore,
+          scoreDate: dateScore,
+          scoreVendor: vendorScore,
+          matchFactors: factors,
         });
       }
     }
-    
-    // Sort by match score (highest first) and return top 5
-    return matches
-      .sort((a, b) => b.matchScore - a.matchScore)
-      .slice(0, 5);
+
+    // Sort by score, return top 5
+    const ranked = matches.sort((a, b) => b.matchScore - a.matchScore).slice(0, 5);
+
+    // Auto-link: score >= 90 AND gap between top two >= 10
+    const [top1, top2] = ranked;
+    if (top1 && top1.matchScore >= 90 && (!top2 || top1.matchScore - top2.matchScore >= 10)) {
+      (top1 as any).__autoLink = true;
+    }
+
+    return ranked;
       
   } catch (error) {
     console.error('Error finding transaction matches:', error);

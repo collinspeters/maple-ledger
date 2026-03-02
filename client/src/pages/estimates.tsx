@@ -114,7 +114,7 @@ export default function Estimates() {
                 <Send className="h-8 w-8 text-orange-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {estimates?.filter(est => est.status === 'sent').length || 0}
+                    {estimates?.filter(est => est.status === 'sent' && !isExpired(est.expiryDate)).length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Pending</p>
                 </div>
@@ -142,8 +142,8 @@ export default function Estimates() {
                 <Calendar className="h-8 w-8 text-red-600" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {estimates?.filter(est => 
-                      est.status !== 'accepted' && isExpired(est.expiryDate)
+                    {estimates?.filter(est =>
+                      est.status !== 'accepted' && est.status !== 'declined' && isExpired(est.expiryDate)
                     ).length || 0}
                   </p>
                   <p className="text-sm text-gray-600">Expired</p>

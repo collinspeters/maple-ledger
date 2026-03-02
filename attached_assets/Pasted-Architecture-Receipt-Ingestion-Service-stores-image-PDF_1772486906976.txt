@@ -1,0 +1,164 @@
+Architecture
+
+Receipt Ingestion Service: stores image/PDF, calls Mindee OCR.
+Matching Service: exact match + scored candidate ranking.
+Review Queue Service/UI: human resolution workflow.
+Ledger Service: transaction CRUD/linking.
+Core entities (DB)
+
+receipts
+id (uuid)
+source_file_url
+uploaded_by
+uploaded_at
+status enum: INGESTED | OCR_DONE | AUTO_LINKED | NEEDS_REVIEW | LINKED_MANUAL | TXN_CREATED | IGNORED | FAILED
+receipt_extractions
+receipt_id (fk)
+vendor_raw
+vendor_normalized
+date_raw
+date_parsed
+amount_raw
+amount_parsed
+currency
+ocr_confidence_vendor
+ocr_confidence_date
+ocr_confidence_amount
+line_items_json
+tax_amount
+mindee_payload_json
+transactions
+id
+account_id
+posted_at
+merchant_raw
+merchant_normalized
+amount
+currency
+has_receipt
+receipt_transaction_links
+id
+receipt_id
+transaction_id
+link_method enum: EXACT | SCORED_AUTO | MANUAL | CREATED_NEW
+match_score
+linked_by
+linked_at
+receipt_match_candidates
+id
+receipt_id
+transaction_id
+score_total
+score_amount
+score_date
+score_vendor
+reason_tags_json
+rank
+created_at
+merchant_aliases
+id
+alias
+canonical_name
+confidence
+source enum: SYSTEM | USER_FEEDBACK
+Pipeline
+
+Upload receipt -> create receipts row (INGESTED).
+OCR run -> populate receipt_extractions, set OCR_DONE.
+Exact matcher:
+Same currency
+Amount exact (or within 0.01)
+Date in [receipt_date-1, receipt_date+1]
+Vendor normalized exact or alias exact
+Exact outcomes:
+1 hit -> create link (EXACT), set AUTO_LINKED.
+0 or >1 hits -> run candidate scorer.
+Candidate scorer:
+Search transactions in date window (default ±7 days; configurable)
+Exclude transactions already linked (unless allowed)
+Compute weighted score and store top N in receipt_match_candidates.
+Threshold decision:
+score >= 0.90 and (top1-top2) >= 0.10 -> auto-link (SCORED_AUTO)
+Else -> NEEDS_REVIEW.
+Review queue resolution:
+Manual link suggested/other txn
+Create new transaction from OCR
+Mark ignore/duplicate
+Scoring formula (example)
+
+score_total = 0.55*amount + 0.25*date + 0.20*vendor
+amount score
+exact: 1.0
+within 0.01: 0.95
+within 1%: 0.75
+else decays to 0
+date score
+same day: 1.0
+±1 day: 0.8
+±3 days: 0.5
+±7 days: 0.2
+vendor score
+canonical exact: 1.0
+alias exact: 0.9
+fuzzy ratio normalized (rapidfuzz): 0..1
+API contracts
+
+POST /receipts
+input: file
+output: {receipt_id, status}
+POST /receipts/{id}/process
+triggers OCR+matching
+output: {status, auto_linked, transaction_id?}
+GET /receipts/review?status=NEEDS_REVIEW
+output: list of receipts with extraction summary
+GET /receipts/{id}/candidates
+output: ranked candidates with score breakdown
+POST /receipts/{id}/link
+input: {transaction_id}
+output: link result
+POST /receipts/{id}/create-transaction
+input: optional overrides
+output: {transaction_id, link_id}
+POST /receipts/{id}/ignore
+input: {reason}
+output: status update
+Review UI requirements
+
+Left: receipt image + OCR fields/confidence.
+Right: candidate list with rank, score, reason tags.
+Actions:
+Link
+Search transactions
+Create transaction
+Ignore
+Show warning if OCR confidence low (< configured threshold).
+Rules/guards
+
+No auto-link when:
+OCR amount/date confidence below threshold
+Multiple near-identical candidates
+Transaction already linked and duplicates disallowed
+Idempotency key for processing endpoint to avoid duplicate links.
+Full audit log for every decision path.
+Observability
+
+Metrics:
+auto_link_rate
+review_rate
+manual_accept_top1_rate
+false_auto_link_rate (via unlinks)
+OCR confidence distributions
+Daily report by account/vendor.
+Tuning plan
+
+Start conservative thresholds.
+Track manual actions 2–4 weeks.
+Adjust weights/thresholds from acceptance data.
+Expand merchant aliases from accepted manual links.
+Acceptance criteria
+
+Exact unique matches auto-link correctly.
+No-match receipts always appear in review queue.
+Review shows top 3–5 plausible transactions with transparent reasons.
+Users can create+link new transaction in one flow.
+All outcomes are auditable and reversible.

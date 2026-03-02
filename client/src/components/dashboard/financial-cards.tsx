@@ -39,16 +39,28 @@ export default function FinancialCards() {
     );
   }
 
-  const revenueChange = summary?.revenueChange || 0;
-  const expenseChange = summary?.expenseChange || 0;
-  const profitMargin = summary?.profitMargin || 0;
-  
+  const safeChange = (val: number | undefined): string => {
+    const v = val ?? 0;
+    if (!isFinite(v) || isNaN(v)) return 'N/A vs prior year';
+    return `${v >= 0 ? '+' : ''}${v.toFixed(1)}% vs prior year`;
+  };
+  const safeMargin = (val: number | undefined): string => {
+    const v = val ?? 0;
+    if (!isFinite(v) || isNaN(v)) return 'N/A profit margin';
+    return `${v.toFixed(1)}% profit margin`;
+  };
+
+  const revenueChange = summary?.revenueChange ?? 0;
+  const expenseChange = summary?.expenseChange ?? 0;
+  const profitMargin = summary?.profitMargin ?? 0;
+  const gstDueYear = lastYear + 1;
+
   const cards = [
     {
       title: `${lastYear} Revenue`,
       value: `$${summary?.totalRevenue?.toLocaleString() || '0'}`,
-      change: `${revenueChange >= 0 ? '+' : ''}${revenueChange.toFixed(1)}% vs prior year`,
-      changeType: revenueChange >= 0 ? "positive" : "negative",
+      change: safeChange(revenueChange),
+      changeType: (isFinite(revenueChange) && revenueChange >= 0) ? "positive" : "negative",
       icon: DollarSign,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-600",
@@ -56,8 +68,8 @@ export default function FinancialCards() {
     {
       title: `${lastYear} Expenses`,
       value: `$${summary?.totalExpenses?.toLocaleString() || '0'}`,
-      change: `${expenseChange >= 0 ? '+' : ''}${expenseChange.toFixed(1)}% vs prior year`,
-      changeType: expenseChange <= 0 ? "positive" : "negative",
+      change: safeChange(expenseChange),
+      changeType: (isFinite(expenseChange) && expenseChange <= 0) ? "positive" : "negative",
       icon: Receipt,
       iconBg: "bg-orange-50",
       iconColor: "text-orange-600",
@@ -65,8 +77,8 @@ export default function FinancialCards() {
     {
       title: "Net Profit",
       value: `$${summary?.netProfit?.toLocaleString() || '0'}`,
-      change: `${profitMargin.toFixed(1)}% profit margin`,
-      changeType: (summary?.netProfit || 0) >= 0 ? "positive" : "negative",
+      change: safeMargin(profitMargin),
+      changeType: (summary?.netProfit ?? 0) >= 0 ? "positive" : "negative",
       icon: TrendingUp,
       iconBg: "bg-blue-50",
       iconColor: "text-blue-600",
@@ -74,7 +86,7 @@ export default function FinancialCards() {
     {
       title: "GST/HST Owing",
       value: `$${summary?.gstOwing?.toLocaleString() || '0'}`,
-      change: "Due Mar 31, 2025",
+      change: `Due Mar 31, ${gstDueYear}`,
       changeType: "neutral",
       icon: FileText,
       iconBg: "bg-purple-50", 

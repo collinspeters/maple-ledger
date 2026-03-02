@@ -776,13 +776,26 @@ export class DatabaseStorage implements IStorage {
       .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
     // Expense increase warning
-    if (thisMonthExpenses > prevMonthExpenses * 1.2) {
+    const safeExpensePct = (curr: number, prev: number): string => {
+      if (!prev || !isFinite(curr / prev)) return 'significantly';
+      return `${((curr - prev) / prev * 100).toFixed(1)}%`;
+    };
+    if (prevMonthExpenses > 0 && thisMonthExpenses > prevMonthExpenses * 1.2) {
       insights.push({
         type: 'warning',
         title: 'Expense Increase Alert',
-        description: `Your expenses increased by ${((thisMonthExpenses - prevMonthExpenses) / prevMonthExpenses * 100).toFixed(1)}% this month.`,
+        description: `Your expenses increased by ${safeExpensePct(thisMonthExpenses, prevMonthExpenses)} compared to the previous period.`,
         impact: 'high',
         confidence: 0.9,
+        category: 'Expense Management'
+      });
+    } else if (prevMonthExpenses === 0 && thisMonthExpenses > 0) {
+      insights.push({
+        type: 'trend',
+        title: 'New Expenses Recorded',
+        description: `You have $${thisMonthExpenses.toFixed(2)} in expenses this period with no prior-period data to compare against.`,
+        impact: 'low',
+        confidence: 0.8,
         category: 'Expense Management'
       });
     }
