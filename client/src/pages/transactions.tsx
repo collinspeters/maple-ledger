@@ -376,7 +376,7 @@ export default function Transactions() {
                       <th className="w-12 p-4">
                         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4"></div>
                       </th>
-                      {['Date', 'Description', 'Account', 'Category', 'Amount', 'Status'].map((header, i) => (
+                      {['Date', 'Description', 'Account', 'Category', 'Receipt', 'Amount', 'Status'].map((header, i) => (
                         <th key={i} className="text-left p-4">
                           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
                         </th>
@@ -607,6 +607,7 @@ export default function Transactions() {
                     <th className="text-left p-4 font-medium">Description</th>
                     <th className="text-left p-4 font-medium">Account</th>
                     <th className="text-left p-4 font-medium">Category</th>
+                    <th className="text-left p-4 font-medium">Receipt</th>
                     <th className="text-right p-4 font-medium">Amount</th>
                     <th className="text-left p-4 font-medium">Status</th>
                   </tr>

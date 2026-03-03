@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -103,6 +103,13 @@ export function TransactionRow({
     await onUpdate(transaction.id, { isReviewed: true, needsReview: false });
   };
 
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>) => {
+    if (!onOpenDetails) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button, input, [role="button"], [data-no-row-open="true"]')) return;
+    onOpenDetails(transaction);
+  };
+
   const getTxnKind = () => {
     if (transaction.txnKind) return transaction.txnKind;
     if (transaction.isTransfer) return 'transfer';
@@ -164,11 +171,14 @@ export function TransactionRow({
   // Add error boundary for this component
   try {
     return (
-      <tr className={`
+      <tr
+        className={`
         border-b transition-colors hover:bg-muted/50
         ${isSelected ? 'bg-blue-50 dark:bg-blue-950/20' : ''}
         ${transaction.needsReview ? 'border-l-4 border-l-orange-400' : ''}
-      `}>
+      `}
+        onClick={handleRowClick}
+      >
       {/* Selection Checkbox */}
       <td className="w-12 p-4">
         <Checkbox
@@ -222,6 +232,7 @@ export function TransactionRow({
             ) : (
               <div 
                 className="cursor-pointer hover:bg-muted p-1 rounded truncate"
+                data-no-row-open="true"
                 onClick={() => startEditing('description', transaction.description)}
                 role="button"
                 tabIndex={0}
@@ -244,11 +255,6 @@ export function TransactionRow({
               </div>
             )}
           </div>
-
-          {/* Receipt Indicator */}
-          {transaction.receiptAttached && (
-            <Paperclip className="h-4 w-4 text-gray-400" />
-          )}
 
           {/* Review Indicator */}
           {transaction.needsReview && (
@@ -296,6 +302,7 @@ export function TransactionRow({
         ) : (
           <div 
             className="cursor-pointer hover:bg-muted p-1 rounded text-sm"
+            data-no-row-open="true"
             onClick={() => startEditing('bankConnectionId', transaction.bankConnectionId || '')}
             role="button"
             tabIndex={0}
@@ -352,6 +359,7 @@ export function TransactionRow({
           ) : (
             <div 
               className="cursor-pointer hover:bg-muted p-1 rounded"
+              data-no-row-open="true"
               onClick={() => startEditing('category', transaction.category || transaction.aiCategory || '')}
               role="button"
               tabIndex={0}
@@ -424,6 +432,7 @@ export function TransactionRow({
         ) : (
           <div 
             className={`cursor-pointer hover:bg-muted p-1 rounded font-medium ${getAmountColor()}`}
+            data-no-row-open="true"
             onClick={() => startEditing('amount', transaction.amount)}
             role="button"
             tabIndex={0}
@@ -436,6 +445,21 @@ export function TransactionRow({
             }}
           >
             {formatAmount(transaction.amount, getTxnKind() === 'expense', getTxnKind() === 'transfer')}
+          </div>
+        )}
+      </td>
+
+      {/* Receipt */}
+      <td className="p-4">
+        {transaction.receiptAttached ? (
+          <div className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+            <Paperclip className="h-3.5 w-3.5 mr-1" />
+            <span className="text-xs font-medium">Attached</span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-gray-500">
+            <Paperclip className="h-3.5 w-3.5 mr-1" />
+            <span className="text-xs">None</span>
           </div>
         )}
       </td>
@@ -463,6 +487,7 @@ export function TransactionRow({
               variant="outline"
               onClick={handleMarkReviewed}
               className="text-xs h-6 px-2"
+              data-no-row-open="true"
               aria-label="Mark transaction as reviewed"
             >
               Mark Reviewed
@@ -475,6 +500,7 @@ export function TransactionRow({
               variant="ghost"
               onClick={() => onOpenDetails(transaction)}
               className="text-xs h-6 px-2"
+              data-no-row-open="true"
               aria-label="Open transaction details"
             >
               <Eye className="h-3 w-3 mr-1" />
@@ -489,7 +515,7 @@ export function TransactionRow({
     console.error(`❌ Error rendering transaction ${transaction.id}:`, error);
     return (
       <tr className="border-b bg-red-50">
-        <td colSpan={7} className="p-4 text-red-600">
+        <td colSpan={8} className="p-4 text-red-600">
           Error rendering transaction: {transaction.id} - {error?.message || 'Unknown error'}
         </td>
       </tr>

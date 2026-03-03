@@ -517,11 +517,11 @@ export default function Reports() {
             </TabsTrigger>
             <TabsTrigger value="transfers-summary" className="flex items-center gap-2">
               <ArrowRightLeft className="h-4 w-4" />
-              Transfers
+              Transfers (Non-P&L)
             </TabsTrigger>
             <TabsTrigger value="owner-equity-summary" className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
-              Owner Equity
+              Draws & Contributions
             </TabsTrigger>
             <TabsTrigger value="trial-balance" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
@@ -1005,7 +1005,7 @@ export default function Reports() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <ArrowRightLeft className="h-5 w-5 text-blue-600" />
-                Transfers Summary
+                Transfers Summary (Non-P&L)
               </CardTitle>
               <div className="flex gap-2">
                 <Button
@@ -1019,6 +1019,9 @@ export default function Reports() {
               </div>
             </CardHeader>
             <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Internal account movements only. These amounts do not affect Profit &amp; Loss.
+              </p>
               {transfersLoading ? (
                 <div className="animate-pulse space-y-4">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -1083,7 +1086,7 @@ export default function Reports() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-blue-600" />
-                Owner Equity Summary
+                Owner Draws & Contributions
               </CardTitle>
               <div className="flex gap-2">
                 <Button
@@ -1097,6 +1100,9 @@ export default function Reports() {
               </div>
             </CardHeader>
             <CardContent>
+              <p className="text-sm text-gray-600 mb-4">
+                Equity movements between owner and business. These are balance sheet items, not operating expenses.
+              </p>
               {ownerEquityLoading ? (
                 <div className="animate-pulse space-y-4">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>

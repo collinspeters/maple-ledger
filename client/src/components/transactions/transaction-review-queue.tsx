@@ -39,6 +39,25 @@ interface ReviewItem {
   kind: string;
 }
 
+const QUICK_ACTIONS: Record<string, Array<{ label: string; value: "resolve" | "skip" }>> = {
+  category: [
+    { label: "Accept AI", value: "resolve" },
+    { label: "Skip", value: "skip" },
+  ],
+  txn_kind: [
+    { label: "Mark Resolved", value: "resolve" },
+    { label: "Skip", value: "skip" },
+  ],
+  receipt_match: [
+    { label: "Handled", value: "resolve" },
+    { label: "Skip", value: "skip" },
+  ],
+  reconciliation: [
+    { label: "Reviewed", value: "resolve" },
+    { label: "Skip", value: "skip" },
+  ],
+};
+
 export default function TransactionReviewQueue() {
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const queryClient = useQueryClient();
@@ -226,6 +245,7 @@ export default function TransactionReviewQueue() {
             const confidence = transaction.aiConfidence ? parseFloat(transaction.aiConfidence) : 0;
             const isSelected = selectedTransactions.includes(transaction.id);
             const item = reviewItems.find((i) => i.entityType === "transaction" && i.entityId === transaction.id);
+            const quickActions = item ? (QUICK_ACTIONS[item.kind] || QUICK_ACTIONS.category) : [];
             
             return (
               <motion.div
@@ -284,8 +304,30 @@ export default function TransactionReviewQueue() {
                           </div>
                         )}
                         {item?.prompt && (
-                          <div className="max-w-md">
+                          <div className="max-w-md space-y-2">
                             <p className="text-xs text-amber-700">{item.prompt}</p>
+                            {item?.id && quickActions.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {quickActions.map((action) => (
+                                  <Button
+                                    key={`${item.id}-${action.label}`}
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => {
+                                      if (action.value === "resolve") {
+                                        resolveReviewItemMutation.mutate(item.id);
+                                      } else {
+                                        skipReviewItemMutation.mutate(item.id);
+                                      }
+                                    }}
+                                    disabled={resolveReviewItemMutation.isPending || skipReviewItemMutation.isPending}
+                                  >
+                                    {action.label}
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
