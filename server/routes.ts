@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
 import { categorizeTransaction, processFinancialQuery, extractReceiptData, parseNaturalLanguageTransaction } from "./services/openai";
@@ -29,12 +30,13 @@ import {
   insertInvoiceItemSchema,
   insertEstimateSchema,
   insertEstimateItemSchema,
+  insertReviewMessageSchema,
   type User,
   type Receipt,
   type InsertReceipt,
   type Client,
   type Invoice,
-  type Estimate 
+  type Estimate
 } from "@shared/schema";
 import { CHART_OF_ACCOUNTS } from "@shared/chart-of-accounts";
 import { z } from "zod";
@@ -139,6 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  const generateToken = (size = 32) => crypto.randomBytes(size).toString("hex");
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -152,12 +156,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Hash password and create user with trial period
       const hashedPassword = await hashPassword(userData.password);
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + 14); // 14-day trial
+      const emailVerificationToken = generateToken(24);
       
       const user = await storage.createUser({
         ...userData,
         password: hashedPassword,
+        emailVerificationToken,
       });
       
       // Log in the user
@@ -172,7 +176,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             username: user.username,
             businessName: user.businessName,
             subscriptionStatus: user.subscriptionStatus 
-          } 
+          },
+          verifyToken: emailVerificationToken
         });
       });
     } catch (error) {
@@ -216,10 +221,369 @@ export async function registerRoutes(app: Express): Promise<Server> {
         businessName: user.businessName,
         firstName: user.firstName,
         lastName: user.lastName,
+        province: user.province,
+        address: user.address,
+        fiscalYearStart: user.fiscalYearStart,
+        gstRegistered: user.gstRegistered,
+        gstNumber: user.gstNumber,
+        gstFilingFrequency: user.gstFilingFrequency,
+        emailVerifiedAt: user.emailVerifiedAt,
         subscriptionStatus: user.subscriptionStatus,
         trialDaysRemaining: getTrialDaysRemaining(user)
       } 
     });
+  });
+
+  app.post("/api/auth/request-password-reset", async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await storage.getUserByEmail(email);
+    // Keep response generic to avoid account enumeration
+    if (!user) {
+      return res.json({ message: "If that email exists, a reset link has been generated." });
+    }
+
+    const token = generateToken(24);
+    const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+    await storage.updateUserProfile(user.id, {
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: expires,
+    } as Partial<User>);
+
+    // v1 placeholder: return token for manual email wiring
+    return res.json({
+      message: "Password reset token generated.",
+      resetToken: token,
+      expiresAt: expires,
+    });
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    const token = String(req.body?.token || "").trim();
+    const password = String(req.body?.password || "");
+    if (!token || !password || password.length < 8) {
+      return res.status(400).json({ message: "Token and password (min 8 chars) are required" });
+    }
+
+    const user = await storage.getUserByResetToken(token);
+    if (!user || !user.resetPasswordExpiresAt || new Date(user.resetPasswordExpiresAt) < new Date()) {
+      return res.status(400).json({ message: "Reset token is invalid or expired" });
+    }
+
+    const hashedPassword = await hashPassword(password);
+    await storage.updateUserProfile(user.id, {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpiresAt: null,
+    } as Partial<User>);
+
+    return res.json({ message: "Password reset successful" });
+  });
+
+  app.get("/api/auth/verify-email", async (req, res) => {
+    const token = String(req.query.token || "");
+    if (!token) {
+      return res.status(400).json({ message: "Missing token" });
+    }
+    const user = await storage.getUserByEmailVerificationToken(token);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid verification token" });
+    }
+
+    await storage.updateUserProfile(user.id, {
+      emailVerifiedAt: new Date(),
+      emailVerificationToken: null,
+    } as Partial<User>);
+
+    return res.json({ message: "Email verified" });
+  });
+
+  app.get("/api/profile", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json({
+      legalName: user.businessName || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email,
+      province: user.province || "",
+      address: user.address || "",
+      fiscalYearStart: user.fiscalYearStart,
+      gstRegistered: Boolean(user.gstRegistered),
+      gstNumber: user.gstNumber || "",
+      gstFilingFrequency: user.gstFilingFrequency || "annual",
+    });
+  });
+
+  app.put("/api/profile", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const updates: Partial<User> = {
+        businessName: req.body?.legalName ?? req.body?.businessName ?? user.businessName,
+        firstName: req.body?.firstName ?? user.firstName,
+        lastName: req.body?.lastName ?? user.lastName,
+        province: req.body?.province ?? user.province,
+        address: req.body?.address ?? user.address,
+        gstRegistered: typeof req.body?.gstRegistered === "boolean" ? req.body.gstRegistered : user.gstRegistered,
+        gstNumber: req.body?.gstNumber ?? user.gstNumber,
+        gstFilingFrequency: req.body?.gstFilingFrequency ?? user.gstFilingFrequency,
+      };
+
+      if (req.body?.fiscalYearStart) {
+        updates.fiscalYearStart = new Date(req.body.fiscalYearStart);
+      }
+
+      const updated = await storage.updateUserProfile(user.id, updates);
+      res.json({ user: updated });
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Collaborator access
+  app.post("/api/access/invite", requireAuth, async (req, res) => {
+    try {
+      const owner = req.user as User;
+      const email = String(req.body?.email || "").trim().toLowerCase();
+      const role = String(req.body?.role || "").trim().toLowerCase();
+      if (!email || !["accountant", "bookkeeper"].includes(role)) {
+        return res.status(400).json({ message: "Valid email and role are required" });
+      }
+      if (email === owner.email.toLowerCase()) {
+        return res.status(400).json({ message: "Cannot invite yourself" });
+      }
+
+      const inviteToken = generateToken(24);
+      const inviteExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+
+      const collaborator = await storage.createCollaborator({
+        ownerUserId: owner.id,
+        collaboratorUserId: null,
+        role,
+        status: "invited",
+        invitedEmail: email,
+        inviteToken,
+        inviteExpiresAt,
+      });
+
+      res.json({
+        ok: true,
+        collaboratorId: collaborator.id,
+        inviteToken,
+        expiresAt: inviteExpiresAt,
+      });
+    } catch (error) {
+      console.error("Invite collaborator failed:", error);
+      res.status(500).json({ message: "Failed to create invite" });
+    }
+  });
+
+  app.post("/api/access/accept", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const inviteToken = String(req.body?.invite_token || "").trim();
+      if (!inviteToken) {
+        return res.status(400).json({ message: "invite_token is required" });
+      }
+
+      const invite = await storage.getCollaboratorByInviteToken(inviteToken);
+      if (!invite || !invite.inviteExpiresAt || new Date(invite.inviteExpiresAt) < new Date()) {
+        return res.status(400).json({ message: "TOKEN_INVALID_OR_EXPIRED" });
+      }
+      if (invite.invitedEmail.toLowerCase() !== user.email.toLowerCase()) {
+        return res.status(403).json({ message: "Invite email does not match current user" });
+      }
+
+      await storage.acceptCollaboratorInvite(inviteToken, user.id);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Accept invite failed:", error);
+      res.status(500).json({ message: "Failed to accept invite" });
+    }
+  });
+
+  app.get("/api/access/collaborators", requireAuth, async (req, res) => {
+    try {
+      const owner = req.user as User;
+      const items = await storage.getCollaboratorsByOwner(owner.id);
+      res.json({ items });
+    } catch (error) {
+      console.error("Get collaborators failed:", error);
+      res.status(500).json({ message: "Failed to fetch collaborators" });
+    }
+  });
+
+  app.delete("/api/access/collaborators/:id", requireAuth, async (req, res) => {
+    try {
+      const owner = req.user as User;
+      await storage.deleteCollaborator(owner.id, req.params.id);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Delete collaborator failed:", error);
+      res.status(500).json({ message: "Failed to remove collaborator" });
+    }
+  });
+
+  // Reconciliation
+  const parseMonth = (statementMonth: string) => {
+    const [y, m] = statementMonth.split("-").map(Number);
+    if (!y || !m || m < 1 || m > 12) return null;
+    return new Date(Date.UTC(y, m - 1, 1, 0, 0, 0));
+  };
+
+  app.get("/api/reconciliation/accounts", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const conns = await storage.getBankConnections(user.id);
+      const dedup = new Map<string, any>();
+      for (const c of conns) {
+        if (!dedup.has(c.accountId)) {
+          dedup.set(c.accountId, {
+            bank_account_id: c.accountId,
+            name: `${c.bankName} ${c.accountName}`,
+          });
+        }
+      }
+      res.json({ accounts: Array.from(dedup.values()) });
+    } catch (error) {
+      console.error("Reconciliation accounts failed:", error);
+      res.status(500).json({ message: "Failed to load reconciliation accounts" });
+    }
+  });
+
+  app.get("/api/reconciliation/:bank_account_id/:statement_month", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const bankAccountId = req.params.bank_account_id;
+      const statementMonth = parseMonth(req.params.statement_month);
+      if (!statementMonth) {
+        return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
+      }
+
+      let statement = await storage.getBankStatement(user.id, bankAccountId, statementMonth);
+      const statementEndDate = statement?.statementEndDate
+        ? new Date(statement.statementEndDate)
+        : new Date(Date.UTC(statementMonth.getUTCFullYear(), statementMonth.getUTCMonth() + 1, 0, 23, 59, 59));
+
+      const bookEndingBalance = await storage.getBookEndingBalance(user.id, bankAccountId, statementEndDate);
+      const unclearedBase = await storage.getUnclearedTransactions(user.id, bankAccountId, statementEndDate);
+
+      let clearedIds = new Set<string>();
+      if (statement) {
+        const clears = await storage.getTransactionClearsForStatement(statement.id);
+        clearedIds = new Set(clears.filter(c => c.cleared).map(c => c.transactionId));
+      }
+      const unclearedTransactions = unclearedBase.filter(t => !clearedIds.has(t.id));
+
+      const endingBal = statement ? Number(statement.endingBalance) : 0;
+      const difference = statement ? endingBal - bookEndingBalance : 0;
+
+      res.json({
+        statement: statement || null,
+        book_ending_balance: bookEndingBalance,
+        difference,
+        uncleared_transactions: unclearedTransactions,
+      });
+    } catch (error) {
+      console.error("Reconciliation fetch failed:", error);
+      res.status(500).json({ message: "Failed to fetch reconciliation data" });
+    }
+  });
+
+  app.put("/api/reconciliation/:bank_account_id/:statement_month", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const bankAccountId = req.params.bank_account_id;
+      const statementMonth = parseMonth(req.params.statement_month);
+      if (!statementMonth) {
+        return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
+      }
+      const statementEndDate = req.body?.statement_end_date ? new Date(req.body.statement_end_date) : null;
+      const endingBalance = req.body?.ending_balance;
+      if (!statementEndDate || endingBalance === undefined || endingBalance === null) {
+        return res.status(400).json({ message: "statement_end_date and ending_balance are required" });
+      }
+
+      const statement = await storage.upsertBankStatement({
+        ownerUserId: user.id,
+        bankAccountId,
+        statementMonth,
+        statementEndDate,
+        endingBalance: String(endingBalance),
+        currency: "CAD",
+      });
+
+      res.json({ statement });
+    } catch (error) {
+      console.error("Reconciliation save failed:", error);
+      res.status(500).json({ message: "Failed to save statement" });
+    }
+  });
+
+  app.post("/api/reconciliation/:bank_account_id/:statement_month/auto-clear", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const bankAccountId = req.params.bank_account_id;
+      const statementMonth = parseMonth(req.params.statement_month);
+      if (!statementMonth) {
+        return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
+      }
+      const statement = await storage.getBankStatement(user.id, bankAccountId, statementMonth);
+      if (!statement) {
+        return res.status(400).json({ message: "Create statement first" });
+      }
+
+      const clearTo = req.body?.clear_up_to_date ? new Date(req.body.clear_up_to_date) : new Date(statement.statementEndDate);
+      const txns = await storage.getUnclearedTransactions(user.id, bankAccountId, clearTo);
+      let count = 0;
+      for (const t of txns) {
+        await storage.setTransactionClear({
+          ownerUserId: user.id,
+          bankStatementId: statement.id,
+          transactionId: t.id,
+          cleared: true,
+        });
+        count += 1;
+      }
+      res.json({ cleared_count: count });
+    } catch (error) {
+      console.error("Reconciliation auto-clear failed:", error);
+      res.status(500).json({ message: "Failed to auto-clear transactions" });
+    }
+  });
+
+  app.post("/api/reconciliation/:bank_account_id/:statement_month/clear", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const bankAccountId = req.params.bank_account_id;
+      const statementMonth = parseMonth(req.params.statement_month);
+      if (!statementMonth) {
+        return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
+      }
+      const statement = await storage.getBankStatement(user.id, bankAccountId, statementMonth);
+      if (!statement) {
+        return res.status(400).json({ message: "Create statement first" });
+      }
+
+      const transactionId = String(req.body?.transaction_id || "");
+      const cleared = Boolean(req.body?.cleared);
+      if (!transactionId) {
+        return res.status(400).json({ message: "transaction_id is required" });
+      }
+      await storage.setTransactionClear({
+        ownerUserId: user.id,
+        bankStatementId: statement.id,
+        transactionId,
+        cleared,
+      });
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Reconciliation clear toggle failed:", error);
+      res.status(500).json({ message: "Failed to set clear status" });
+    }
   });
 
   // Chart of Accounts routes
@@ -402,6 +766,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reviewQueue);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch review queue" });
+    }
+  });
+
+  app.get("/api/review/items", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const items = await storage.getOpenReviewItems(user.id);
+      res.json({ items });
+    } catch (error) {
+      console.error("Failed fetching review items:", error);
+      res.status(500).json({ message: "Failed to fetch review items" });
+    }
+  });
+
+  app.post("/api/review/items", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { kind, entityType, entityId, prompt, optionsJson, modelSuggestionJson } = req.body || {};
+      if (!kind || !entityType || !entityId || !prompt) {
+        return res.status(400).json({ message: "kind, entityType, entityId, prompt are required" });
+      }
+
+      const item = await storage.createReviewItem({
+        ownerUserId: user.id,
+        status: "open",
+        kind,
+        entityType,
+        entityId,
+        prompt,
+        optionsJson: optionsJson ?? null,
+        modelSuggestionJson: modelSuggestionJson ?? null,
+        resolvedAt: null,
+      });
+      res.json({ item });
+    } catch (error) {
+      console.error("Failed creating review item:", error);
+      res.status(500).json({ message: "Failed to create review item" });
+    }
+  });
+
+  app.get("/api/review/items/:id/messages", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const messages = await storage.getReviewMessages(req.params.id);
+      res.json({ messages });
+    } catch (error) {
+      console.error("Failed fetching review messages:", error);
+      res.status(500).json({ message: "Failed to fetch review messages" });
+    }
+  });
+
+  app.post("/api/review/items/:id/messages", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const payload = insertReviewMessageSchema.parse({
+        reviewItemId: req.params.id,
+        role: req.body?.role || "user",
+        content: req.body?.content || "",
+      });
+      if (!payload.content.trim()) {
+        return res.status(400).json({ message: "content is required" });
+      }
+      const message = await storage.createReviewMessage(payload);
+      res.json({ message });
+    } catch (error) {
+      console.error("Failed creating review message:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create review message" });
     }
   });
 
@@ -844,6 +1276,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error.message,
         details: "Please check your Stripe configuration and ensure all API keys and price IDs are correct."
       });
+    }
+  });
+
+  app.post("/api/billing/portal", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ message: "No Stripe customer found for user" });
+      }
+      const returnUrl = req.body?.returnUrl || `${req.protocol}://${req.get("host")}/settings`;
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: returnUrl,
+      });
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Billing portal error:", error);
+      res.status(500).json({ message: "Failed to open billing portal" });
+    }
+  });
+
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    try {
+      const sig = req.headers["stripe-signature"] as string | undefined;
+      const secret = process.env.STRIPE_WEBHOOK_SECRET;
+      let event: Stripe.Event;
+
+      if (sig && secret && Buffer.isBuffer(req.body)) {
+        event = stripe.webhooks.constructEvent(req.body, sig, secret);
+      } else {
+        // Fallback for local/dev environments without webhook signature verification.
+        event = req.body as Stripe.Event;
+      }
+
+      const obj: any = event.data?.object || {};
+      if (event.type.startsWith("customer.subscription.")) {
+        const subscriptionId = obj.id as string | undefined;
+        const status = obj.status as string | undefined;
+        if (subscriptionId && status) {
+          const user = await storage.getUserByStripeSubscriptionId(subscriptionId);
+          if (user) {
+            let mapped = "inactive";
+            if (status === "trialing") mapped = "trial";
+            else if (status === "active") mapped = "active";
+            else if (status === "past_due") mapped = "inactive";
+            else if (status === "canceled" || status === "unpaid" || status === "incomplete_expired") mapped = "cancelled";
+            await storage.updateUserSubscriptionStatus(user.id, mapped);
+          }
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Stripe webhook error:", error);
+      res.status(400).json({ message: "Webhook error", error: error.message });
     }
   });
 

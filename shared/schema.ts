@@ -11,6 +11,16 @@ export const users = pgTable("users", {
   businessName: text("business_name"),
   firstName: text("first_name"),
   lastName: text("last_name"),
+  province: text("province"),
+  address: text("address"),
+  fiscalYearStart: timestamp("fiscal_year_start"),
+  gstRegistered: boolean("gst_registered").default(false),
+  gstNumber: text("gst_number"),
+  gstFilingFrequency: text("gst_filing_frequency").default("annual"),
+  emailVerifiedAt: timestamp("email_verified_at"),
+  emailVerificationToken: text("email_verification_token"),
+  resetPasswordToken: text("reset_password_token"),
+  resetPasswordExpiresAt: timestamp("reset_password_expires_at"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status").default("trial"), // trial, active, inactive, cancelled
@@ -295,6 +305,64 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Collaborator access (owner invites accountant/bookkeeper)
+export const collaborators = pgTable("collaborators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
+  collaboratorUserId: varchar("collaborator_user_id").references(() => users.id),
+  role: text("role").notNull(), // accountant | bookkeeper
+  status: text("status").notNull().default("invited"), // invited | active
+  invitedEmail: text("invited_email").notNull(),
+  inviteToken: text("invite_token"),
+  inviteExpiresAt: timestamp("invite_expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Monthly statement anchor for reconciliation
+export const bankStatements = pgTable("bank_statements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
+  bankAccountId: text("bank_account_id").notNull(), // plaid account id
+  statementMonth: timestamp("statement_month").notNull(), // first day of month
+  statementEndDate: timestamp("statement_end_date").notNull(),
+  endingBalance: decimal("ending_balance", { precision: 15, scale: 2 }).notNull(),
+  currency: text("currency").default("CAD"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Cleared flags per statement
+export const transactionClears = pgTable("transaction_clears", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
+  bankStatementId: varchar("bank_statement_id").notNull().references(() => bankStatements.id),
+  transactionId: varchar("transaction_id").notNull().references(() => transactions.id),
+  cleared: boolean("cleared").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Structured review queue (kept additive with existing needsReview flow)
+export const reviewItems = pgTable("review_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("open"), // open | skipped | resolved
+  kind: text("kind").notNull(), // txn_kind | category | receipt_match | reconciliation
+  entityType: text("entity_type").notNull(), // transaction | receipt | bank_statement
+  entityId: varchar("entity_id").notNull(),
+  prompt: text("prompt").notNull(),
+  optionsJson: jsonb("options_json"),
+  modelSuggestionJson: jsonb("model_suggestion_json"),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const reviewMessages = pgTable("review_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reviewItemId: varchar("review_item_id").notNull().references(() => reviewItems.id),
+  role: text("role").notNull(), // system | user
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   transactions: many(transactions),
@@ -302,6 +370,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   aiSuggestions: many(aiSuggestions),
   bankConnections: many(bankConnections),
   chatMessages: many(chatMessages),
+  ownedCollaborators: many(collaborators),
+  bankStatements: many(bankStatements),
+  transactionClears: many(transactionClears),
+  reviewItems: many(reviewItems),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one, many }) => ({
@@ -379,6 +451,55 @@ export const recurringTransactionsRelations = relations(recurringTransactions, (
   user: one(users, {
     fields: [recurringTransactions.userId],
     references: [users.id],
+  }),
+}));
+
+export const collaboratorsRelations = relations(collaborators, ({ one }) => ({
+  owner: one(users, {
+    fields: [collaborators.ownerUserId],
+    references: [users.id],
+  }),
+  collaborator: one(users, {
+    fields: [collaborators.collaboratorUserId],
+    references: [users.id],
+  }),
+}));
+
+export const bankStatementsRelations = relations(bankStatements, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [bankStatements.ownerUserId],
+    references: [users.id],
+  }),
+  clears: many(transactionClears),
+}));
+
+export const transactionClearsRelations = relations(transactionClears, ({ one }) => ({
+  owner: one(users, {
+    fields: [transactionClears.ownerUserId],
+    references: [users.id],
+  }),
+  statement: one(bankStatements, {
+    fields: [transactionClears.bankStatementId],
+    references: [bankStatements.id],
+  }),
+  transaction: one(transactions, {
+    fields: [transactionClears.transactionId],
+    references: [transactions.id],
+  }),
+}));
+
+export const reviewItemsRelations = relations(reviewItems, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [reviewItems.ownerUserId],
+    references: [users.id],
+  }),
+  messages: many(reviewMessages),
+}));
+
+export const reviewMessagesRelations = relations(reviewMessages, ({ one }) => ({
+  item: one(reviewItems, {
+    fields: [reviewMessages.reviewItemId],
+    references: [reviewItems.id],
   }),
 }));
 
@@ -469,6 +590,31 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   createdAt: true,
 });
 
+export const insertCollaboratorSchema = createInsertSchema(collaborators).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBankStatementSchema = createInsertSchema(bankStatements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTransactionClearSchema = createInsertSchema(transactionClears).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReviewItemSchema = createInsertSchema(reviewItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertReviewMessageSchema = createInsertSchema(reviewMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -500,3 +646,13 @@ export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
 export type InsertChartOfAccount = z.infer<typeof insertChartOfAccountsSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type Collaborator = typeof collaborators.$inferSelect;
+export type InsertCollaborator = z.infer<typeof insertCollaboratorSchema>;
+export type BankStatement = typeof bankStatements.$inferSelect;
+export type InsertBankStatement = z.infer<typeof insertBankStatementSchema>;
+export type TransactionClear = typeof transactionClears.$inferSelect;
+export type InsertTransactionClear = z.infer<typeof insertTransactionClearSchema>;
+export type ReviewItem = typeof reviewItems.$inferSelect;
+export type InsertReviewItem = z.infer<typeof insertReviewItemSchema>;
+export type ReviewMessage = typeof reviewMessages.$inferSelect;
+export type InsertReviewMessage = z.infer<typeof insertReviewMessageSchema>;

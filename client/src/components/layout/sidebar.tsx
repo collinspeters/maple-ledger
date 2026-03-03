@@ -18,6 +18,7 @@ import {
   Users,
   Calculator,
   BookOpen,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -44,8 +45,10 @@ export default function Sidebar() {
     { href: "/receipts", icon: Receipt, label: "Receipts", badge: receiptBadge },
     { href: "/chart-of-accounts", icon: BookOpen, label: "Chart of Accounts" },
     { href: "/reports", icon: ChartLine, label: "Reports" },
+    { href: "/reconciliation", icon: Calculator, label: "Reconciliation" },
     { href: "/banking", icon: Building2, label: "Banking" },
     { href: "/ai-assistant", icon: MessageSquare, label: "AI Assistant" },
+    { href: "/access", icon: ShieldCheck, label: "Access" },
     { href: "/settings", icon: Settings, label: "Settings" },
   ];
 

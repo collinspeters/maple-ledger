@@ -15,6 +15,11 @@ import {
   estimateItems,
   expenseCategories,
   recurringTransactions,
+  collaborators,
+  bankStatements,
+  transactionClears,
+  reviewItems,
+  reviewMessages,
   type User, 
   type InsertUser,
   type Transaction,
@@ -42,7 +47,17 @@ import {
   type RecurringTransaction,
   type InsertRecurringTransaction,
   type ChartOfAccount,
-  type InsertChartOfAccount
+  type InsertChartOfAccount,
+  type Collaborator,
+  type InsertCollaborator,
+  type BankStatement,
+  type InsertBankStatement,
+  type TransactionClear,
+  type InsertTransactionClear,
+  type ReviewItem,
+  type InsertReviewItem,
+  type ReviewMessage,
+  type InsertReviewMessage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
@@ -52,9 +67,13 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByStripeSubscriptionId(subscriptionId: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  getUserByEmailVerificationToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId: string): Promise<User>;
   updateUserSubscriptionStatus(userId: string, status: string): Promise<User>;
+  updateUserProfile(userId: string, updates: Partial<User>): Promise<User>;
   
   // Transaction methods
   getTransactions(userId: string, limit?: number): Promise<Transaction[]>;
@@ -137,6 +156,28 @@ export interface IStorage {
   createRecurringTransaction(transaction: InsertRecurringTransaction): Promise<RecurringTransaction>;
   updateRecurringTransaction(id: string, updates: Partial<RecurringTransaction>): Promise<RecurringTransaction>;
   deleteRecurringTransaction(id: string): Promise<void>;
+
+  // Collaborators
+  createCollaborator(input: InsertCollaborator): Promise<Collaborator>;
+  getCollaboratorsByOwner(ownerUserId: string): Promise<Collaborator[]>;
+  getCollaboratorByInviteToken(inviteToken: string): Promise<Collaborator | undefined>;
+  acceptCollaboratorInvite(inviteToken: string, collaboratorUserId: string): Promise<Collaborator | null>;
+  deleteCollaborator(ownerUserId: string, collaboratorId: string): Promise<void>;
+
+  // Reconciliation
+  getBankStatement(ownerUserId: string, bankAccountId: string, statementMonth: Date): Promise<BankStatement | null>;
+  upsertBankStatement(input: InsertBankStatement): Promise<BankStatement>;
+  setTransactionClear(input: InsertTransactionClear): Promise<TransactionClear>;
+  getTransactionClearsForStatement(bankStatementId: string): Promise<TransactionClear[]>;
+  getUnclearedTransactions(ownerUserId: string, bankAccountId: string, statementEndDate: Date): Promise<Transaction[]>;
+  getBookEndingBalance(ownerUserId: string, bankAccountId: string, statementEndDate: Date): Promise<number>;
+
+  // Structured review
+  createReviewItem(input: InsertReviewItem): Promise<ReviewItem>;
+  updateReviewItem(id: string, updates: Partial<ReviewItem>): Promise<ReviewItem>;
+  getOpenReviewItems(ownerUserId: string): Promise<ReviewItem[]>;
+  createReviewMessage(input: InsertReviewMessage): Promise<ReviewMessage>;
+  getReviewMessages(reviewItemId: string): Promise<ReviewMessage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -152,6 +193,21 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByStripeSubscriptionId(subscriptionId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.stripeSubscriptionId, subscriptionId));
+    return user || undefined;
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.resetPasswordToken, token));
+    return user || undefined;
+  }
+
+  async getUserByEmailVerificationToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token));
     return user || undefined;
   }
 
@@ -190,6 +246,18 @@ export class DatabaseStorage implements IStorage {
       .set({ 
         subscriptionStatus: status,
         updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(userId: string, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
       .returning();
@@ -662,6 +730,177 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRecurringTransaction(id: string): Promise<void> {
     await db.delete(recurringTransactions).where(eq(recurringTransactions.id, id));
+  }
+
+  // Collaborators
+  async createCollaborator(input: InsertCollaborator): Promise<Collaborator> {
+    const [row] = await db.insert(collaborators).values(input).returning();
+    return row;
+  }
+
+  async getCollaboratorsByOwner(ownerUserId: string): Promise<Collaborator[]> {
+    return await db
+      .select()
+      .from(collaborators)
+      .where(eq(collaborators.ownerUserId, ownerUserId))
+      .orderBy(desc(collaborators.createdAt));
+  }
+
+  async getCollaboratorByInviteToken(inviteToken: string): Promise<Collaborator | undefined> {
+    const [row] = await db
+      .select()
+      .from(collaborators)
+      .where(eq(collaborators.inviteToken, inviteToken));
+    return row || undefined;
+  }
+
+  async acceptCollaboratorInvite(inviteToken: string, collaboratorUserId: string): Promise<Collaborator | null> {
+    const [row] = await db
+      .update(collaborators)
+      .set({
+        collaboratorUserId,
+        status: "active",
+        inviteToken: null,
+        inviteExpiresAt: null,
+      })
+      .where(eq(collaborators.inviteToken, inviteToken))
+      .returning();
+    return row || null;
+  }
+
+  async deleteCollaborator(ownerUserId: string, collaboratorId: string): Promise<void> {
+    await db
+      .delete(collaborators)
+      .where(and(
+        eq(collaborators.id, collaboratorId),
+        eq(collaborators.ownerUserId, ownerUserId)
+      ));
+  }
+
+  // Reconciliation
+  async getBankStatement(ownerUserId: string, bankAccountId: string, statementMonth: Date): Promise<BankStatement | null> {
+    const [row] = await db
+      .select()
+      .from(bankStatements)
+      .where(and(
+        eq(bankStatements.ownerUserId, ownerUserId),
+        eq(bankStatements.bankAccountId, bankAccountId),
+        eq(bankStatements.statementMonth, statementMonth)
+      ));
+    return row || null;
+  }
+
+  async upsertBankStatement(input: InsertBankStatement): Promise<BankStatement> {
+    const existing = await this.getBankStatement(input.ownerUserId, input.bankAccountId, input.statementMonth as Date);
+    if (existing) {
+      const [updated] = await db
+        .update(bankStatements)
+        .set({
+          statementEndDate: input.statementEndDate,
+          endingBalance: input.endingBalance,
+          currency: input.currency,
+        })
+        .where(eq(bankStatements.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db.insert(bankStatements).values(input).returning();
+    return created;
+  }
+
+  async setTransactionClear(input: InsertTransactionClear): Promise<TransactionClear> {
+    const [existing] = await db.select().from(transactionClears).where(and(
+      eq(transactionClears.bankStatementId, input.bankStatementId),
+      eq(transactionClears.transactionId, input.transactionId)
+    ));
+
+    if (existing) {
+      const [updated] = await db
+        .update(transactionClears)
+        .set({ cleared: input.cleared })
+        .where(eq(transactionClears.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db.insert(transactionClears).values(input).returning();
+    return created;
+  }
+
+  async getTransactionClearsForStatement(bankStatementId: string): Promise<TransactionClear[]> {
+    return await db
+      .select()
+      .from(transactionClears)
+      .where(eq(transactionClears.bankStatementId, bankStatementId));
+  }
+
+  async getUnclearedTransactions(ownerUserId: string, bankAccountId: string, statementEndDate: Date): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .where(and(
+        eq(transactions.userId, ownerUserId),
+        eq(transactions.accountId, bankAccountId),
+        lte(transactions.date, statementEndDate)
+      ))
+      .orderBy(desc(transactions.date));
+  }
+
+  async getBookEndingBalance(ownerUserId: string, bankAccountId: string, statementEndDate: Date): Promise<number> {
+    const result = await db
+      .select({
+        sum: sql<string>`COALESCE(SUM(CAST(${transactions.amount} AS numeric)), 0)`,
+      })
+      .from(transactions)
+      .where(and(
+        eq(transactions.userId, ownerUserId),
+        eq(transactions.accountId, bankAccountId),
+        lte(transactions.date, statementEndDate)
+      ));
+
+    const raw = result[0]?.sum ?? "0";
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  // Structured review
+  async createReviewItem(input: InsertReviewItem): Promise<ReviewItem> {
+    const [row] = await db.insert(reviewItems).values(input).returning();
+    return row;
+  }
+
+  async updateReviewItem(id: string, updates: Partial<ReviewItem>): Promise<ReviewItem> {
+    const [row] = await db
+      .update(reviewItems)
+      .set(updates)
+      .where(eq(reviewItems.id, id))
+      .returning();
+    return row;
+  }
+
+  async getOpenReviewItems(ownerUserId: string): Promise<ReviewItem[]> {
+    return await db
+      .select()
+      .from(reviewItems)
+      .where(and(
+        eq(reviewItems.ownerUserId, ownerUserId),
+        eq(reviewItems.status, "open")
+      ))
+      .orderBy(desc(reviewItems.createdAt));
+  }
+
+  async createReviewMessage(input: InsertReviewMessage): Promise<ReviewMessage> {
+    const [row] = await db.insert(reviewMessages).values(input).returning();
+    return row;
+  }
+
+  async getReviewMessages(reviewItemId: string): Promise<ReviewMessage[]> {
+    return await db
+      .select()
+      .from(reviewMessages)
+      .where(eq(reviewMessages.reviewItemId, reviewItemId))
+      .orderBy(reviewMessages.createdAt);
   }
 
   // Chart of Accounts methods

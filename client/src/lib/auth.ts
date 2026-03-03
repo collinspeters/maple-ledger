@@ -7,6 +7,13 @@ export interface AuthUser {
   businessName?: string;
   firstName?: string;
   lastName?: string;
+  province?: string;
+  address?: string;
+  fiscalYearStart?: string;
+  gstRegistered?: boolean;
+  gstNumber?: string;
+  gstFilingFrequency?: string;
+  emailVerifiedAt?: string;
   subscriptionStatus: string;
   trialDaysRemaining?: number;
 }
