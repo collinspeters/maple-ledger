@@ -28,7 +28,9 @@ import {
   BookOpen,
   ChevronRight,
   Eye,
-  ArrowUpDown
+  ArrowUpDown,
+  ArrowRightLeft,
+  Wallet
 } from "lucide-react";
 
 type DateRange = {
@@ -140,6 +142,32 @@ type GeneralLedgerReport = {
   };
 };
 
+type TransfersSummaryReport = {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  totalTransferAmount: number;
+  transferCount: number;
+  byType: Array<{
+    type: string;
+    amount: number;
+    count: number;
+  }>;
+};
+
+type OwnerEquitySummaryReport = {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  ownerDrawTotal: number;
+  ownerContributionTotal: number;
+  netOwnerEquityChange: number;
+  drawCount: number;
+  contributionCount: number;
+};
+
 // T2125 CRA Report types
 type MonthlyPLRow = {
   month: string;
@@ -228,6 +256,14 @@ export default function Reports() {
 
   const { data: generalLedger, isLoading: glLoading } = useQuery<GeneralLedgerReport>({
     queryKey: [`/api/reports/general-ledger?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
+  });
+
+  const { data: transfersSummary, isLoading: transfersLoading } = useQuery<TransfersSummaryReport>({
+    queryKey: [`/api/reports/transfers-summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
+  });
+
+  const { data: ownerEquitySummary, isLoading: ownerEquityLoading } = useQuery<OwnerEquitySummaryReport>({
+    queryKey: [`/api/reports/owner-equity-summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
 
   const { data: t2125Report, isLoading: t2125Loading } = useQuery<T2125Report>({
@@ -478,6 +514,14 @@ export default function Reports() {
             <TabsTrigger value="tax-summary" className="flex items-center gap-2">
               <Receipt className="h-4 w-4" />
               Tax Summary
+            </TabsTrigger>
+            <TabsTrigger value="transfers-summary" className="flex items-center gap-2">
+              <ArrowRightLeft className="h-4 w-4" />
+              Transfers
+            </TabsTrigger>
+            <TabsTrigger value="owner-equity-summary" className="flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Owner Equity
             </TabsTrigger>
             <TabsTrigger value="trial-balance" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
@@ -949,6 +993,126 @@ export default function Reports() {
                 <div className="text-center py-8">
                   <Receipt className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">No tax data available for selected period</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Transfers Summary Report */}
+        <TabsContent value="transfers-summary">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5 text-blue-600" />
+                Transfers Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {transfersLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ) : transfersSummary ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="text-sm text-gray-600">Total Transfer Amount</p>
+                        <p className="text-2xl font-bold">{formatCurrency(transfersSummary.totalTransferAmount)}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="text-sm text-gray-600">Transfer Count</p>
+                        <p className="text-2xl font-bold">{transfersSummary.transferCount}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-900 mb-3">Breakdown by Transfer Type</h4>
+                    {transfersSummary.byType.length === 0 ? (
+                      <p className="text-sm text-gray-500">No transfers in selected period.</p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead className="text-right">Count</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {transfersSummary.byType.map((row, idx) => (
+                            <TableRow key={`${row.type}-${idx}`}>
+                              <TableCell className="capitalize">{row.type.replace(/_/g, " ")}</TableCell>
+                              <TableCell className="text-right">{row.count}</TableCell>
+                              <TableCell className="text-right">{formatCurrency(row.amount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ArrowRightLeft className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No transfer summary available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Owner Equity Summary Report */}
+        <TabsContent value="owner-equity-summary">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-blue-600" />
+                Owner Equity Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ownerEquityLoading ? (
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ) : ownerEquitySummary ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="text-sm text-gray-600">Owner Draws</p>
+                        <p className="text-2xl font-bold text-red-600">{formatCurrency(ownerEquitySummary.ownerDrawTotal)}</p>
+                        <p className="text-xs text-gray-500 mt-1">{ownerEquitySummary.drawCount} transactions</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="text-sm text-gray-600">Owner Contributions</p>
+                        <p className="text-2xl font-bold text-green-600">{formatCurrency(ownerEquitySummary.ownerContributionTotal)}</p>
+                        <p className="text-xs text-gray-500 mt-1">{ownerEquitySummary.contributionCount} transactions</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="text-sm text-gray-600">Net Equity Change</p>
+                        <p className={`text-2xl font-bold ${ownerEquitySummary.netOwnerEquityChange >= 0 ? "text-green-700" : "text-red-700"}`}>
+                          {formatCurrency(ownerEquitySummary.netOwnerEquityChange)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Wallet className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No owner equity summary available</p>
                 </div>
               )}
             </CardContent>

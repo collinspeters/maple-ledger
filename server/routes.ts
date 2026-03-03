@@ -2068,6 +2068,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/reports/transfers-summary", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+
+      const { generateTransferSummaryReport } = await import("./services/reports");
+      const report = await generateTransferSummaryReport(user.id, startDate, endDate);
+
+      res.json(report);
+    } catch (error) {
+      console.error("Transfers summary report error:", error);
+      res.status(500).json({ message: "Failed to generate transfers summary report" });
+    }
+  });
+
+  app.get("/api/reports/owner-equity-summary", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+
+      const { generateOwnerEquitySummaryReport } = await import("./services/reports");
+      const report = await generateOwnerEquitySummaryReport(user.id, startDate, endDate);
+
+      res.json(report);
+    } catch (error) {
+      console.error("Owner equity summary report error:", error);
+      res.status(500).json({ message: "Failed to generate owner equity summary report" });
+    }
+  });
+
   // Monthly P&L breakdown
   app.get("/api/reports/profit-loss/monthly", requireAuth, requireSubscription, async (req, res) => {
     try {

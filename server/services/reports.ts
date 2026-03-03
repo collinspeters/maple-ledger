@@ -89,6 +89,49 @@ export interface GeneralLedgerReport {
   };
 }
 
+export interface TransferSummaryReport {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  totalTransferAmount: number;
+  transferCount: number;
+  byType: Array<{
+    type: string;
+    amount: number;
+    count: number;
+  }>;
+}
+
+export interface OwnerEquitySummaryReport {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  ownerDrawTotal: number;
+  ownerContributionTotal: number;
+  netOwnerEquityChange: number;
+  drawCount: number;
+  contributionCount: number;
+}
+
+function inferTxnKind(t: any): "transfer" | "equity" | "expense" | "income" {
+  if (t.txnKind === "transfer" || t.isTransfer) return "transfer";
+  if (t.txnKind === "equity") return "equity";
+  return t.isExpense ? "expense" : "income";
+}
+
+function inferEquityType(t: any): "owner_draw" | "owner_contribution" | null {
+  if (t.equityType === "owner_draw" || t.equityType === "owner_contribution") {
+    return t.equityType;
+  }
+
+  const category = String(t.category || t.aiCategory || "").toLowerCase();
+  if (category.includes("owner_draw") || category.includes("owner draw")) return "owner_draw";
+  if (category.includes("owner_contribution") || category.includes("owner contribution")) return "owner_contribution";
+  return null;
+}
+
 export async function generateProfitLossReport(
   userId: string, 
   startDate: Date, 
@@ -451,6 +494,95 @@ export async function generateGeneralLedgerReport(
       startDate: startDate.toISOString().split('T')[0],
       endDate: endDate.toISOString().split('T')[0]
     }
+  };
+}
+
+export async function generateTransferSummaryReport(
+  userId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<TransferSummaryReport> {
+  const transactions = await storage.getTransactionsByDateRange(userId, startDate, endDate);
+  const transfers = transactions.filter((t) => inferTxnKind(t) === "transfer");
+
+  const byTypeMap = new Map<string, { amount: number; count: number }>();
+  for (const t of transfers) {
+    const type = t.transferType || "unspecified";
+    const amount = Math.abs(parseFloat(t.amount) || 0);
+    const current = byTypeMap.get(type) || { amount: 0, count: 0 };
+    current.amount += amount;
+    current.count += 1;
+    byTypeMap.set(type, current);
+  }
+
+  const byType = Array.from(byTypeMap.entries()).map(([type, v]) => ({
+    type,
+    amount: v.amount,
+    count: v.count,
+  }));
+
+  const totalTransferAmount = transfers.reduce((sum, t) => sum + Math.abs(parseFloat(t.amount) || 0), 0);
+
+  return {
+    period: {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+    },
+    totalTransferAmount,
+    transferCount: transfers.length,
+    byType,
+  };
+}
+
+export async function generateOwnerEquitySummaryReport(
+  userId: string,
+  startDate: Date,
+  endDate: Date
+): Promise<OwnerEquitySummaryReport> {
+  const transactions = await storage.getTransactionsByDateRange(userId, startDate, endDate);
+  const equityRows = transactions.filter((t) => inferTxnKind(t) === "equity" || inferEquityType(t) !== null);
+
+  let ownerDrawTotal = 0;
+  let ownerContributionTotal = 0;
+  let drawCount = 0;
+  let contributionCount = 0;
+
+  for (const t of equityRows) {
+    const amount = Math.abs(parseFloat(t.amount) || 0);
+    const equityType = inferEquityType(t);
+
+    if (equityType === "owner_draw") {
+      ownerDrawTotal += amount;
+      drawCount += 1;
+      continue;
+    }
+
+    if (equityType === "owner_contribution") {
+      ownerContributionTotal += amount;
+      contributionCount += 1;
+      continue;
+    }
+
+    // Fallback when equity type is missing: use sign/legacy expense flag.
+    if (t.isExpense) {
+      ownerDrawTotal += amount;
+      drawCount += 1;
+    } else {
+      ownerContributionTotal += amount;
+      contributionCount += 1;
+    }
+  }
+
+  return {
+    period: {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+    },
+    ownerDrawTotal,
+    ownerContributionTotal,
+    netOwnerEquityChange: ownerContributionTotal - ownerDrawTotal,
+    drawCount,
+    contributionCount,
   };
 }
 
