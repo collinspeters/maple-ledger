@@ -140,10 +140,10 @@ export function TransactionFiltersComponent({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="income">Income/Deposit</SelectItem>
+              <SelectItem value="income">Income</SelectItem>
               <SelectItem value="expense">Expense</SelectItem>
               <SelectItem value="transfer">Transfer</SelectItem>
-              <SelectItem value="journal">Journal Entry</SelectItem>
+              <SelectItem value="equity">Equity</SelectItem>
             </SelectContent>
           </Select>
         </div>

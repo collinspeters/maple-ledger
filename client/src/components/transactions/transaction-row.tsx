@@ -103,16 +103,28 @@ export function TransactionRow({
     await onUpdate(transaction.id, { isReviewed: true, needsReview: false });
   };
 
+  const getTxnKind = () => {
+    if (transaction.txnKind) return transaction.txnKind;
+    if (transaction.isTransfer) return 'transfer';
+    return transaction.isExpense ? 'expense' : 'income';
+  };
+
   const getAmountColor = () => {
-    if (transaction.isTransfer) return 'text-blue-600';
-    return transaction.isExpense ? 'text-red-600' : 'text-green-600';
+    const kind = getTxnKind();
+    if (kind === 'transfer') return 'text-blue-600';
+    if (kind === 'equity') return transaction.equityType === 'owner_draw' ? 'text-orange-600' : 'text-emerald-600';
+    return kind === 'expense' ? 'text-red-600' : 'text-green-600';
   };
 
   const getTransactionIcon = () => {
-    if (transaction.isTransfer) {
+    const kind = getTxnKind();
+    if (kind === 'transfer') {
       return <ArrowRightLeft className="h-4 w-4 text-blue-500" />;
     }
-    return transaction.isExpense ? 
+    if (kind === 'equity') {
+      return <Banknote className="h-4 w-4 text-orange-500" />;
+    }
+    return kind === 'expense' ? 
       <TrendingDown className="h-4 w-4 text-red-500" /> : 
       <TrendingUp className="h-4 w-4 text-green-500" />;
   };
@@ -360,9 +372,14 @@ export function TransactionRow({
                     AI {Math.round(transaction.aiConfidence * 100)}%
                   </Badge>
                 )}
-                {transaction.isTransfer && (
+                {getTxnKind() === 'transfer' && (
                   <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
                     {transaction.transferType}
+                  </Badge>
+                )}
+                {getTxnKind() === 'equity' && (
+                  <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">
+                    {transaction.equityType === 'owner_contribution' ? 'Owner Contribution' : 'Owner Draw'}
                   </Badge>
                 )}
               </div>
@@ -418,7 +435,7 @@ export function TransactionRow({
               }
             }}
           >
-            {formatAmount(transaction.amount, transaction.isExpense, transaction.isTransfer || false)}
+            {formatAmount(transaction.amount, getTxnKind() === 'expense', getTxnKind() === 'transfer')}
           </div>
         )}
       </td>

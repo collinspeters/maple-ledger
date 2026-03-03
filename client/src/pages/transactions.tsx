@@ -115,6 +115,12 @@ export default function Transactions() {
 
   // Filter and sort transactions
   const filteredAndSortedTransactions = useMemo(() => {
+    const getTxnKind = (transaction: Transaction) => {
+      if (transaction.txnKind) return transaction.txnKind;
+      if (transaction.isTransfer) return 'transfer';
+      return transaction.isExpense ? 'expense' : 'income';
+    };
+
     // Filtering logic working correctly
     
     let filtered = transactions.filter(transaction => {
@@ -144,9 +150,11 @@ export default function Transactions() {
 
       // Type filter
       if (filters.type && filters.type !== 'all') {
-        if (filters.type === 'income' && transaction.isExpense) return false;
-        if (filters.type === 'expense' && !transaction.isExpense) return false;
-        if (filters.type === 'transfer' && !transaction.isTransfer) return false;
+        const txnKind = getTxnKind(transaction);
+        if (filters.type === 'income' && txnKind !== 'income') return false;
+        if (filters.type === 'expense' && txnKind !== 'expense') return false;
+        if (filters.type === 'transfer' && txnKind !== 'transfer') return false;
+        if (filters.type === 'equity' && txnKind !== 'equity') return false;
       }
 
       // Account filter
