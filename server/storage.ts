@@ -461,6 +461,17 @@ export class DatabaseStorage implements IStorage {
     await db.delete(bankConnections).where(eq(bankConnections.id, id));
   }
 
+  async getBankConnectionByAccountId(userId: string, accountId: string): Promise<BankConnection | undefined> {
+    const [connection] = await db
+      .select()
+      .from(bankConnections)
+      .where(and(
+        eq(bankConnections.userId, userId),
+        eq(bankConnections.accountId, accountId),
+      ));
+    return connection || undefined;
+  }
+
   async getBankConnectionByPlaidItemId(plaidItemId: string): Promise<BankConnection | undefined> {
     const [connection] = await db
       .select()
@@ -674,16 +685,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBankAccountsForChartOfAccounts(userId: string): Promise<any[]> {
-    // Get bank connections and convert them to Chart of Accounts entries
     const connections = await db
       .select()
       .from(bankConnections)
       .where(and(
         eq(bankConnections.userId, userId),
         eq(bankConnections.isActive, true)
-      ));
+      ))
+      .orderBy(desc(bankConnections.createdAt));
 
-    return connections.map((conn, index) => ({
+    // Deduplicate: one entry per unique Plaid account_id, falling back to accountName
+    // (handles cases where the same bank account was reconnected and got a new Plaid ID)
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+    const unique = connections.filter(conn => {
+      if (conn.accountId && seenIds.has(conn.accountId)) return false;
+      const nameKey = `${conn.bankName}::${conn.accountName}`;
+      if (seenNames.has(nameKey)) return false;
+      if (conn.accountId) seenIds.add(conn.accountId);
+      seenNames.add(nameKey);
+      return true;
+    });
+
+    return unique.map((conn, index) => ({
       id: `bank-${conn.id}`,
       name: `${conn.bankName} ${conn.accountName}`,
       category: conn.accountType === 'credit' ? 'LIABILITY' : 'ASSET',
@@ -695,7 +719,7 @@ export class DatabaseStorage implements IStorage {
       bankConnectionId: conn.id,
       plaidAccountId: conn.accountId,
       taxSettings: { taxable: false, exempt: true, zeroRated: false },
-      balance: 0 // Will be updated with real balance later
+      balance: 0,
     }));
   }
 

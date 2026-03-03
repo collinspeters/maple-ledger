@@ -226,22 +226,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chart-of-accounts", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
-      
-      // Get user's chart of accounts from database
-      const userAccounts = await storage.getChartOfAccounts(user.id);
-      
-      // If user has no custom accounts, return default + their bank accounts
-      if (!userAccounts || userAccounts.length === 0) {
-        const bankAccounts = await storage.getBankAccountsForChartOfAccounts(user.id);
-        const defaultAccounts = CHART_OF_ACCOUNTS.map(account => ({
-          ...account,
-          userId: user.id
-        }));
-        
-        res.json([...defaultAccounts, ...bankAccounts]);
-      } else {
-        res.json(userAccounts);
-      }
+
+      const [userAccounts, bankAccounts] = await Promise.all([
+        storage.getChartOfAccounts(user.id),
+        storage.getBankAccountsForChartOfAccounts(user.id),
+      ]);
+
+      // Always start with the standard defaults
+      const defaultAccounts = CHART_OF_ACCOUNTS.map(account => ({
+        ...account,
+        userId: user.id,
+      }));
+
+      // Only surface user-created custom accounts (not auto-generated bank entries,
+      // which are already represented by the live bankAccounts query above)
+      const userCustomAccounts = userAccounts.filter(a => !a.isBankAccount);
+
+      res.json([...defaultAccounts, ...userCustomAccounts, ...bankAccounts]);
     } catch (error) {
       console.error("Error fetching chart of accounts:", error);
       res.status(500).json({ message: "Failed to fetch chart of accounts" });
@@ -872,15 +873,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get account information using enhanced quickstart method
       const accountsData = await getAccounts(tokenData.accessToken);
       
-      // Store bank connections for each account
+      // Store bank connections for each account (upsert by Plaid account_id)
       const connections = [];
+      const user = req.user as User;
+      const bankName = await getInstitutionName(accountsData.item.institution_id || "") || "Unknown Bank";
+
       for (const account of accountsData.accounts) {
-        const user = req.user as User;
         const connectionData = {
           userId: user.id,
           plaidItemId: tokenData.itemId,
           plaidAccessToken: tokenData.accessToken,
-          bankName: await getInstitutionName(accountsData.item.institution_id || "") || "Unknown Bank",
+          bankName,
           accountType: account.type,
           accountId: account.account_id,
           accountName: account.name,
@@ -888,26 +891,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastSyncAt: new Date(),
         };
 
-        const connection = await storage.createBankConnection(connectionData);
+        // Upsert: update existing connection if same Plaid account_id, else create
+        const existing = await storage.getBankConnectionByAccountId(user.id, account.account_id);
+        let connection;
+        if (existing) {
+          connection = await storage.updateBankConnection(existing.id, {
+            plaidItemId: connectionData.plaidItemId,
+            plaidAccessToken: connectionData.plaidAccessToken,
+            bankName: connectionData.bankName,
+            accountName: connectionData.accountName,
+            accountMask: connectionData.accountMask,
+            lastSyncAt: connectionData.lastSyncAt,
+          });
+        } else {
+          connection = await storage.createBankConnection(connectionData);
+        }
         connections.push(connection);
-        
-        // AUTOMATED PROCESS 1: Create corresponding chart of accounts entry
-        const chartAccountData = {
-          userId: user.id,
-          code: `10${connections.length.toString().padStart(2, '0')}`, // 1001, 1002, etc.
-          name: `${connection.bankName} ${connection.accountName}`,
-          category: 'Assets',
-          subcategory: 'Current Assets',
-          description: `Bank account: ${connection.accountName} (${connection.accountMask})`,
-          isDeductible: false,
-          isActive: true,
-          isBankAccount: true,
-          bankConnectionId: connection.id,
-          plaidAccountId: connection.accountId,
-          balance: (account.balances?.current || 0).toString()
-        };
-        
-        await storage.createChartOfAccountsEntry(user.id, chartAccountData);
       }
 
       // AUTOMATED PROCESS 2: Trigger initial transaction sync
