@@ -31,6 +31,14 @@ interface Transaction {
   isExpense: boolean;
 }
 
+interface ReviewItem {
+  id: string;
+  entityType: string;
+  entityId: string;
+  prompt: string;
+  kind: string;
+}
+
 export default function TransactionReviewQueue() {
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const queryClient = useQueryClient();
@@ -39,6 +47,10 @@ export default function TransactionReviewQueue() {
   const { data: transactions, isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions/review-queue"],
   });
+  const { data: reviewItemsData } = useQuery<{ items: ReviewItem[] }>({
+    queryKey: ["/api/review/items"],
+  });
+  const reviewItems = reviewItemsData?.items || [];
 
   const approveMutation = useMutation({
     mutationFn: async (transactionIds: string[]) => {
@@ -58,6 +70,22 @@ export default function TransactionReviewQueue() {
         title: "Transactions Approved",
         description: "Selected transactions have been approved and categorized",
       });
+    },
+  });
+
+  const resolveReviewItemMutation = useMutation({
+    mutationFn: async (reviewItemId: string) =>
+      apiRequest(`/api/review/items/${reviewItemId}/resolve`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+    },
+  });
+
+  const skipReviewItemMutation = useMutation({
+    mutationFn: async (reviewItemId: string) =>
+      apiRequest(`/api/review/items/${reviewItemId}/skip`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
     },
   });
 
@@ -131,7 +159,8 @@ export default function TransactionReviewQueue() {
     );
   }
 
-  const reviewTransactions = transactions?.filter(t => t.needsReview) || [];
+  const reviewTransactions = transactions || [];
+  const openReviewCount = reviewItems.filter((i) => i.entityType === "transaction").length;
 
   if (reviewTransactions.length === 0) {
     return (
@@ -163,7 +192,7 @@ export default function TransactionReviewQueue() {
             <AlertTriangle className="h-5 w-5 text-amber-600" />
             <span>Review Queue</span>
             <Badge variant="secondary">
-              {reviewTransactions.length} pending
+              {Math.max(reviewTransactions.length, openReviewCount)} pending
             </Badge>
           </CardTitle>
           
@@ -196,6 +225,7 @@ export default function TransactionReviewQueue() {
           {reviewTransactions.map((transaction) => {
             const confidence = transaction.aiConfidence ? parseFloat(transaction.aiConfidence) : 0;
             const isSelected = selectedTransactions.includes(transaction.id);
+            const item = reviewItems.find((i) => i.entityType === "transaction" && i.entityId === transaction.id);
             
             return (
               <motion.div
@@ -253,6 +283,11 @@ export default function TransactionReviewQueue() {
                             </p>
                           </div>
                         )}
+                        {item?.prompt && (
+                          <div className="max-w-md">
+                            <p className="text-xs text-amber-700">{item.prompt}</p>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="flex items-center space-x-2">
@@ -290,11 +325,26 @@ export default function TransactionReviewQueue() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => approveMutation.mutate([transaction.id])}
+                          onClick={async () => {
+                            await approveMutation.mutateAsync([transaction.id]);
+                            if (item?.id) {
+                              resolveReviewItemMutation.mutate(item.id);
+                            }
+                          }}
                           disabled={approveMutation.isPending}
                         >
                           <Check className="h-4 w-4" />
                         </Button>
+                        {item?.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => skipReviewItemMutation.mutate(item.id)}
+                            disabled={skipReviewItemMutation.isPending}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

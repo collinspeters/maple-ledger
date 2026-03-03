@@ -12,6 +12,7 @@ type Collaborator = {
   invitedEmail: string;
   role: "accountant" | "bookkeeper";
   status: "invited" | "active";
+  inviteExpiresAt?: string | null;
   createdAt: string;
 };
 
@@ -51,6 +52,18 @@ export default function AccessPage() {
     },
     onError: (error: any) => {
       toast({ title: "Remove failed", description: error.message || "Could not remove collaborator", variant: "destructive" });
+    },
+  });
+
+  const resendMutation = useMutation({
+    mutationFn: async (id: string) =>
+      apiRequest(`/api/access/collaborators/${id}/resend`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/access/collaborators"] });
+      toast({ title: "Invite resent", description: "A new invite token has been generated." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Resend failed", description: error.message || "Could not resend invite", variant: "destructive" });
     },
   });
 
@@ -112,15 +125,29 @@ export default function AccessPage() {
                 <div key={c.id} className="flex items-center justify-between border rounded-lg px-3 py-2">
                   <div>
                     <p className="font-medium text-gray-900">{c.invitedEmail}</p>
-                    <p className="text-xs text-gray-600 capitalize">{c.role} • {c.status}</p>
+                    <p className="text-xs text-gray-600 capitalize">
+                      {c.role} • {c.status}
+                      {c.status === "invited" && c.inviteExpiresAt ? ` • expires ${new Date(c.inviteExpiresAt).toLocaleDateString()}` : ""}
+                    </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => removeMutation.mutate(c.id)}
-                    disabled={removeMutation.isPending}
-                  >
-                    Remove
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {c.status === "invited" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => resendMutation.mutate(c.id)}
+                        disabled={resendMutation.isPending}
+                      >
+                        Resend
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => removeMutation.mutate(c.id)}
+                      disabled={removeMutation.isPending}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

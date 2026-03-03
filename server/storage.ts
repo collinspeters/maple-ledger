@@ -160,6 +160,7 @@ export interface IStorage {
   // Collaborators
   createCollaborator(input: InsertCollaborator): Promise<Collaborator>;
   getCollaboratorsByOwner(ownerUserId: string): Promise<Collaborator[]>;
+  updateCollaborator(ownerUserId: string, collaboratorId: string, updates: Partial<Collaborator>): Promise<Collaborator>;
   getCollaboratorByInviteToken(inviteToken: string): Promise<Collaborator | undefined>;
   hasActiveCollaboratorAccess(userId: string): Promise<boolean>;
   acceptCollaboratorInvite(inviteToken: string, collaboratorUserId: string): Promise<Collaborator | null>;
@@ -745,6 +746,18 @@ export class DatabaseStorage implements IStorage {
       .from(collaborators)
       .where(eq(collaborators.ownerUserId, ownerUserId))
       .orderBy(desc(collaborators.createdAt));
+  }
+
+  async updateCollaborator(ownerUserId: string, collaboratorId: string, updates: Partial<Collaborator>): Promise<Collaborator> {
+    const [row] = await db
+      .update(collaborators)
+      .set(updates)
+      .where(and(
+        eq(collaborators.ownerUserId, ownerUserId),
+        eq(collaborators.id, collaboratorId)
+      ))
+      .returning();
+    return row;
   }
 
   async getCollaboratorByInviteToken(inviteToken: string): Promise<Collaborator | undefined> {

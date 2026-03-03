@@ -1,13 +1,7 @@
 import { db } from '../db';
 import { auditLogs } from '@shared/schema';
 
-export type AuditEvent =
-  | 'sync.started'
-  | 'sync.completed'
-  | 'transaction.reviewed'
-  | 'transaction.categorized'
-  | 'transaction.category_overridden'
-  | 'transaction.bulk_categorized';
+export type AuditEvent = string;
 
 /**
  * Insert an audit log entry. Fire-and-forget; never throws so it

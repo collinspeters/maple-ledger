@@ -586,6 +586,32 @@ export async function generateOwnerEquitySummaryReport(
   };
 }
 
+export function transferSummaryToCSV(report: TransferSummaryReport): string {
+  const lines: string[] = [];
+  lines.push("Transfers Summary");
+  lines.push(`Period,${report.period.startDate} to ${report.period.endDate}`);
+  lines.push(`Total Transfer Amount,${report.totalTransferAmount.toFixed(2)}`);
+  lines.push(`Transfer Count,${report.transferCount}`);
+  lines.push("");
+  lines.push("Type,Count,Amount");
+  for (const row of report.byType) {
+    lines.push(`${row.type},${row.count},${row.amount.toFixed(2)}`);
+  }
+  return lines.join("\n");
+}
+
+export function ownerEquitySummaryToCSV(report: OwnerEquitySummaryReport): string {
+  const lines: string[] = [];
+  lines.push("Owner Equity Summary");
+  lines.push(`Period,${report.period.startDate} to ${report.period.endDate}`);
+  lines.push(`Owner Draw Total,${report.ownerDrawTotal.toFixed(2)}`);
+  lines.push(`Owner Contribution Total,${report.ownerContributionTotal.toFixed(2)}`);
+  lines.push(`Net Owner Equity Change,${report.netOwnerEquityChange.toFixed(2)}`);
+  lines.push(`Owner Draw Count,${report.drawCount}`);
+  lines.push(`Owner Contribution Count,${report.contributionCount}`);
+  return lines.join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Monthly P&L report — one row per calendar month within the year
 // ---------------------------------------------------------------------------

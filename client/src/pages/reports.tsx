@@ -1007,6 +1007,16 @@ export default function Reports() {
                 <ArrowRightLeft className="h-5 w-5 text-blue-600" />
                 Transfers Summary
               </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/api/reports/transfers-summary/export/csv?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`, "_blank")}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {transfersLoading ? (
@@ -1075,6 +1085,16 @@ export default function Reports() {
                 <Wallet className="h-5 w-5 text-blue-600" />
                 Owner Equity Summary
               </CardTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/api/reports/owner-equity-summary/export/csv?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`, "_blank")}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {ownerEquityLoading ? (

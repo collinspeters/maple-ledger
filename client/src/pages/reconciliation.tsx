@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -46,6 +46,16 @@ export default function ReconciliationPage() {
     queryKey: activeQueryKey,
     enabled: Boolean(selectedAccount),
   });
+
+  useEffect(() => {
+    if (!reconData?.statement) return;
+    if (!statementEndDate && reconData.statement.statementEndDate) {
+      setStatementEndDate(new Date(reconData.statement.statementEndDate).toISOString().split("T")[0]);
+    }
+    if (!endingBalance && reconData.statement.endingBalance) {
+      setEndingBalance(String(reconData.statement.endingBalance));
+    }
+  }, [reconData, statementEndDate, endingBalance]);
 
   const saveStatement = useMutation({
     mutationFn: async () =>
@@ -159,7 +169,12 @@ export default function ReconciliationPage() {
                 </div>
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-gray-600">Statement difference</p>
-                  <p className="text-lg font-semibold">${(reconData?.difference ?? 0).toFixed(2)}</p>
+                  <p className={`text-lg font-semibold ${Math.abs(reconData?.difference ?? 0) < 0.005 ? "text-green-700" : "text-red-700"}`}>
+                    ${(reconData?.difference ?? 0).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {Math.abs(reconData?.difference ?? 0) < 0.005 ? "Balanced" : "Not balanced"}
+                  </p>
                 </div>
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-gray-600">Uncleared transactions</p>
@@ -168,13 +183,22 @@ export default function ReconciliationPage() {
               </div>
 
               <div className="space-y-2">
+                {Math.abs(reconData?.difference ?? 0) >= 0.005 && (
+                  <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    Reconciliation is not balanced. Review uncleared transactions or update statement ending balance.
+                  </div>
+                )}
                 {(reconData?.uncleared_transactions || []).map((t) => (
                   <div key={t.id} className="flex items-center justify-between border rounded-lg px-3 py-2">
                     <div>
                       <p className="font-medium text-gray-900">{t.description}</p>
                       <p className="text-xs text-gray-600">{new Date(t.date).toLocaleDateString()} • ${Number(t.amount).toFixed(2)}</p>
                     </div>
-                    <Button variant="outline" onClick={() => toggleClear.mutate({ transactionId: t.id, cleared: true })}>
+                    <Button
+                      variant="outline"
+                      onClick={() => toggleClear.mutate({ transactionId: t.id, cleared: true })}
+                      disabled={toggleClear.isPending}
+                    >
                       Mark cleared
                     </Button>
                   </div>

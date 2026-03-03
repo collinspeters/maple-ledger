@@ -61,10 +61,12 @@ export function TransactionDrawer({
     if (transaction?.isTransfer) return "transfer";
     return transaction?.isExpense ? "expense" : "income";
   }, [draft.txnKind, transaction]);
+  const equityTypeMissing = defaultTxnKind === "equity" && !draft.equityType;
 
   if (!transaction) return null;
 
   const handleSave = async () => {
+    if (equityTypeMissing) return;
     setIsSaving(true);
     try {
       const updates: Partial<Transaction> = {
@@ -175,6 +177,9 @@ export function TransactionDrawer({
                       <SelectItem value="owner_contribution">Owner Contribution</SelectItem>
                     </SelectContent>
                   </Select>
+                  {equityTypeMissing && (
+                    <p className="text-xs text-red-600">Select Owner Draw or Owner Contribution before saving.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -247,7 +252,7 @@ export function TransactionDrawer({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving || equityTypeMissing}>
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>

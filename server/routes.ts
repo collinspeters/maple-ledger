@@ -194,6 +194,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   };
 
+  const isSameStatementMonth = (a: Date, statementMonth: Date) => (
+    a.getUTCFullYear() === statementMonth.getUTCFullYear() &&
+    a.getUTCMonth() === statementMonth.getUTCMonth()
+  );
+
+  const upsertOpenReviewItem = async (
+    ownerUserId: string,
+    kind: "txn_kind" | "category" | "receipt_match" | "reconciliation",
+    entityType: "transaction" | "receipt" | "bank_statement",
+    entityId: string,
+    prompt: string,
+    optionsJson?: any,
+    modelSuggestionJson?: any
+  ) => {
+    const openItems = await storage.getOpenReviewItems(ownerUserId);
+    const existing = openItems.find((item) =>
+      item.kind === kind &&
+      item.entityType === entityType &&
+      item.entityId === entityId
+    );
+    if (existing) return existing;
+    return storage.createReviewItem({
+      ownerUserId,
+      status: "open",
+      kind,
+      entityType,
+      entityId,
+      prompt,
+      optionsJson: optionsJson ?? null,
+      modelSuggestionJson: modelSuggestionJson ?? null,
+      resolvedAt: null,
+    });
+  };
+
+  const resolveOpenReviewItemsForEntity = async (
+    ownerUserId: string,
+    entityType: "transaction" | "receipt" | "bank_statement",
+    entityId: string
+  ) => {
+    const openItems = await storage.getOpenReviewItems(ownerUserId);
+    const matching = openItems.filter((item) => item.entityType === entityType && item.entityId === entityId);
+    for (const item of matching) {
+      await storage.updateReviewItem(item.id, {
+        status: "resolved",
+        resolvedAt: new Date(),
+      });
+    }
+  };
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -406,6 +455,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Cannot invite yourself" });
       }
 
+      const existing = (await storage.getCollaboratorsByOwner(owner.id)).find((c) =>
+        c.invitedEmail.toLowerCase() === email && (c.status === "invited" || c.status === "active")
+      );
+      if (existing) {
+        return res.status(409).json({ message: "ALREADY_INVITED" });
+      }
+
       const inviteToken = generateToken(24);
       const inviteExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
@@ -419,6 +475,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         inviteExpiresAt,
       });
 
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(owner.id, "access.invite_created", "collaborator", collaborator.id, {
+        invitedEmail: email,
+        role,
+        status: "invited",
+      });
+
       res.json({
         ok: true,
         collaboratorId: collaborator.id,
@@ -428,6 +491,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Invite collaborator failed:", error);
       res.status(500).json({ message: "Failed to create invite" });
+    }
+  });
+
+  app.post("/api/access/collaborators/:id/resend", requireAuth, requireOwnerAccount, async (req, res) => {
+    try {
+      const owner = req.user as User;
+      const items = await storage.getCollaboratorsByOwner(owner.id);
+      const target = items.find((item) => item.id === req.params.id);
+      if (!target) {
+        return res.status(404).json({ message: "Collaborator invite not found" });
+      }
+      if (target.status !== "invited") {
+        return res.status(400).json({ message: "Only invited collaborators can be resent" });
+      }
+
+      const inviteToken = generateToken(24);
+      const inviteExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+      const updated = await storage.updateCollaborator(owner.id, target.id, {
+        inviteToken,
+        inviteExpiresAt,
+      });
+
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(owner.id, "access.invite_resent", "collaborator", target.id, {
+        invitedEmail: target.invitedEmail,
+      });
+
+      res.json({
+        ok: true,
+        collaborator: updated,
+        inviteToken,
+        expiresAt: inviteExpiresAt,
+      });
+    } catch (error) {
+      console.error("Resend collaborator invite failed:", error);
+      res.status(500).json({ message: "Failed to resend invite" });
     }
   });
 
@@ -448,6 +547,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.acceptCollaboratorInvite(inviteToken, user.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "access.invite_accepted", "collaborator", invite.id, {
+        ownerUserId: invite.ownerUserId,
+      });
       res.json({ ok: true });
     } catch (error) {
       console.error("Accept invite failed:", error);
@@ -469,7 +572,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/access/collaborators/:id", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const owner = req.user as User;
+      const items = await storage.getCollaboratorsByOwner(owner.id);
+      const target = items.find((item) => item.id === req.params.id);
       await storage.deleteCollaborator(owner.id, req.params.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(owner.id, "access.collaborator_removed", "collaborator", req.params.id, {
+        invitedEmail: target?.invitedEmail,
+      });
       res.json({ ok: true });
     } catch (error) {
       console.error("Delete collaborator failed:", error);
@@ -556,6 +665,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!statementEndDate || endingBalance === undefined || endingBalance === null) {
         return res.status(400).json({ message: "statement_end_date and ending_balance are required" });
       }
+      if (!isSameStatementMonth(statementEndDate, statementMonth)) {
+        return res.status(400).json({ message: "statement_end_date must be within the selected statement month" });
+      }
 
       const statement = await storage.upsertBankStatement({
         ownerUserId: user.id,
@@ -566,7 +678,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currency: "CAD",
       });
 
-      res.json({ statement });
+      const bookEndingBalance = await storage.getBookEndingBalance(user.id, bankAccountId, statementEndDate);
+      const difference = Number(endingBalance) - bookEndingBalance;
+
+      if (Math.abs(difference) > 0.005) {
+        await upsertOpenReviewItem(
+          user.id,
+          "reconciliation",
+          "bank_statement",
+          statement.id,
+          "Statement ending balance does not match books. Confirm missing/uncleared transactions.",
+          [
+            { label: "Recheck uncleared items", value: "recheck_uncleared" },
+            { label: "Adjust statement balance", value: "adjust_statement" },
+          ],
+          { difference, bookEndingBalance, endingBalance: Number(endingBalance) }
+        );
+      } else {
+        await resolveOpenReviewItemsForEntity(user.id, "bank_statement", statement.id);
+      }
+
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "reconciliation.statement_saved", "bank_statement", statement.id, {
+        statementMonth: req.params.statement_month,
+        bankAccountId,
+        endingBalance: Number(endingBalance),
+        difference,
+      });
+
+      res.json({ statement, book_ending_balance: bookEndingBalance, difference });
     } catch (error) {
       console.error("Reconciliation save failed:", error);
       res.status(500).json({ message: "Failed to save statement" });
@@ -598,6 +738,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         count += 1;
       }
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "reconciliation.auto_clear", "bank_statement", statement.id, {
+        clearedCount: count,
+        clearTo: clearTo.toISOString(),
+      });
       res.json({ cleared_count: count });
     } catch (error) {
       console.error("Reconciliation auto-clear failed:", error);
@@ -627,6 +772,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ownerUserId: user.id,
         bankStatementId: statement.id,
         transactionId,
+        cleared,
+      });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "reconciliation.clear_toggled", "transaction", transactionId, {
+        bankStatementId: statement.id,
         cleared,
       });
       res.json({ ok: true });
@@ -812,7 +962,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as User;
       const transactions = await storage.getTransactions(user.id);
-      const reviewQueue = transactions.filter(t => t.needsReview);
+      const openItems = await storage.getOpenReviewItems(user.id);
+      const transactionItemIds = new Set(
+        openItems
+          .filter((item) => item.entityType === "transaction")
+          .map((item) => item.entityId)
+      );
+      const reviewQueue = transactions.filter(t => t.needsReview || transactionItemIds.has(t.id));
       res.json(reviewQueue);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch review queue" });
@@ -849,6 +1005,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         modelSuggestionJson: modelSuggestionJson ?? null,
         resolvedAt: null,
       });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "review.item_created", "review_item", item.id, {
+        kind,
+        entityType,
+        entityId,
+      });
       res.json({ item });
     } catch (error) {
       console.error("Failed creating review item:", error);
@@ -884,6 +1046,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create review message" });
+    }
+  });
+
+  app.post("/api/review/items/:id/resolve", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const openItems = await storage.getOpenReviewItems(user.id);
+      const item = openItems.find((i) => i.id === req.params.id);
+      if (!item) {
+        return res.status(404).json({ message: "Open review item not found" });
+      }
+      const updated = await storage.updateReviewItem(item.id, {
+        status: "resolved",
+        resolvedAt: new Date(),
+      });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "review.item_resolved", "review_item", item.id, {
+        kind: item.kind,
+        entityType: item.entityType,
+        entityId: item.entityId,
+      });
+      res.json({ item: updated });
+    } catch (error) {
+      console.error("Failed resolving review item:", error);
+      res.status(500).json({ message: "Failed to resolve review item" });
+    }
+  });
+
+  app.post("/api/review/items/:id/skip", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const openItems = await storage.getOpenReviewItems(user.id);
+      const item = openItems.find((i) => i.id === req.params.id);
+      if (!item) {
+        return res.status(404).json({ message: "Open review item not found" });
+      }
+      const updated = await storage.updateReviewItem(item.id, {
+        status: "skipped",
+        resolvedAt: new Date(),
+      });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "review.item_skipped", "review_item", item.id, {
+        kind: item.kind,
+        entityType: item.entityType,
+        entityId: item.entityId,
+      });
+      res.json({ item: updated });
+    } catch (error) {
+      console.error("Failed skipping review item:", error);
+      res.status(500).json({ message: "Failed to skip review item" });
     }
   });
 
@@ -965,12 +1177,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isTransfer: transactionData.isTransfer,
         isExpense: transactionData.isExpense,
       });
+      const equityType = req.body?.equityType || null;
+      if (txnKind === "equity" && !equityType) {
+        return res.status(400).json({ message: "equityType is required when txnKind is equity" });
+      }
       const legacyFlags = mapTxnKindToLegacyFlags(txnKind, transactionData.isExpense, transactionData.isTransfer);
 
       const transaction = await storage.createTransaction({
         ...transactionData,
         txnKind,
-        equityType: req.body?.equityType || null,
+        equityType,
         isExpense: legacyFlags.isExpense,
         isTransfer: legacyFlags.isTransfer,
         aiCategory,
@@ -978,6 +1194,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiExplanation,
         needsReview,
         category: transactionData.category || aiCategory,
+      });
+
+      if (needsReview) {
+        await upsertOpenReviewItem(
+          user.id,
+          "category",
+          "transaction",
+          transaction.id,
+          "Category confidence is low. Please confirm the best category.",
+          [
+            { label: "Accept AI category", value: "accept_ai" },
+            { label: "Choose another category", value: "choose_other" },
+          ],
+          { aiCategory, aiConfidence }
+        );
+      }
+
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "transaction.created", "transaction", transaction.id, {
+        txnKind,
+        equityType,
+        needsReview,
       });
       
       res.json(transaction);
@@ -1000,6 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updates: any = { ...req.body };
+      const hadOpenReviewsBefore = existing.needsReview;
       if (updates.txnKind) {
         const flags = mapTxnKindToLegacyFlags(
           updates.txnKind,
@@ -1013,8 +1252,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updates.txnKind !== "equity") {
         updates.equityType = null;
       }
+      if (updates.txnKind === "equity" && !updates.equityType && !existing.equityType) {
+        return res.status(400).json({ message: "equityType is required when txnKind is equity" });
+      }
 
       const transaction = await storage.updateTransaction(req.params.id, updates);
+      const nextKind = updates.txnKind || existing.txnKind || deriveTxnKind(existing as any);
+      const nextEquityType = updates.equityType ?? existing.equityType ?? null;
+      const nextNeedsReview = updates.needsReview ?? existing.needsReview ?? false;
+
+      if (nextNeedsReview) {
+        await upsertOpenReviewItem(
+          user.id,
+          "category",
+          "transaction",
+          transaction.id,
+          "This transaction still needs review. Confirm kind/category.",
+          [
+            { label: "Mark reviewed", value: "mark_reviewed" },
+            { label: "Edit classification", value: "edit_classification" },
+          ]
+        );
+      } else if (hadOpenReviewsBefore || updates.isReviewed || updates.category || updates.txnKind || updates.equityType) {
+        await resolveOpenReviewItemsForEntity(user.id, "transaction", transaction.id);
+      }
+
+      if (nextKind === "equity" && !nextEquityType) {
+        await upsertOpenReviewItem(
+          user.id,
+          "txn_kind",
+          "transaction",
+          transaction.id,
+          "Select owner equity type for this transaction.",
+          [
+            { label: "Owner Draw", value: "owner_draw" },
+            { label: "Owner Contribution", value: "owner_contribution" },
+          ]
+        );
+      }
+
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "transaction.updated", "transaction", transaction.id, {
+        changedFields: Object.keys(updates),
+      });
       res.json(transaction);
     } catch (error) {
       res.status(500).json({ message: "Failed to update transaction" });
@@ -1796,18 +2076,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       receiptAttached: true,
                       receiptId: receipt.id,
                     });
+                    await resolveOpenReviewItemsForEntity(user.id, "receipt", receipt.id);
                   } else {
                     await storage.updateReceipt(receipt.id, {
                       suggestedMatches: matches,
                       status: "unmatched",
                       updatedAt: new Date()
                     });
+                    await upsertOpenReviewItem(
+                      user.id,
+                      "receipt_match",
+                      "receipt",
+                      receipt.id,
+                      "Multiple possible transaction matches found. Confirm the correct transaction.",
+                      [
+                        { label: "Confirm best match", value: "confirm" },
+                        { label: "Skip for now", value: "skip" },
+                      ],
+                      { suggestions: matches.slice(0, 3) }
+                    );
                   }
                 } else {
                   await storage.updateReceipt(receipt.id, {
                     status: "unmatched",
                     updatedAt: new Date()
                   });
+                  await upsertOpenReviewItem(
+                    user.id,
+                    "receipt_match",
+                    "receipt",
+                    receipt.id,
+                    "No reliable transaction match found for this receipt.",
+                    [
+                      { label: "Link manually", value: "manual_link" },
+                      { label: "Create transaction", value: "create_transaction" },
+                    ]
+                  );
                 }
               }
             })
@@ -1918,6 +2222,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           auditReady: true,
           updatedAt: new Date()
         });
+        await resolveOpenReviewItemsForEntity(user.id, "receipt", receiptId);
+        const { logAuditEvent } = await import("./services/audit-log");
+        await logAuditEvent(user.id, "receipt.match_confirmed", "receipt", receiptId, {
+          transactionId,
+        });
 
         res.json({ message: "Receipt matched successfully" });
 
@@ -1929,6 +2238,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateReceipt(receiptId, {
           suggestedMatches: filteredSuggestions,
           updatedAt: new Date()
+        });
+        const { logAuditEvent } = await import("./services/audit-log");
+        await logAuditEvent(user.id, "receipt.match_rejected", "receipt", receiptId, {
+          transactionId,
         });
 
         res.json({ message: "Match suggestion rejected" });
@@ -1972,6 +2285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Delete receipt record
       await storage.deleteReceipt(req.params.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(user.id, "receipt.deleted", "receipt", req.params.id);
 
       res.json({ message: "Receipt deleted successfully" });
     } catch (error) {
@@ -2101,6 +2416,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Owner equity summary report error:", error);
       res.status(500).json({ message: "Failed to generate owner equity summary report" });
+    }
+  });
+
+  app.get("/api/reports/transfers-summary/export/csv", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+      const { generateTransferSummaryReport, transferSummaryToCSV } = await import("./services/reports");
+      const report = await generateTransferSummaryReport(user.id, startDate, endDate);
+      const csv = transferSummaryToCSV(report);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="TransfersSummary_${report.period.startDate}_${report.period.endDate}.csv"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("Transfers summary CSV export error:", error);
+      res.status(500).json({ message: "Failed to export transfers summary CSV" });
+    }
+  });
+
+  app.get("/api/reports/owner-equity-summary/export/csv", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const { from, to } = req.query;
+      const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to ? new Date(to as string) : new Date();
+      const { generateOwnerEquitySummaryReport, ownerEquitySummaryToCSV } = await import("./services/reports");
+      const report = await generateOwnerEquitySummaryReport(user.id, startDate, endDate);
+      const csv = ownerEquitySummaryToCSV(report);
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="OwnerEquitySummary_${report.period.startDate}_${report.period.endDate}.csv"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("Owner equity summary CSV export error:", error);
+      res.status(500).json({ message: "Failed to export owner equity summary CSV" });
     }
   });
 
