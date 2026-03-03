@@ -673,51 +673,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/receipts/upload", requireAuth, requireSubscription, upload.single('receipt'), async (req, res) => {
-    try {
-      const user = req.user as User;
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      // Create receipt record
-      const receipt = await storage.createReceipt({
-        userId: user.id,
-        fileName: req.file.originalname,
-        filePath: req.file.path,
-        status: "processing",
-      });
-
-      // TODO: Process with OCR service (Mindee)
-      // For now, we'll simulate OCR processing
-      setTimeout(async () => {
-        try {
-          // Simulate OCR text extraction
-          const mockOcrText = `${req.file!.originalname} - Receipt processing simulation`;
-          
-          const extractedData = await extractReceiptData(mockOcrText);
-          
-          await storage.updateReceipt(receipt.id, {
-            ocrData: { text: mockOcrText },
-            extractedAmount: extractedData.amount?.toString(),
-            extractedVendor: extractedData.vendor,
-            extractedDate: extractedData.date ? new Date(extractedData.date) : null,
-            status: "processed",
-          });
-        } catch (error) {
-          console.error("Receipt processing error:", error);
-          await storage.updateReceipt(receipt.id, {
-            status: "error",
-          });
-        }
-      }, 2000);
-
-      res.json(receipt);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to upload receipt" });
-    }
-  });
-
   // Financial summary route
   app.get("/api/financial-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
