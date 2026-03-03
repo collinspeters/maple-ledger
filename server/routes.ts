@@ -163,6 +163,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const generateToken = (size = 32) => crypto.randomBytes(size).toString("hex");
 
+  const getDataOwnerUserId = async (user: User): Promise<string> => {
+    const collaborator = await storage.getActiveCollaboratorForUser(user.id);
+    return collaborator?.ownerUserId || user.id;
+  };
+
   const deriveTxnKind = (input: {
     txnKind?: string | null;
     isTransfer?: boolean | null;
@@ -402,39 +407,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/profile", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const ownerUserId = await getDataOwnerUserId(user);
+    const profileUser = ownerUserId === user.id ? user : await storage.getUser(ownerUserId);
+    if (!profileUser) return res.status(404).json({ message: "Profile not found" });
     res.json({
-      legalName: user.businessName || "",
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      email: user.email,
-      province: user.province || "",
-      address: user.address || "",
-      fiscalYearStart: user.fiscalYearStart,
-      gstRegistered: Boolean(user.gstRegistered),
-      gstNumber: user.gstNumber || "",
-      gstFilingFrequency: user.gstFilingFrequency || "annual",
+      legalName: profileUser.businessName || "",
+      firstName: profileUser.firstName || "",
+      lastName: profileUser.lastName || "",
+      email: profileUser.email,
+      province: profileUser.province || "",
+      address: profileUser.address || "",
+      fiscalYearStart: profileUser.fiscalYearStart,
+      gstRegistered: Boolean(profileUser.gstRegistered),
+      gstNumber: profileUser.gstNumber || "",
+      gstFilingFrequency: profileUser.gstFilingFrequency || "annual",
     });
   });
 
   app.put("/api/profile", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const targetUser = ownerUserId === user.id ? user : await storage.getUser(ownerUserId);
+      if (!targetUser) return res.status(404).json({ message: "Profile not found" });
       const updates: Partial<User> = {
-        businessName: req.body?.legalName ?? req.body?.businessName ?? user.businessName,
-        firstName: req.body?.firstName ?? user.firstName,
-        lastName: req.body?.lastName ?? user.lastName,
-        province: req.body?.province ?? user.province,
-        address: req.body?.address ?? user.address,
-        gstRegistered: typeof req.body?.gstRegistered === "boolean" ? req.body.gstRegistered : user.gstRegistered,
-        gstNumber: req.body?.gstNumber ?? user.gstNumber,
-        gstFilingFrequency: req.body?.gstFilingFrequency ?? user.gstFilingFrequency,
+        businessName: req.body?.legalName ?? req.body?.businessName ?? targetUser.businessName,
+        firstName: req.body?.firstName ?? targetUser.firstName,
+        lastName: req.body?.lastName ?? targetUser.lastName,
+        province: req.body?.province ?? targetUser.province,
+        address: req.body?.address ?? targetUser.address,
+        gstRegistered: typeof req.body?.gstRegistered === "boolean" ? req.body.gstRegistered : targetUser.gstRegistered,
+        gstNumber: req.body?.gstNumber ?? targetUser.gstNumber,
+        gstFilingFrequency: req.body?.gstFilingFrequency ?? targetUser.gstFilingFrequency,
       };
 
       if (req.body?.fiscalYearStart) {
         updates.fiscalYearStart = new Date(req.body.fiscalYearStart);
       }
 
-      const updated = await storage.updateUserProfile(user.id, updates);
+      const updated = await storage.updateUserProfile(ownerUserId, updates);
       res.json({ user: updated });
     } catch (error) {
       console.error("Profile update failed:", error);
@@ -596,7 +607,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reconciliation/accounts", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const conns = await storage.getBankConnections(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const conns = await storage.getBankConnections(ownerUserId);
       const dedup = new Map<string, any>();
       for (const c of conns) {
         if (!dedup.has(c.accountId)) {
@@ -616,19 +628,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reconciliation/:bank_account_id/:statement_month", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const bankAccountId = req.params.bank_account_id;
       const statementMonth = parseMonth(req.params.statement_month);
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
 
-      let statement = await storage.getBankStatement(user.id, bankAccountId, statementMonth);
+      let statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
       const statementEndDate = statement?.statementEndDate
         ? new Date(statement.statementEndDate)
         : new Date(Date.UTC(statementMonth.getUTCFullYear(), statementMonth.getUTCMonth() + 1, 0, 23, 59, 59));
 
-      const bookEndingBalance = await storage.getBookEndingBalance(user.id, bankAccountId, statementEndDate);
-      const unclearedBase = await storage.getUnclearedTransactions(user.id, bankAccountId, statementEndDate);
+      const bookEndingBalance = await storage.getBookEndingBalance(ownerUserId, bankAccountId, statementEndDate);
+      const unclearedBase = await storage.getUnclearedTransactions(ownerUserId, bankAccountId, statementEndDate);
 
       let clearedIds = new Set<string>();
       if (statement) {
@@ -655,6 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/reconciliation/:bank_account_id/:statement_month", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const bankAccountId = req.params.bank_account_id;
       const statementMonth = parseMonth(req.params.statement_month);
       if (!statementMonth) {
@@ -670,7 +684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const statement = await storage.upsertBankStatement({
-        ownerUserId: user.id,
+        ownerUserId,
         bankAccountId,
         statementMonth,
         statementEndDate,
@@ -678,12 +692,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currency: "CAD",
       });
 
-      const bookEndingBalance = await storage.getBookEndingBalance(user.id, bankAccountId, statementEndDate);
+      const bookEndingBalance = await storage.getBookEndingBalance(ownerUserId, bankAccountId, statementEndDate);
       const difference = Number(endingBalance) - bookEndingBalance;
 
       if (Math.abs(difference) > 0.005) {
         await upsertOpenReviewItem(
-          user.id,
+          ownerUserId,
           "reconciliation",
           "bank_statement",
           statement.id,
@@ -695,11 +709,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { difference, bookEndingBalance, endingBalance: Number(endingBalance) }
         );
       } else {
-        await resolveOpenReviewItemsForEntity(user.id, "bank_statement", statement.id);
+        await resolveOpenReviewItemsForEntity(ownerUserId, "bank_statement", statement.id);
       }
 
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "reconciliation.statement_saved", "bank_statement", statement.id, {
+      await logAuditEvent(ownerUserId, "reconciliation.statement_saved", "bank_statement", statement.id, {
         statementMonth: req.params.statement_month,
         bankAccountId,
         endingBalance: Number(endingBalance),
@@ -716,22 +730,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/reconciliation/:bank_account_id/:statement_month/auto-clear", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const bankAccountId = req.params.bank_account_id;
       const statementMonth = parseMonth(req.params.statement_month);
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
-      const statement = await storage.getBankStatement(user.id, bankAccountId, statementMonth);
+      const statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
       if (!statement) {
         return res.status(400).json({ message: "Create statement first" });
       }
 
       const clearTo = req.body?.clear_up_to_date ? new Date(req.body.clear_up_to_date) : new Date(statement.statementEndDate);
-      const txns = await storage.getUnclearedTransactions(user.id, bankAccountId, clearTo);
+      const txns = await storage.getUnclearedTransactions(ownerUserId, bankAccountId, clearTo);
       let count = 0;
       for (const t of txns) {
         await storage.setTransactionClear({
-          ownerUserId: user.id,
+          ownerUserId,
           bankStatementId: statement.id,
           transactionId: t.id,
           cleared: true,
@@ -739,7 +754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         count += 1;
       }
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "reconciliation.auto_clear", "bank_statement", statement.id, {
+      await logAuditEvent(ownerUserId, "reconciliation.auto_clear", "bank_statement", statement.id, {
         clearedCount: count,
         clearTo: clearTo.toISOString(),
       });
@@ -753,12 +768,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/reconciliation/:bank_account_id/:statement_month/clear", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const bankAccountId = req.params.bank_account_id;
       const statementMonth = parseMonth(req.params.statement_month);
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
-      const statement = await storage.getBankStatement(user.id, bankAccountId, statementMonth);
+      const statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
       if (!statement) {
         return res.status(400).json({ message: "Create statement first" });
       }
@@ -769,13 +785,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "transaction_id is required" });
       }
       await storage.setTransactionClear({
-        ownerUserId: user.id,
+        ownerUserId,
         bankStatementId: statement.id,
         transactionId,
         cleared,
       });
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "reconciliation.clear_toggled", "transaction", transactionId, {
+      await logAuditEvent(ownerUserId, "reconciliation.clear_toggled", "transaction", transactionId, {
         bankStatementId: statement.id,
         cleared,
       });
@@ -790,16 +806,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chart-of-accounts", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
 
       const [userAccounts, bankAccounts] = await Promise.all([
-        storage.getChartOfAccounts(user.id),
-        storage.getBankAccountsForChartOfAccounts(user.id),
+        storage.getChartOfAccounts(ownerUserId),
+        storage.getBankAccountsForChartOfAccounts(ownerUserId),
       ]);
 
       // Always start with the standard defaults
       const defaultAccounts = CHART_OF_ACCOUNTS.map(account => ({
         ...account,
-        userId: user.id,
+        userId: ownerUserId,
       }));
 
       // Only surface user-created custom accounts (not auto-generated bank entries,
@@ -816,9 +833,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chart-of-accounts", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const accountData = req.body;
       
-      const account = await storage.createChartOfAccountsEntry(user.id, accountData);
+      const account = await storage.createChartOfAccountsEntry(ownerUserId, accountData);
       res.json(account);
     } catch (error) {
       console.error("Error creating account:", error);
@@ -830,11 +848,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions/:id/post", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { id } = req.params;
       
       // Verify transaction belongs to user
       const transaction = await storage.getTransaction(id);
-      if (!transaction || transaction.userId !== user.id) {
+      if (!transaction || transaction.userId !== ownerUserId) {
         return res.status(404).json({ message: "Transaction not found" });
       }
 
@@ -860,8 +879,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/transactions", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
-      console.log(`Fetching transactions for user: ${user.id}`);
-      const transactions = await storage.getTransactions(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      console.log(`Fetching transactions for owner context: ${ownerUserId}`);
+      const transactions = await storage.getTransactions(ownerUserId);
       console.log(`Found ${transactions.length} transactions`);
       res.json(transactions);
     } catch (error) {
@@ -874,16 +894,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions/bulk-categorize", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { transactionIds, force = false } = req.body;
       
       let transactions;
       if (transactionIds && Array.isArray(transactionIds)) {
         // Categorize specific transactions - filter by user for security
-        const allTransactions = await storage.getTransactions(user.id);
+        const allTransactions = await storage.getTransactions(ownerUserId);
         transactions = allTransactions.filter(t => transactionIds.includes(t.id));
       } else {
         // Categorize all uncategorized transactions
-        const allTransactions = await storage.getTransactions(user.id);
+        const allTransactions = await storage.getTransactions(ownerUserId);
         transactions = allTransactions.filter(t => 
           !t.aiCategory && !t.isTransfer && t.isExpense && (t.vendor || t.description)
         );
@@ -934,7 +955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { logAuditEvent: logBulkCat } = await import('./services/audit-log');
       const successCount = results.filter(r => r.status === 'success').length;
       if (successCount > 0) {
-        await logBulkCat(user.id, 'transaction.bulk_categorized', 'transaction', undefined, {
+        await logBulkCat(ownerUserId, 'transaction.bulk_categorized', 'transaction', undefined, {
           total: results.length,
           success: successCount,
           errors: results.filter(r => r.status === 'error').length,
@@ -961,8 +982,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/transactions/review-queue", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const transactions = await storage.getTransactions(user.id);
-      const openItems = await storage.getOpenReviewItems(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const transactions = await storage.getTransactions(ownerUserId);
+      const openItems = await storage.getOpenReviewItems(ownerUserId);
       const transactionItemIds = new Set(
         openItems
           .filter((item) => item.entityType === "transaction")
@@ -978,7 +1000,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/review/items", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const items = await storage.getOpenReviewItems(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const items = await storage.getOpenReviewItems(ownerUserId);
       res.json({ items });
     } catch (error) {
       console.error("Failed fetching review items:", error);
@@ -989,13 +1012,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/review/items", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { kind, entityType, entityId, prompt, optionsJson, modelSuggestionJson } = req.body || {};
       if (!kind || !entityType || !entityId || !prompt) {
         return res.status(400).json({ message: "kind, entityType, entityId, prompt are required" });
       }
 
       const item = await storage.createReviewItem({
-        ownerUserId: user.id,
+        ownerUserId,
         status: "open",
         kind,
         entityType,
@@ -1006,7 +1030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         resolvedAt: null,
       });
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "review.item_created", "review_item", item.id, {
+      await logAuditEvent(ownerUserId, "review.item_created", "review_item", item.id, {
         kind,
         entityType,
         entityId,
@@ -1052,7 +1076,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/review/items/:id/resolve", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const openItems = await storage.getOpenReviewItems(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const openItems = await storage.getOpenReviewItems(ownerUserId);
       const item = openItems.find((i) => i.id === req.params.id);
       if (!item) {
         return res.status(404).json({ message: "Open review item not found" });
@@ -1062,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         resolvedAt: new Date(),
       });
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "review.item_resolved", "review_item", item.id, {
+      await logAuditEvent(ownerUserId, "review.item_resolved", "review_item", item.id, {
         kind: item.kind,
         entityType: item.entityType,
         entityId: item.entityId,
@@ -1077,7 +1102,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/review/items/:id/skip", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const openItems = await storage.getOpenReviewItems(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const openItems = await storage.getOpenReviewItems(ownerUserId);
       const item = openItems.find((i) => i.id === req.params.id);
       if (!item) {
         return res.status(404).json({ message: "Open review item not found" });
@@ -1087,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         resolvedAt: new Date(),
       });
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "review.item_skipped", "review_item", item.id, {
+      await logAuditEvent(ownerUserId, "review.item_skipped", "review_item", item.id, {
         kind: item.kind,
         entityType: item.entityType,
         entityId: item.entityId,
@@ -1102,9 +1128,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const transactionData = insertTransactionSchema.parse({
         ...req.body,
-        userId: user.id,
+        userId: ownerUserId,
       });
       
       // Enhanced AI categorization with merchant enrichment
@@ -1156,7 +1183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Store AI suggestion with enriched context
           await storage.createAiSuggestion({
-            userId: user.id,
+            userId: ownerUserId,
             suggestionType: "categorization",
             originalPrompt: `${transactionData.vendor} - ${transactionData.description}`,
             aiResponse: {
@@ -1198,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (needsReview) {
         await upsertOpenReviewItem(
-          user.id,
+          ownerUserId,
           "category",
           "transaction",
           transaction.id,
@@ -1212,7 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "transaction.created", "transaction", transaction.id, {
+      await logAuditEvent(ownerUserId, "transaction.created", "transaction", transaction.id, {
         txnKind,
         equityType,
         needsReview,
@@ -1232,13 +1259,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/transactions/:id", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const existing = await storage.getTransaction(req.params.id);
-      if (!existing || existing.userId !== user.id) {
+      if (!existing || existing.userId !== ownerUserId) {
         return res.status(404).json({ message: "Transaction not found" });
       }
 
       const updates: any = { ...req.body };
       const hadOpenReviewsBefore = existing.needsReview;
+      if (existing.isTransfer && updates.bankConnectionId) {
+        return res.status(400).json({
+          message: "Cannot change account for transfer transactions as it would break the transfer relationship",
+        });
+      }
       if (updates.txnKind) {
         const flags = mapTxnKindToLegacyFlags(
           updates.txnKind,
@@ -1249,7 +1282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updates.isTransfer = flags.isTransfer;
       }
 
-      if (updates.txnKind !== "equity") {
+      if (updates.txnKind && updates.txnKind !== "equity") {
         updates.equityType = null;
       }
       if (updates.txnKind === "equity" && !updates.equityType && !existing.equityType) {
@@ -1263,7 +1296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (nextNeedsReview) {
         await upsertOpenReviewItem(
-          user.id,
+          ownerUserId,
           "category",
           "transaction",
           transaction.id,
@@ -1274,12 +1307,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ]
         );
       } else if (hadOpenReviewsBefore || updates.isReviewed || updates.category || updates.txnKind || updates.equityType) {
-        await resolveOpenReviewItemsForEntity(user.id, "transaction", transaction.id);
+        await resolveOpenReviewItemsForEntity(ownerUserId, "transaction", transaction.id);
       }
 
       if (nextKind === "equity" && !nextEquityType) {
         await upsertOpenReviewItem(
-          user.id,
+          ownerUserId,
           "txn_kind",
           "transaction",
           transaction.id,
@@ -1292,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "transaction.updated", "transaction", transaction.id, {
+      await logAuditEvent(ownerUserId, "transaction.updated", "transaction", transaction.id, {
         changedFields: Object.keys(updates),
       });
       res.json(transaction);
@@ -1303,6 +1336,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/transactions/:id", requireAuth, requireSubscription, async (req, res) => {
     try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const existing = await storage.getTransaction(req.params.id);
+      if (!existing || existing.userId !== ownerUserId) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
       await storage.deleteTransaction(req.params.id);
       res.json({ message: "Transaction deleted" });
     } catch (error) {
@@ -1314,6 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions/bulk", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { action, transactionIds } = req.body;
       
       if (!action || !transactionIds || !Array.isArray(transactionIds)) {
@@ -1321,7 +1361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate that all transactions belong to the user
-      const userTransactions = await storage.getTransactions(user.id);
+      const userTransactions = await storage.getTransactions(ownerUserId);
       const userTransactionIds = new Set(userTransactions.map(t => t.id));
       const invalidIds = transactionIds.filter(id => !userTransactionIds.has(id));
       
@@ -1384,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               needsReview: false
             });
             results.push(transaction);
-            await logReview(user.id, 'transaction.reviewed', 'transaction', id);
+            await logReview(ownerUserId, 'transaction.reviewed', 'transaction', id);
           }
           break;
         }
@@ -1411,57 +1451,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced transaction update endpoint with transfer detection
-  app.patch("/api/transactions/:id", requireAuth, requireSubscription, async (req, res) => {
-    try {
-      const user = req.user as User;
-      const { id } = req.params;
-      
-      // Verify transaction belongs to user
-      const existingTransaction = await storage.getTransaction(id);
-      if (!existingTransaction || existingTransaction.userId !== user.id) {
-        return res.status(404).json({ message: "Transaction not found" });
-      }
-      
-      // Prevent editing restricted transaction types
-      if (existingTransaction.isTransfer && req.body.bankConnectionId) {
-        return res.status(400).json({ 
-          message: "Cannot change account for transfer transactions as it would break the transfer relationship" 
-        });
-      }
-
-      const updates = req.body;
-      
-      // If updating category and it was previously AI-suggested, mark as reviewed
-      if (updates.category && existingTransaction.aiCategory && !existingTransaction.category) {
-        updates.isReviewed = true;
-        updates.needsReview = false;
-      }
-
-      const transaction = await storage.updateTransaction(id, updates);
-
-      // Emit audit event
-      const { logAuditEvent: logPatch } = await import('./services/audit-log');
-      if (updates.isReviewed) {
-        await logPatch(user.id, 'transaction.reviewed', 'transaction', id);
-      } else if (updates.category || updates.aiCategory) {
-        await logPatch(user.id, 'transaction.categorized', 'transaction', id, {
-          category: updates.category ?? updates.aiCategory,
-        });
-      }
-
-      res.json(transaction);
-    } catch (error) {
-      console.error("Transaction update error:", error);
-      res.status(500).json({ message: "Failed to update transaction" });
-    }
-  });
-
   // Receipt routes
   app.get("/api/receipts", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const receipts = await storage.getReceipts(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const receipts = await storage.getReceipts(ownerUserId);
       res.json(receipts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch receipts" });
@@ -1472,12 +1467,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/financial-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { startDate, endDate } = req.query;
       
       const start = startDate ? new Date(startDate as string) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       const end = endDate ? new Date(endDate as string) : new Date();
       
-      const summary = await storage.getFinancialSummary(user.id, start, end);
+      const summary = await storage.getFinancialSummary(ownerUserId, start, end);
       res.json(summary);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch financial summary" });
@@ -1488,7 +1484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/expense-breakdown", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const breakdown = await storage.getExpenseBreakdown(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const breakdown = await storage.getExpenseBreakdown(ownerUserId);
       res.json(breakdown);
     } catch (error) {
       console.error("Error fetching expense breakdown:", error);
@@ -1500,7 +1497,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/monthly-trends", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const trends = await storage.getMonthlyTrends(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const trends = await storage.getMonthlyTrends(ownerUserId);
       res.json(trends);
     } catch (error) {
       console.error("Error fetching monthly trends:", error);
@@ -1512,7 +1510,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ai-insights", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const insights = await storage.getAIInsights(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const insights = await storage.getAIInsights(ownerUserId);
       res.json(insights);
     } catch (error) {
       console.error("Error fetching AI insights:", error);
@@ -1524,6 +1523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { message } = req.body;
       
       if (!message) {
@@ -1532,24 +1532,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save user message
       await storage.createChatMessage({
-        userId: user.id,
+        userId: ownerUserId,
         message,
         isFromUser: true,
       });
 
       // Get financial context
       const summary = await storage.getFinancialSummary(
-        user.id,
+        ownerUserId,
         new Date(new Date().getFullYear(), 0, 1), // Start of year
         new Date()
       );
 
       // Process with AI
-      const aiResponse = await processFinancialQuery(message, user.id, summary);
+      const aiResponse = await processFinancialQuery(message, ownerUserId, summary);
 
       // Save AI response
       await storage.createChatMessage({
-        userId: user.id,
+        userId: ownerUserId,
         message: aiResponse.response,
         isFromUser: false,
       });
@@ -1563,7 +1563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chat/history", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const history = await storage.getChatHistory(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const history = await storage.getChatHistory(ownerUserId);
       res.json(history);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch chat history" });
@@ -1889,7 +1890,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/bank-connections", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const connections = await storage.getBankConnections(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const connections = await storage.getBankConnections(ownerUserId);
       res.json(connections);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch bank connections" });
@@ -1911,7 +1913,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
-      const clients = await storage.getClients(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const clients = await storage.getClients(ownerUserId);
       res.json(clients);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -1921,9 +1924,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const clientData = insertClientSchema.parse({
         ...req.body,
-        userId: user.id,
+        userId: ownerUserId,
       });
       const client = await storage.createClient(clientData);
       res.json(client);
@@ -1936,9 +1940,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoices", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const [invoices, clientList] = await Promise.all([
-        storage.getInvoices(user.id),
-        storage.getClients(user.id),
+        storage.getInvoices(ownerUserId),
+        storage.getClients(ownerUserId),
       ]);
       const clientMap = new Map(clientList.map(c => [c.id, c]));
       const enriched = invoices.map(inv => ({
@@ -1954,15 +1959,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/invoices", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { invoice: invoiceData, items } = req.body;
       
       // Generate invoice number
-      const invoiceCount = await storage.getInvoices(user.id);
+      const invoiceCount = await storage.getInvoices(ownerUserId);
       const invoiceNumber = `INV-${String(invoiceCount.length + 1).padStart(4, '0')}`;
       
       const parsedInvoice = insertInvoiceSchema.parse({
         ...invoiceData,
-        userId: user.id,
+        userId: ownerUserId,
         invoiceNumber,
       });
       
@@ -1981,7 +1987,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/receipts", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const receipts = await storage.getReceipts(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const receipts = await storage.getReceipts(ownerUserId);
       res.json(receipts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch receipts" });
@@ -1991,12 +1998,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/receipts/unmatched", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
-      const unmatchedReceipts = await storage.getUnmatchedReceipts(user.id);
+      const ownerUserId = await getDataOwnerUserId(user);
+      const unmatchedReceipts = await storage.getUnmatchedReceipts(ownerUserId);
       
       // For each unmatched receipt, find suggested transaction matches
       const receiptsWithSuggestions = await Promise.all(
         unmatchedReceipts.map(async (receipt) => {
-          const suggestions = await findTransactionMatches(receipt, user.id);
+          const suggestions = await findTransactionMatches(receipt, ownerUserId);
           return {
             ...receipt,
             suggestedMatches: suggestions
@@ -2013,6 +2021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/receipts/upload", requireAuth, requireSubscription, upload.array('receipts', 10), async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const files = req.files as Express.Multer.File[];
       const { notes, tags } = req.body;
 
@@ -2027,7 +2036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Create receipt record
           const receiptData = {
-            userId: user.id,
+            userId: ownerUserId,
             fileName: file.originalname,
             filePath: file.path,
             fileSize: file.size,
@@ -2059,7 +2068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Find and suggest transaction matches
               const updatedReceipt = await storage.getReceiptById(receipt.id);
               if (updatedReceipt) {
-                const matches = await findTransactionMatches(updatedReceipt, user.id);
+                const matches = await findTransactionMatches(updatedReceipt, ownerUserId);
                 if (matches.length > 0) {
                   const topMatch = matches[0] as any;
                   if (topMatch.__autoLink) {
@@ -2144,9 +2153,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/receipts/:id/preview", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const receipt = await storage.getReceiptById(req.params.id);
       
-      if (!receipt || receipt.userId !== user.id) {
+      if (!receipt || receipt.userId !== ownerUserId) {
         return res.status(404).json({ message: "Receipt not found" });
       }
 
@@ -2160,9 +2170,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/receipts/:id/thumbnail", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const receipt = await storage.getReceiptById(req.params.id);
       
-      if (!receipt || receipt.userId !== user.id) {
+      if (!receipt || receipt.userId !== ownerUserId) {
         return res.status(404).json({ message: "Receipt not found" });
       }
 
@@ -2181,9 +2192,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/receipts/:id/download", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const receipt = await storage.getReceiptById(req.params.id);
       
-      if (!receipt || receipt.userId !== user.id) {
+      if (!receipt || receipt.userId !== ownerUserId) {
         return res.status(404).json({ message: "Receipt not found" });
       }
 
@@ -2196,11 +2208,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/receipts/:id/match", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { transactionId, action } = req.body;
       const receiptId = req.params.id;
 
       const receipt = await storage.getReceiptById(receiptId);
-      if (!receipt || receipt.userId !== user.id) {
+      if (!receipt || receipt.userId !== ownerUserId) {
         return res.status(404).json({ message: "Receipt not found" });
       }
 
@@ -2222,9 +2235,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           auditReady: true,
           updatedAt: new Date()
         });
-        await resolveOpenReviewItemsForEntity(user.id, "receipt", receiptId);
+        await resolveOpenReviewItemsForEntity(ownerUserId, "receipt", receiptId);
         const { logAuditEvent } = await import("./services/audit-log");
-        await logAuditEvent(user.id, "receipt.match_confirmed", "receipt", receiptId, {
+        await logAuditEvent(ownerUserId, "receipt.match_confirmed", "receipt", receiptId, {
           transactionId,
         });
 
@@ -2240,7 +2253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date()
         });
         const { logAuditEvent } = await import("./services/audit-log");
-        await logAuditEvent(user.id, "receipt.match_rejected", "receipt", receiptId, {
+        await logAuditEvent(ownerUserId, "receipt.match_rejected", "receipt", receiptId, {
           transactionId,
         });
 
@@ -2257,9 +2270,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/receipts/:id", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const receipt = await storage.getReceiptById(req.params.id);
       
-      if (!receipt || receipt.userId !== user.id) {
+      if (!receipt || receipt.userId !== ownerUserId) {
         return res.status(404).json({ message: "Receipt not found" });
       }
 
@@ -2286,7 +2300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete receipt record
       await storage.deleteReceipt(req.params.id);
       const { logAuditEvent } = await import("./services/audit-log");
-      await logAuditEvent(user.id, "receipt.deleted", "receipt", req.params.id);
+      await logAuditEvent(ownerUserId, "receipt.deleted", "receipt", req.params.id);
 
       res.json({ message: "Receipt deleted successfully" });
     } catch (error) {
@@ -2297,14 +2311,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Financial Reports Routes
   app.get("/api/reports/profit-loss", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const user = req.user as User;  
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
       
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
       
       const { generateProfitLossReport } = await import('./services/reports');
-      const report = await generateProfitLossReport(user.id, startDate, endDate);
+      const report = await generateProfitLossReport(ownerUserId, startDate, endDate);
       
       res.json(report);
     } catch (error) {
@@ -2316,12 +2331,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/balance-sheet", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { asOf } = req.query;
       
       const asOfDate = asOf ? new Date(asOf as string) : new Date();
       
       const { generateBalanceSheetReport } = await import('./services/reports');
-      const report = await generateBalanceSheetReport(user.id, asOfDate);
+      const report = await generateBalanceSheetReport(ownerUserId, asOfDate);
       
       res.json(report);
     } catch (error) {
@@ -2333,13 +2349,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/tax-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
       
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
       
       const { generateTaxSummaryReport } = await import('./services/reports');
-      const report = await generateTaxSummaryReport(user.id, startDate, endDate);
+      const report = await generateTaxSummaryReport(ownerUserId, startDate, endDate);
       
       res.json(report);
     } catch (error) {
@@ -2351,12 +2368,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/trial-balance", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { asOf } = req.query;
       
       const asOfDate = asOf ? new Date(asOf as string) : new Date();
       
       const { generateTrialBalanceReport } = await import('./services/reports');
-      const report = await generateTrialBalanceReport(user.id, asOfDate);
+      const report = await generateTrialBalanceReport(ownerUserId, asOfDate);
       
       res.json(report);
     } catch (error) {
@@ -2368,13 +2386,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/general-ledger", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
       
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
       
       const { generateGeneralLedgerReport } = await import('./services/reports');
-      const report = await generateGeneralLedgerReport(user.id, startDate, endDate);
+      const report = await generateGeneralLedgerReport(ownerUserId, startDate, endDate);
       
       res.json(report);
     } catch (error) {
@@ -2386,13 +2405,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/transfers-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
 
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
 
       const { generateTransferSummaryReport } = await import("./services/reports");
-      const report = await generateTransferSummaryReport(user.id, startDate, endDate);
+      const report = await generateTransferSummaryReport(ownerUserId, startDate, endDate);
 
       res.json(report);
     } catch (error) {
@@ -2404,13 +2424,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/owner-equity-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
 
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
 
       const { generateOwnerEquitySummaryReport } = await import("./services/reports");
-      const report = await generateOwnerEquitySummaryReport(user.id, startDate, endDate);
+      const report = await generateOwnerEquitySummaryReport(ownerUserId, startDate, endDate);
 
       res.json(report);
     } catch (error) {
@@ -2422,11 +2443,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/transfers-summary/export/csv", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
       const { generateTransferSummaryReport, transferSummaryToCSV } = await import("./services/reports");
-      const report = await generateTransferSummaryReport(user.id, startDate, endDate);
+      const report = await generateTransferSummaryReport(ownerUserId, startDate, endDate);
       const csv = transferSummaryToCSV(report);
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename="TransfersSummary_${report.period.startDate}_${report.period.endDate}.csv"`);
@@ -2440,11 +2462,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/owner-equity-summary/export/csv", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
       const { generateOwnerEquitySummaryReport, ownerEquitySummaryToCSV } = await import("./services/reports");
-      const report = await generateOwnerEquitySummaryReport(user.id, startDate, endDate);
+      const report = await generateOwnerEquitySummaryReport(ownerUserId, startDate, endDate);
       const csv = ownerEquitySummaryToCSV(report);
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename="OwnerEquitySummary_${report.period.startDate}_${report.period.endDate}.csv"`);
@@ -2459,9 +2482,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/profit-loss/monthly", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const year = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
       const { generateMonthlyPLReport } = await import('./services/reports');
-      const report = await generateMonthlyPLReport(user.id, year);
+      const report = await generateMonthlyPLReport(ownerUserId, year);
       res.json(report);
     } catch (error) {
       console.error("Monthly P&L report error:", error);
@@ -2473,12 +2497,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/general-ledger/export/csv", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
 
       const { generateGeneralLedgerReport, generalLedgerToCSV } = await import('./services/reports');
-      const report = await generateGeneralLedgerReport(user.id, startDate, endDate);
+      const report = await generateGeneralLedgerReport(ownerUserId, startDate, endDate);
       const csv = generalLedgerToCSV(report);
 
       const filename = `GeneralLedger_${report.period.startDate}_${report.period.endDate}.csv`;
@@ -2495,6 +2520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/audit-logs", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       const { db } = await import('./db');
       const { auditLogs } = await import('@shared/schema');
@@ -2503,7 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const logs = await db
         .select()
         .from(auditLogs)
-        .where(eq(auditLogs.userId, user.id))
+        .where(eq(auditLogs.userId, ownerUserId))
         .orderBy(desc(auditLogs.createdAt))
         .limit(limit);
 
@@ -2518,13 +2544,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/t2125", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
 
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
 
       const { generateT2125Report } = await import('./services/t2125-report');
-      const report = await generateT2125Report(user.id, startDate, endDate);
+      const report = await generateT2125Report(ownerUserId, startDate, endDate);
 
       res.json(report);
     } catch (error) {
@@ -2537,13 +2564,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/t2125/export/csv", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
 
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
 
       const { generateT2125Report, reportToCSV } = await import('./services/t2125-report');
-      const report = await generateT2125Report(user.id, startDate, endDate);
+      const report = await generateT2125Report(ownerUserId, startDate, endDate);
       const csv = reportToCSV(report);
 
       const filename = `T2125_${report.taxYear}_${report.period.startDate}_${report.period.endDate}.csv`;
@@ -2560,13 +2588,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/t2125/export/json", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const { from, to } = req.query;
 
       const startDate = from ? new Date(from as string) : new Date(new Date().getFullYear(), 0, 1);
       const endDate = to ? new Date(to as string) : new Date();
 
       const { generateT2125Report } = await import('./services/t2125-report');
-      const report = await generateT2125Report(user.id, startDate, endDate);
+      const report = await generateT2125Report(ownerUserId, startDate, endDate);
 
       const filename = `T2125_${report.taxYear}_${report.period.startDate}_${report.period.endDate}.json`;
       res.setHeader('Content-Type', 'application/json');
@@ -2592,9 +2621,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/estimates", requireAuth, async (req, res) => {
     try {
       const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const [estimateList, clientList] = await Promise.all([
-        storage.getEstimates(user.id),
-        storage.getClients(user.id),
+        storage.getEstimates(ownerUserId),
+        storage.getClients(ownerUserId),
       ]);
       const clientMap = new Map(clientList.map(c => [c.id, c]));
       const enriched = estimateList.map(est => ({
@@ -2636,11 +2666,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced Financial Reports API
   app.get("/api/reports/financial-summary/:period?", requireAuth, async (req, res) => {
     try {
-      const user = req.user as User;  
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
       const period = req.params.period || 'current-month';
       
       // Get transactions for the user
-      const transactions = await storage.getTransactions(user.id);
+      const transactions = await storage.getTransactions(ownerUserId);
       
       // Calculate date range based on period
       const now = new Date();

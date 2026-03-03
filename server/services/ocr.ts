@@ -26,9 +26,25 @@ export async function processReceiptOCR(receiptId: string, filePath: string, mim
       throw new Error("Receipt file not found");
     }
 
-    // For PDF files, we would need a PDF to image conversion step here
-    // For now, we'll handle images only
-    if (!mimeType.startsWith('image/')) {
+    // Accept any image file type; tolerate missing/incorrect MIME by falling back to extension.
+    const ext = path.extname(filePath).toLowerCase();
+    const imageMimeByExt: Record<string, string> = {
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+      ".webp": "image/webp",
+      ".gif": "image/gif",
+      ".bmp": "image/bmp",
+      ".tif": "image/tiff",
+      ".tiff": "image/tiff",
+      ".heic": "image/heic",
+      ".heif": "image/heif",
+    };
+    const normalizedMime = (mimeType || "").toLowerCase();
+    const effectiveMime = normalizedMime.startsWith("image/")
+      ? normalizedMime
+      : (imageMimeByExt[ext] || "");
+    if (!effectiveMime) {
       throw new Error("OCR currently supports image files only");
     }
 
@@ -85,7 +101,7 @@ If information is unclear or missing, omit those fields. Be conservative with co
             {
               type: "image_url",
               image_url: {
-                url: `data:${mimeType};base64,${base64Image}`
+                url: `data:${effectiveMime};base64,${base64Image}`
               }
             }
           ]

@@ -86,7 +86,7 @@ export function useAuth() {
         : "";
       toast({
         title: "Account Created!",
-        description: `Your account has been created and your 14-day trial has started.${verifySuffix}`,
+        description: `Your account has been created and your 30-day trial has started.${verifySuffix}`,
       });
     },
     onError: (error: any) => {

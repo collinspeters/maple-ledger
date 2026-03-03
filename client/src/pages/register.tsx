@@ -57,7 +57,7 @@ export default function Register() {
           </div>
           <CardTitle>Start Your Free Trial</CardTitle>
           <CardDescription>
-            Get 14 days free to experience AI-powered bookkeeping
+            Get 30 days free to experience AI-powered bookkeeping
           </CardDescription>
         </CardHeader>
         

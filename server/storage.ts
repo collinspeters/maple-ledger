@@ -160,6 +160,7 @@ export interface IStorage {
   // Collaborators
   createCollaborator(input: InsertCollaborator): Promise<Collaborator>;
   getCollaboratorsByOwner(ownerUserId: string): Promise<Collaborator[]>;
+  getActiveCollaboratorForUser(userId: string): Promise<Collaborator | undefined>;
   updateCollaborator(ownerUserId: string, collaboratorId: string, updates: Partial<Collaborator>): Promise<Collaborator>;
   getCollaboratorByInviteToken(inviteToken: string): Promise<Collaborator | undefined>;
   hasActiveCollaboratorAccess(userId: string): Promise<boolean>;
@@ -215,7 +216,7 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 14); // 14-day trial
+    trialEndsAt.setDate(trialEndsAt.getDate() + 30); // 30-day trial
     
     const [user] = await db
       .insert(users)
@@ -746,6 +747,18 @@ export class DatabaseStorage implements IStorage {
       .from(collaborators)
       .where(eq(collaborators.ownerUserId, ownerUserId))
       .orderBy(desc(collaborators.createdAt));
+  }
+
+  async getActiveCollaboratorForUser(userId: string): Promise<Collaborator | undefined> {
+    const [row] = await db
+      .select()
+      .from(collaborators)
+      .where(and(
+        eq(collaborators.collaboratorUserId, userId),
+        eq(collaborators.status, "active")
+      ))
+      .limit(1);
+    return row || undefined;
   }
 
   async updateCollaborator(ownerUserId: string, collaboratorId: string, updates: Partial<Collaborator>): Promise<Collaborator> {

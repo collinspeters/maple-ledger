@@ -19,9 +19,10 @@ export function checkSubscriptionAccess(user: User): boolean {
     return true;
   }
   
-  // Trial users always get access — expiry is communicated as a warning, not a hard block
+  // Trial users get access only while trial is active
   if (user.subscriptionStatus === "trial") {
-    return true;
+    if (!user.trialEndsAt) return false;
+    return new Date(user.trialEndsAt).getTime() > Date.now();
   }
   
   return false;
