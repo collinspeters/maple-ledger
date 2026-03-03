@@ -126,19 +126,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(401).json({ message: "Authentication required" });
   };
 
-  const requireSubscription = (req: Request, res: Response, next: NextFunction) => {
+  const requireSubscription = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    
-    if (!checkSubscriptionAccess(req.user as User)) {
-      return res.status(403).json({ 
-        message: "Subscription required", 
-        trialExpired: true 
-      });
+
+    try {
+      const actor = req.user as User;
+      const collaborator = await storage.getActiveCollaboratorForUser(actor.id);
+      const subscriptionUser = collaborator ? await storage.getUser(collaborator.ownerUserId) : actor;
+      if (!subscriptionUser) {
+        return res.status(403).json({ message: "Subscription required", trialExpired: true, readOnly: true });
+      }
+
+      if (!checkSubscriptionAccess(subscriptionUser)) {
+        const method = (req.method || "GET").toUpperCase();
+        const isReadMethod = method === "GET" || method === "HEAD" || method === "OPTIONS";
+        const isExportRoute = req.path.includes("/export/");
+        if (isReadMethod && !isExportRoute) {
+          // Read-only access after trial expiry: allow data viewing, block writes and exports.
+          return next();
+        }
+        return res.status(403).json({
+          message: "Subscription required",
+          trialExpired: true,
+          readOnly: true,
+        });
+      }
+      next();
+    } catch (error) {
+      console.error("Subscription check failed:", error);
+      return res.status(500).json({ message: "Subscription check failed" });
     }
-    
-    next();
   };
 
   const requireOwnerAccount = async (req: Request, res: Response, next: NextFunction) => {
@@ -318,24 +337,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, (req, res) => {
     const user = req.user as User;
-    res.json({ 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        username: user.username,
-        businessName: user.businessName,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        province: user.province,
-        address: user.address,
-        fiscalYearStart: user.fiscalYearStart,
-        gstRegistered: user.gstRegistered,
-        gstNumber: user.gstNumber,
-        gstFilingFrequency: user.gstFilingFrequency,
-        emailVerifiedAt: user.emailVerifiedAt,
-        subscriptionStatus: user.subscriptionStatus,
-        trialDaysRemaining: getTrialDaysRemaining(user)
-      } 
+    const send = async () => {
+      const collaborator = await storage.getActiveCollaboratorForUser(user.id);
+      const subscriptionUser = collaborator ? await storage.getUser(collaborator.ownerUserId) : user;
+      const effectiveSubscriptionStatus = subscriptionUser?.subscriptionStatus || user.subscriptionStatus;
+      const effectiveTrialDaysRemaining = subscriptionUser ? getTrialDaysRemaining(subscriptionUser) : getTrialDaysRemaining(user);
+      res.json({ 
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          username: user.username,
+          businessName: user.businessName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          province: user.province,
+          address: user.address,
+          fiscalYearStart: user.fiscalYearStart,
+          gstRegistered: user.gstRegistered,
+          gstNumber: user.gstNumber,
+          gstFilingFrequency: user.gstFilingFrequency,
+          emailVerifiedAt: user.emailVerifiedAt,
+          subscriptionStatus: effectiveSubscriptionStatus,
+          trialDaysRemaining: effectiveTrialDaysRemaining
+        } 
+      });
+    };
+    send().catch((err) => {
+      console.error("Auth me failed:", err);
+      res.status(500).json({ message: "Failed to load auth state" });
     });
   });
 
@@ -446,6 +475,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updated = await storage.updateUserProfile(ownerUserId, updates);
+      const beforeSnapshot = {
+        businessName: targetUser.businessName,
+        firstName: targetUser.firstName,
+        lastName: targetUser.lastName,
+        province: targetUser.province,
+        address: targetUser.address,
+        gstRegistered: targetUser.gstRegistered,
+        gstNumber: targetUser.gstNumber,
+        gstFilingFrequency: targetUser.gstFilingFrequency,
+        fiscalYearStart: targetUser.fiscalYearStart,
+      };
+      const afterSnapshot = {
+        businessName: updated.businessName,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        province: updated.province,
+        address: updated.address,
+        gstRegistered: updated.gstRegistered,
+        gstNumber: updated.gstNumber,
+        gstFilingFrequency: updated.gstFilingFrequency,
+        fiscalYearStart: updated.fiscalYearStart,
+      };
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "profile.updated", "user", ownerUserId, {
+        actorUserId: user.id,
+        ownerUserId,
+        before: beforeSnapshot,
+        after: afterSnapshot,
+      });
       res.json({ user: updated });
     } catch (error) {
       console.error("Profile update failed:", error);
@@ -1240,9 +1298,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { logAuditEvent } = await import("./services/audit-log");
       await logAuditEvent(ownerUserId, "transaction.created", "transaction", transaction.id, {
+        actorUserId: user.id,
+        ownerUserId,
         txnKind,
         equityType,
         needsReview,
+        after: {
+          id: transaction.id,
+          userId: transaction.userId,
+          date: transaction.date,
+          amount: transaction.amount,
+          description: transaction.description,
+          vendor: transaction.vendor,
+          category: transaction.category,
+          txnKind: transaction.txnKind,
+          equityType: transaction.equityType,
+          isExpense: transaction.isExpense,
+          isTransfer: transaction.isTransfer,
+          needsReview: transaction.needsReview,
+          isReviewed: transaction.isReviewed,
+        },
       });
       
       res.json(transaction);
@@ -1266,6 +1341,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updates: any = { ...req.body };
+      const beforeSnapshot = {
+        id: existing.id,
+        userId: existing.userId,
+        date: existing.date,
+        amount: existing.amount,
+        description: existing.description,
+        vendor: existing.vendor,
+        category: existing.category,
+        txnKind: existing.txnKind,
+        equityType: existing.equityType,
+        isExpense: existing.isExpense,
+        isTransfer: existing.isTransfer,
+        needsReview: existing.needsReview,
+        isReviewed: existing.isReviewed,
+      };
       const hadOpenReviewsBefore = existing.needsReview;
       if (existing.isTransfer && updates.bankConnectionId) {
         return res.status(400).json({
@@ -1326,7 +1416,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { logAuditEvent } = await import("./services/audit-log");
       await logAuditEvent(ownerUserId, "transaction.updated", "transaction", transaction.id, {
+        actorUserId: user.id,
+        ownerUserId,
         changedFields: Object.keys(updates),
+        before: beforeSnapshot,
+        after: {
+          id: transaction.id,
+          userId: transaction.userId,
+          date: transaction.date,
+          amount: transaction.amount,
+          description: transaction.description,
+          vendor: transaction.vendor,
+          category: transaction.category,
+          txnKind: transaction.txnKind,
+          equityType: transaction.equityType,
+          isExpense: transaction.isExpense,
+          isTransfer: transaction.isTransfer,
+          needsReview: transaction.needsReview,
+          isReviewed: transaction.isReviewed,
+        },
       });
       res.json(transaction);
     } catch (error) {
@@ -1342,7 +1450,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existing || existing.userId !== ownerUserId) {
         return res.status(404).json({ message: "Transaction not found" });
       }
+      const beforeSnapshot = {
+        id: existing.id,
+        userId: existing.userId,
+        date: existing.date,
+        amount: existing.amount,
+        description: existing.description,
+        vendor: existing.vendor,
+        category: existing.category,
+        txnKind: existing.txnKind,
+        equityType: existing.equityType,
+        isExpense: existing.isExpense,
+        isTransfer: existing.isTransfer,
+        needsReview: existing.needsReview,
+        isReviewed: existing.isReviewed,
+      };
       await storage.deleteTransaction(req.params.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "transaction.deleted", "transaction", req.params.id, {
+        actorUserId: user.id,
+        ownerUserId,
+        before: beforeSnapshot,
+      });
       res.json({ message: "Transaction deleted" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete transaction" });

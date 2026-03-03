@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
-import { checkSubscriptionAccess } from "@/lib/auth";
 
 // Pages
 import Login from "@/pages/login";
@@ -18,6 +17,7 @@ import Invoices from "@/pages/invoices";
 import Estimates from "@/pages/estimates";
 import Transactions from "@/pages/transactions";
 import Receipts from "@/pages/receipts";
+import Review from "@/pages/review";
 import Reports from "@/pages/reports";
 import Banking from "@/pages/banking";
 import Settings from "@/pages/settings";
@@ -48,10 +48,6 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     return <Login />;
   }
 
-  if (!checkSubscriptionAccess(user)) {
-    return <Subscribe />;
-  }
-
   return (
     <div className="flex h-screen bg-background-alt">
       <Sidebar />
@@ -77,9 +73,6 @@ function AuthRoute({ component: Component }: { component: React.ComponentType })
   }
 
   if (user) {
-    if (!checkSubscriptionAccess(user)) {
-      return <Subscribe />;
-    }
     return <Dashboard />;
   }
 
@@ -101,6 +94,7 @@ function Router() {
       <Route path="/estimates" component={() => <ProtectedRoute component={Estimates} />} />
       <Route path="/transactions" component={() => <ProtectedRoute component={Transactions} />} />
       <Route path="/receipts" component={() => <ProtectedRoute component={Receipts} />} />
+      <Route path="/review" component={() => <ProtectedRoute component={Review} />} />
       <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
       <Route path="/banking" component={() => <ProtectedRoute component={Banking} />} />
       <Route path="/chart-of-accounts" component={() => <ProtectedRoute component={ChartOfAccountsPage} />} />

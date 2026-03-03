@@ -42,6 +42,7 @@ export default function Sidebar() {
     { href: "/invoices", icon: FileText, label: "Invoices" },
     { href: "/estimates", icon: Calculator, label: "Estimates" },
     { href: "/transactions", icon: ArrowRightLeft, label: "Transactions", badge: txBadge },
+    { href: "/review", icon: Clock, label: "Review", badge: txBadge },
     { href: "/receipts", icon: Receipt, label: "Receipts", badge: receiptBadge },
     { href: "/chart-of-accounts", icon: BookOpen, label: "Chart of Accounts" },
     { href: "/reports", icon: ChartLine, label: "Reports" },
@@ -87,6 +88,17 @@ export default function Sidebar() {
           <Link href="/subscribe">
             <Button className="w-full mt-2 px-3 py-1.5 bg-accent text-white text-xs font-medium rounded hover:bg-orange-600 transition-colors">
               Upgrade Now
+            </Button>
+          </Link>
+        </div>
+      )}
+      {user?.subscriptionStatus === "trial" && (user.trialDaysRemaining || 0) <= 0 && (
+        <div className="mx-4 mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm font-medium text-yellow-900">Read-only mode</p>
+          <p className="text-xs text-yellow-700">Trial expired. Upgrade to make edits and export reports.</p>
+          <Link href="/subscribe">
+            <Button className="w-full mt-2 px-3 py-1.5 bg-yellow-600 text-white text-xs font-medium rounded hover:bg-yellow-700 transition-colors">
+              Upgrade
             </Button>
           </Link>
         </div>
