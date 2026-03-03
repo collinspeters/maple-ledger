@@ -81,9 +81,12 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/auth/me"], data.user);
+      const verifySuffix = data?.verifyToken
+        ? ` Verify: /verify-email?token=${data.verifyToken}`
+        : "";
       toast({
         title: "Account Created!",
-        description: "Your account has been created and your 14-day trial has started.",
+        description: `Your account has been created and your 14-day trial has started.${verifySuffix}`,
       });
     },
     onError: (error: any) => {

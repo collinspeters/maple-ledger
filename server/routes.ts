@@ -141,6 +141,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  const requireOwnerAccount = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user as User | undefined;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const hasCollaboratorAccess = await storage.hasActiveCollaboratorAccess(user.id);
+      if (hasCollaboratorAccess) {
+        return res.status(403).json({
+          message: "Owner permissions required for this action",
+        });
+      }
+      next();
+    } catch (error) {
+      console.error("Owner permission check failed:", error);
+      return res.status(500).json({ message: "Permission check failed" });
+    }
+  };
+
   const generateToken = (size = 32) => crypto.randomBytes(size).toString("hex");
 
   // Auth routes
@@ -177,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             businessName: user.businessName,
             subscriptionStatus: user.subscriptionStatus 
           },
-          verifyToken: emailVerificationToken
+          ...(process.env.NODE_ENV !== "production" ? { verifyToken: emailVerificationToken } : {})
         });
       });
     } catch (error) {
@@ -255,9 +275,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // v1 placeholder: return token for manual email wiring
     return res.json({
-      message: "Password reset token generated.",
-      resetToken: token,
-      expiresAt: expires,
+      message: "If that email exists, a reset link has been generated.",
+      ...(process.env.NODE_ENV !== "production" ? { resetToken: token, expiresAt: expires } : {}),
     });
   });
 
@@ -344,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Collaborator access
-  app.post("/api/access/invite", requireAuth, async (req, res) => {
+  app.post("/api/access/invite", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const owner = req.user as User;
       const email = String(req.body?.email || "").trim().toLowerCase();
@@ -405,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/access/collaborators", requireAuth, async (req, res) => {
+  app.get("/api/access/collaborators", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const owner = req.user as User;
       const items = await storage.getCollaboratorsByOwner(owner.id);
@@ -416,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/access/collaborators/:id", requireAuth, async (req, res) => {
+  app.delete("/api/access/collaborators/:id", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const owner = req.user as User;
       await storage.deleteCollaborator(owner.id, req.params.id);
@@ -1209,7 +1228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe subscription routes  
-  app.post("/api/create-subscription", requireAuth, async (req, res) => {
+  app.post("/api/create-subscription", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       let user = req.user as User;
 
@@ -1279,7 +1298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/billing/portal", requireAuth, async (req, res) => {
+  app.post("/api/billing/portal", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const user = req.user as User;
       if (!user.stripeCustomerId) {
@@ -1335,7 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Plaid Bank Integration Routes
-  app.post("/api/plaid/create-link-token", requireAuth, async (req, res) => {
+  app.post("/api/plaid/create-link-token", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const user = req.user as User;
       const linkToken = await createLinkToken(user.id);
@@ -1346,7 +1365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/plaid/exchange-public-token", requireAuth, async (req, res) => {
+  app.post("/api/plaid/exchange-public-token", requireAuth, requireOwnerAccount, async (req, res) => {
     try {
       const { public_token } = req.body;
       
@@ -1463,7 +1482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bank feed sync endpoint — triggers delta sync pipeline with cursor advancement and de-dup
-  app.post("/api/plaid/sync-transactions", requireAuth, requireSubscription, async (req, res) => {
+  app.post("/api/plaid/sync-transactions", requireAuth, requireSubscription, requireOwnerAccount, async (req, res) => {
     try {
       const user = req.user as User;
       const connections = await storage.getBankConnections(user.id);
@@ -1534,7 +1553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/bank-connections/:id", requireAuth, requireSubscription, async (req, res) => {
+  app.delete("/api/bank-connections/:id", requireAuth, requireSubscription, requireOwnerAccount, async (req, res) => {
     try {
       await storage.deleteBankConnection(req.params.id);
       res.json({ message: "Bank connection removed successfully" });

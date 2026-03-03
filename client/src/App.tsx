@@ -9,6 +9,9 @@ import { checkSubscriptionAccess } from "@/lib/auth";
 // Pages
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
+import VerifyEmailPage from "@/pages/verify-email";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Invoices from "@/pages/invoices";
@@ -88,6 +91,9 @@ function Router() {
     <Switch>
       <Route path="/login" component={() => <AuthRoute component={Login} />} />
       <Route path="/register" component={() => <AuthRoute component={Register} />} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/verify-email" component={VerifyEmailPage} />
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/clients" component={() => <ProtectedRoute component={Clients} />} />

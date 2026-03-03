@@ -82,6 +82,9 @@ export default function Login() {
                 Start your free trial
               </Link>
             </p>
+            <Link href="/forgot-password" className="text-sm text-primary hover:text-primary-dark">
+              Forgot password?
+            </Link>
           </CardFooter>
         </form>
       </Card>
