@@ -28,6 +28,8 @@ export interface Transaction {
   amount: string;
   isExpense: boolean;
   isTransfer?: boolean;
+  txnKind?: string;
+  equityType?: string | null;
   transferType?: string;
   needsReview?: boolean;
   isReviewed?: boolean;
@@ -37,6 +39,7 @@ export interface Transaction {
   accountId?: string;
   bankConnectionId?: string;
   chartAccountId?: string;
+  notes?: string;
 }
 
 interface TransactionRowProps {
@@ -44,6 +47,7 @@ interface TransactionRowProps {
   isSelected: boolean;
   onSelect: (selected: boolean) => void;
   onUpdate: (id: string, updates: Partial<Transaction>) => Promise<void>;
+  onOpenDetails?: (transaction: Transaction) => void;
   categories: string[];
   accounts: Array<{ id: string; name: string }>;
   isEditing?: boolean;
@@ -55,6 +59,7 @@ export function TransactionRow({
   isSelected,
   onSelect,
   onUpdate,
+  onOpenDetails,
   categories,
   accounts,
   isEditing = false,
@@ -444,6 +449,19 @@ export function TransactionRow({
               aria-label="Mark transaction as reviewed"
             >
               Mark Reviewed
+            </Button>
+          )}
+
+          {onOpenDetails && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onOpenDetails(transaction)}
+              className="text-xs h-6 px-2"
+              aria-label="Open transaction details"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              Details
             </Button>
           )}
         </div>

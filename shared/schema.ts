@@ -43,6 +43,8 @@ export const transactions = pgTable("transactions", {
   needsReview: boolean("needs_review").default(false),
   userOverride: boolean("user_override").default(false),
   isReviewed: boolean("is_reviewed").default(false),
+  txnKind: text("txn_kind"), // expense | income | transfer | equity
+  equityType: text("equity_type"), // owner_draw | owner_contribution
   isExpense: boolean("is_expense").default(true),
   receiptId: varchar("receipt_id"), // Will reference receipts.id  
   receiptAttached: boolean("receipt_attached").default(false),

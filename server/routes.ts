@@ -163,6 +163,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const generateToken = (size = 32) => crypto.randomBytes(size).toString("hex");
 
+  const deriveTxnKind = (input: {
+    txnKind?: string | null;
+    isTransfer?: boolean | null;
+    isExpense?: boolean | null;
+  }): string => {
+    if (input.txnKind) return input.txnKind;
+    if (input.isTransfer) return "transfer";
+    if (input.isExpense === false) return "income";
+    return "expense";
+  };
+
+  const mapTxnKindToLegacyFlags = (txnKind: string, currentIsExpense?: boolean, currentIsTransfer?: boolean) => {
+    if (txnKind === "transfer") {
+      return { isTransfer: true, isExpense: false };
+    }
+    if (txnKind === "income") {
+      return { isTransfer: false, isExpense: false };
+    }
+    if (txnKind === "expense") {
+      return { isTransfer: false, isExpense: true };
+    }
+    // For equity, keep transfer false and keep expense flag as-is for compatibility.
+    if (txnKind === "equity") {
+      return { isTransfer: false, isExpense: currentIsExpense ?? true };
+    }
+    return {
+      isTransfer: currentIsTransfer ?? false,
+      isExpense: currentIsExpense ?? true,
+    };
+  };
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -929,8 +960,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      const txnKind = deriveTxnKind({
+        txnKind: req.body?.txnKind,
+        isTransfer: transactionData.isTransfer,
+        isExpense: transactionData.isExpense,
+      });
+      const legacyFlags = mapTxnKindToLegacyFlags(txnKind, transactionData.isExpense, transactionData.isTransfer);
+
       const transaction = await storage.createTransaction({
         ...transactionData,
+        txnKind,
+        equityType: req.body?.equityType || null,
+        isExpense: legacyFlags.isExpense,
+        isTransfer: legacyFlags.isTransfer,
         aiCategory,
         aiConfidence,
         aiExplanation,
@@ -951,7 +993,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/transactions/:id", requireAuth, requireSubscription, async (req, res) => {
     try {
-      const transaction = await storage.updateTransaction(req.params.id, req.body);
+      const user = req.user as User;
+      const existing = await storage.getTransaction(req.params.id);
+      if (!existing || existing.userId !== user.id) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      const updates: any = { ...req.body };
+      if (updates.txnKind) {
+        const flags = mapTxnKindToLegacyFlags(
+          updates.txnKind,
+          existing.isExpense ?? true,
+          existing.isTransfer ?? false
+        );
+        updates.isExpense = flags.isExpense;
+        updates.isTransfer = flags.isTransfer;
+      }
+
+      if (updates.txnKind !== "equity") {
+        updates.equityType = null;
+      }
+
+      const transaction = await storage.updateTransaction(req.params.id, updates);
       res.json(transaction);
     } catch (error) {
       res.status(500).json({ message: "Failed to update transaction" });

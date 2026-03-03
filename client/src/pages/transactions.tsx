@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { TransactionFiltersComponent, TransactionFilters } from "@/components/transactions/transaction-filters";
 import { BulkActions, BulkAction } from "@/components/transactions/bulk-actions";
 import { TransactionRow, Transaction } from "@/components/transactions/transaction-row";
+import { TransactionDrawer } from "@/components/transactions/transaction-drawer";
 import BulkCategorizeButton from "@/components/transactions/bulk-categorize-button";
 import { useToast } from "@/hooks/use-toast";
 type DateRange = {
@@ -37,6 +38,8 @@ export default function Transactions() {
   // State management
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
   const [lastSyncResult, setLastSyncResult] = useState<{ added: number; skipped: number } | null>(null);
+  const [selectedTransactionForDrawer, setSelectedTransactionForDrawer] = useState<Transaction | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -82,12 +85,14 @@ export default function Transactions() {
   const accounts = useMemo(() => {
     const bankAccounts = bankConnections.map((bc: any) => ({
       id: bc.id,
-      name: `${bc.bankName} ${bc.accountName} (${bc.accountMask})`
+      name: `${bc.bankName} ${bc.accountName} (${bc.accountMask})`,
+      source: "bank" as const,
     }));
     
     const chartAccounts = chartOfAccounts.map((ca: any) => ({
       id: ca.id,
-      name: ca.name
+      name: ca.name,
+      source: "chart" as const,
     }));
     
     return [...bankAccounts, ...chartAccounts];
@@ -297,6 +302,18 @@ export default function Transactions() {
 
   const handleUpdateTransaction = async (id: string, updates: Partial<Transaction>) => {
     await updateTransactionMutation.mutateAsync({ id, updates });
+  };
+
+  const handleOpenTransactionDetails = (transaction: Transaction) => {
+    setSelectedTransactionForDrawer(transaction);
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerOpenChange = (open: boolean) => {
+    setIsDrawerOpen(open);
+    if (!open) {
+      setSelectedTransactionForDrawer(null);
+    }
   };
 
   const handleBulkAction = async (action: BulkAction) => {
@@ -594,6 +611,7 @@ export default function Transactions() {
                       isSelected={selectedTransactions.has(transaction.id)}
                       onSelect={(selected) => handleSelectTransaction(transaction.id, selected)}
                       onUpdate={handleUpdateTransaction}
+                      onOpenDetails={handleOpenTransactionDetails}
                       categories={categories}
                       accounts={accounts}
                     />
@@ -697,6 +715,15 @@ export default function Transactions() {
         onBulkAction={handleBulkAction}
         onClearSelection={() => setSelectedTransactions(new Set())}
         isLoading={bulkActionMutation.isPending}
+      />
+
+      <TransactionDrawer
+        open={isDrawerOpen}
+        transaction={selectedTransactionForDrawer}
+        categories={categories}
+        accounts={accounts}
+        onOpenChange={handleDrawerOpenChange}
+        onSave={handleUpdateTransaction}
       />
     </div>
   );
