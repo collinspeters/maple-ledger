@@ -178,6 +178,7 @@ export interface IStorage {
   // Structured review
   createReviewItem(input: InsertReviewItem): Promise<ReviewItem>;
   updateReviewItem(id: string, updates: Partial<ReviewItem>): Promise<ReviewItem>;
+  getReviewItemById(id: string): Promise<ReviewItem | undefined>;
   getOpenReviewItems(ownerUserId: string): Promise<ReviewItem[]>;
   createReviewMessage(input: InsertReviewMessage): Promise<ReviewMessage>;
   getReviewMessages(reviewItemId: string): Promise<ReviewMessage[]>;
@@ -916,6 +917,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(reviewItems.id, id))
       .returning();
     return row;
+  }
+
+  async getReviewItemById(id: string): Promise<ReviewItem | undefined> {
+    const [row] = await db
+      .select()
+      .from(reviewItems)
+      .where(eq(reviewItems.id, id))
+      .limit(1);
+    return row || undefined;
   }
 
   async getOpenReviewItems(ownerUserId: string): Promise<ReviewItem[]> {

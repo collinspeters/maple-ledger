@@ -16,6 +16,10 @@ type Collaborator = {
   createdAt: string;
 };
 
+function getRoleLabel(role: Collaborator["role"]): string {
+  return role === "accountant" ? "Accountant/bookkeeper" : "Other";
+}
+
 export default function AccessPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -94,8 +98,8 @@ export default function AccessPage() {
               value={role}
               onChange={(e) => setRole(e.target.value as "accountant" | "bookkeeper")}
             >
-              <option value="accountant">Accountant</option>
-              <option value="bookkeeper">Bookkeeper</option>
+              <option value="accountant">Accountant/bookkeeper</option>
+              <option value="bookkeeper">Other</option>
             </select>
           </div>
           <div className="md:col-span-3">
@@ -126,7 +130,7 @@ export default function AccessPage() {
                   <div>
                     <p className="font-medium text-gray-900">{c.invitedEmail}</p>
                     <p className="text-xs text-gray-600 capitalize">
-                      {c.role} • {c.status}
+                      {getRoleLabel(c.role)} • {c.status}
                       {c.status === "invited" && c.inviteExpiresAt ? ` • expires ${new Date(c.inviteExpiresAt).toLocaleDateString()}` : ""}
                     </p>
                   </div>

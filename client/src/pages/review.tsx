@@ -28,36 +28,70 @@ export default function ReviewPage() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [lastAction, setLastAction] = useState<{ id: string; action: "resolved" | "skipped" } | null>(null);
 
-  const { data } = useQuery<{ items: ReviewItem[] }>({
+  const { data } = useQuery<{ items: ReviewItem[]; data?: { items: ReviewItem[] } }>({
     queryKey: ["/api/review/items"],
   });
-  const items = data?.items || [];
+  const items = data?.items || data?.data?.items || [];
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) || items[0] || null,
     [items, selectedId]
   );
 
-  const { data: messagesData } = useQuery<{ messages: ReviewMessage[] }>({
+  const { data: messagesData } = useQuery<{ messages: ReviewMessage[]; data?: { messages: ReviewMessage[] } }>({
     queryKey: selected ? [`/api/review/items/${selected.id}/messages`] : ["/api/review/items/messages/empty"],
     enabled: Boolean(selected),
   });
-  const messages = messagesData?.messages || [];
+  const messages = messagesData?.messages || messagesData?.data?.messages || [];
+
+  const getNextItemId = (currentId: string): string | null => {
+    const idx = items.findIndex((i) => i.id === currentId);
+    if (idx === -1) return items[0]?.id || null;
+    return items[idx + 1]?.id || items[idx - 1]?.id || null;
+  };
 
   const resolveMutation = useMutation({
-    mutationFn: async (id: string) => apiRequest(`/api/review/items/${id}/resolve`, { method: "POST" }),
+    mutationFn: async ({ id, selectedOption }: { id: string; selectedOption?: string }) =>
+      apiRequest(`/api/review/items/${id}/resolve`, {
+        method: "POST",
+        body: JSON.stringify(selectedOption ? { selectedOption } : {}),
+      }),
     onSuccess: () => {
+      if (selected) {
+        setLastAction({ id: selected.id, action: "resolved" });
+        setSelectedId(getNextItemId(selected.id));
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
-      setSelectedId(null);
     },
   });
 
   const skipMutation = useMutation({
     mutationFn: async (id: string) => apiRequest(`/api/review/items/${id}/skip`, { method: "POST" }),
     onSuccess: () => {
+      if (selected) {
+        setLastAction({ id: selected.id, action: "skipped" });
+        setSelectedId(getNextItemId(selected.id));
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
-      setSelectedId(null);
+    },
+  });
+
+  const undoMutation = useMutation({
+    mutationFn: async (id: string) => apiRequest(`/api/review/items/${id}/reopen`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+      if (lastAction?.id) setSelectedId(lastAction.id);
+      setLastAction(null);
+      toast({ title: "Undone", description: "Review item moved back to open." });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Undo failed",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -135,10 +169,10 @@ export default function ReviewPage() {
                         key={`${selected.id}-${opt.value}`}
                         variant="outline"
                         size="sm"
-                        onClick={() => resolveMutation.mutate(selected.id)}
+                        onClick={() => resolveMutation.mutate({ id: selected.id, selectedOption: opt.value })}
                         disabled={resolveMutation.isPending}
                       >
-                        {opt.label}
+                        {opt.label} (Apply & Next)
                       </Button>
                     ))}
                   </div>
@@ -167,10 +201,7 @@ export default function ReviewPage() {
                     >
                       Send Note
                     </Button>
-                    <Button
-                      onClick={() => resolveMutation.mutate(selected.id)}
-                      disabled={resolveMutation.isPending}
-                    >
+                    <Button onClick={() => resolveMutation.mutate({ id: selected.id })} disabled={resolveMutation.isPending}>
                       Resolve
                     </Button>
                     <Button
@@ -179,6 +210,13 @@ export default function ReviewPage() {
                       disabled={skipMutation.isPending}
                     >
                       Skip
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => lastAction?.id && undoMutation.mutate(lastAction.id)}
+                      disabled={!lastAction || undoMutation.isPending}
+                    >
+                      Undo last
                     </Button>
                   </div>
                 </div>
@@ -190,4 +228,3 @@ export default function ReviewPage() {
     </div>
   );
 }
-

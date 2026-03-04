@@ -18,7 +18,7 @@ const pageNames: Record<string, { title: string; description: string }> = {
   "/banking": { title: "Banking", description: "Connect and manage your bank accounts." },
   "/chart-of-accounts": { title: "Chart of Accounts", description: "Manage your bookkeeping account structure." },
   "/ai-assistant": { title: "AI Assistant", description: "Ask questions about your finances and get AI-powered insights." },
-  "/access": { title: "Access", description: "Invite and manage accountant or bookkeeper access." },
+  "/access": { title: "Access", description: "Invite and manage Accountant/bookkeeper or Other access." },
   "/settings": { title: "Settings", description: "Configure your account and preferences." },
 };
 

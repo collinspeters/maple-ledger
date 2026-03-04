@@ -180,6 +180,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  const requireOwnerOrCollaboratorRoles = (allowedRoles: string[]) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const user = req.user as User | undefined;
+        if (!user) {
+          return res.status(401).json({ message: "Authentication required" });
+        }
+        const collaborator = await storage.getActiveCollaboratorForUser(user.id);
+        // Owner account (not a collaborator) always allowed.
+        if (!collaborator) return next();
+        if (allowedRoles.includes(collaborator.role)) return next();
+        return res.status(403).json({
+          message: "Insufficient collaborator role permissions",
+          requiredRoles: allowedRoles,
+          role: collaborator.role,
+        });
+      } catch (error) {
+        console.error("Role permission check failed:", error);
+        return res.status(500).json({ message: "Permission check failed" });
+      }
+    };
+  };
+
   const generateToken = (size = 32) => crypto.randomBytes(size).toString("hex");
 
   const getDataOwnerUserId = async (user: User): Promise<string> => {
@@ -453,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.put("/api/profile", requireAuth, async (req, res) => {
+  app.put("/api/profile", requireAuth, requireOwnerOrCollaboratorRoles(["accountant"]), async (req, res) => {
     try {
       const user = req.user as User;
       const ownerUserId = await getDataOwnerUserId(user);
@@ -504,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         before: beforeSnapshot,
         after: afterSnapshot,
       });
-      res.json({ user: updated });
+      res.json({ ok: true, data: { user: updated }, user: updated });
     } catch (error) {
       console.error("Profile update failed:", error);
       res.status(500).json({ message: "Failed to update profile" });
@@ -553,6 +576,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         ok: true,
+        data: {
+          collaboratorId: collaborator.id,
+          inviteToken,
+          expiresAt: inviteExpiresAt,
+        },
         collaboratorId: collaborator.id,
         inviteToken,
         expiresAt: inviteExpiresAt,
@@ -589,6 +617,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         ok: true,
+        data: {
+          collaborator: updated,
+          inviteToken,
+          expiresAt: inviteExpiresAt,
+        },
         collaborator: updated,
         inviteToken,
         expiresAt: inviteExpiresAt,
@@ -620,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await logAuditEvent(user.id, "access.invite_accepted", "collaborator", invite.id, {
         ownerUserId: invite.ownerUserId,
       });
-      res.json({ ok: true });
+      res.json({ ok: true, data: { accepted: true } });
     } catch (error) {
       console.error("Accept invite failed:", error);
       res.status(500).json({ message: "Failed to accept invite" });
@@ -631,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const owner = req.user as User;
       const items = await storage.getCollaboratorsByOwner(owner.id);
-      res.json({ items });
+      res.json({ ok: true, data: { items }, items });
     } catch (error) {
       console.error("Get collaborators failed:", error);
       res.status(500).json({ message: "Failed to fetch collaborators" });
@@ -648,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await logAuditEvent(owner.id, "access.collaborator_removed", "collaborator", req.params.id, {
         invitedEmail: target?.invitedEmail,
       });
-      res.json({ ok: true });
+      res.json({ ok: true, data: { removed: true } });
     } catch (error) {
       console.error("Delete collaborator failed:", error);
       res.status(500).json({ message: "Failed to remove collaborator" });
@@ -676,7 +709,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      res.json({ accounts: Array.from(dedup.values()) });
+      const accounts = Array.from(dedup.values());
+      res.json({ ok: true, data: { accounts }, accounts });
     } catch (error) {
       console.error("Reconciliation accounts failed:", error);
       res.status(500).json({ message: "Failed to load reconciliation accounts" });
@@ -712,6 +746,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const difference = statement ? endingBal - bookEndingBalance : 0;
 
       res.json({
+        ok: true,
+        data: {
+          statement: statement || null,
+          book_ending_balance: bookEndingBalance,
+          difference,
+          uncleared_transactions: unclearedTransactions,
+        },
         statement: statement || null,
         book_ending_balance: bookEndingBalance,
         difference,
@@ -778,7 +819,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         difference,
       });
 
-      res.json({ statement, book_ending_balance: bookEndingBalance, difference });
+      res.json({
+        ok: true,
+        data: { statement, book_ending_balance: bookEndingBalance, difference },
+        statement,
+        book_ending_balance: bookEndingBalance,
+        difference,
+      });
     } catch (error) {
       console.error("Reconciliation save failed:", error);
       res.status(500).json({ message: "Failed to save statement" });
@@ -816,7 +863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clearedCount: count,
         clearTo: clearTo.toISOString(),
       });
-      res.json({ cleared_count: count });
+      res.json({ ok: true, data: { cleared_count: count }, cleared_count: count });
     } catch (error) {
       console.error("Reconciliation auto-clear failed:", error);
       res.status(500).json({ message: "Failed to auto-clear transactions" });
@@ -853,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bankStatementId: statement.id,
         cleared,
       });
-      res.json({ ok: true });
+      res.json({ ok: true, data: { updated: true } });
     } catch (error) {
       console.error("Reconciliation clear toggle failed:", error);
       res.status(500).json({ message: "Failed to set clear status" });
@@ -1060,7 +1107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as User;
       const ownerUserId = await getDataOwnerUserId(user);
       const items = await storage.getOpenReviewItems(ownerUserId);
-      res.json({ items });
+      res.json({ ok: true, data: { items }, items });
     } catch (error) {
       console.error("Failed fetching review items:", error);
       res.status(500).json({ message: "Failed to fetch review items" });
@@ -1093,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType,
         entityId,
       });
-      res.json({ item });
+      res.json({ ok: true, data: { item }, item });
     } catch (error) {
       console.error("Failed creating review item:", error);
       res.status(500).json({ message: "Failed to create review item" });
@@ -1103,7 +1150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/review/items/:id/messages", requireAuth, requireSubscription, async (req, res) => {
     try {
       const messages = await storage.getReviewMessages(req.params.id);
-      res.json({ messages });
+      res.json({ ok: true, data: { messages }, messages });
     } catch (error) {
       console.error("Failed fetching review messages:", error);
       res.status(500).json({ message: "Failed to fetch review messages" });
@@ -1121,7 +1168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "content is required" });
       }
       const message = await storage.createReviewMessage(payload);
-      res.json({ message });
+      res.json({ ok: true, data: { message }, message });
     } catch (error) {
       console.error("Failed creating review message:", error);
       if (error instanceof z.ZodError) {
@@ -1140,6 +1187,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!item) {
         return res.status(404).json({ message: "Open review item not found" });
       }
+      const selectedOption = req.body?.selectedOption ? String(req.body.selectedOption) : null;
+      if (selectedOption) {
+        await storage.createReviewMessage({
+          reviewItemId: item.id,
+          role: "user",
+          content: `Selected option: ${selectedOption}`,
+        });
+      }
       const updated = await storage.updateReviewItem(item.id, {
         status: "resolved",
         resolvedAt: new Date(),
@@ -1150,7 +1205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: item.entityType,
         entityId: item.entityId,
       });
-      res.json({ item: updated });
+      res.json({ ok: true, data: { item: updated }, item: updated });
     } catch (error) {
       console.error("Failed resolving review item:", error);
       res.status(500).json({ message: "Failed to resolve review item" });
@@ -1176,10 +1231,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: item.entityType,
         entityId: item.entityId,
       });
-      res.json({ item: updated });
+      res.json({ ok: true, data: { item: updated }, item: updated });
     } catch (error) {
       console.error("Failed skipping review item:", error);
       res.status(500).json({ message: "Failed to skip review item" });
+    }
+  });
+
+  app.post("/api/review/items/:id/reopen", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const existing = await storage.getReviewItemById(req.params.id);
+      if (!existing || existing.ownerUserId !== ownerUserId) {
+        return res.status(404).json({ message: "Review item not found" });
+      }
+      const item = await storage.updateReviewItem(req.params.id, {
+        status: "open",
+        resolvedAt: null,
+      });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "review.item_reopened", "review_item", item.id, {
+        actorUserId: user.id,
+      });
+      res.json({ ok: true, data: { item }, item });
+    } catch (error) {
+      console.error("Failed reopening review item:", error);
+      res.status(500).json({ message: "Failed to reopen review item" });
     }
   });
 
