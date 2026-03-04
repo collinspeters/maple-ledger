@@ -7,7 +7,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Paperclip, 
   Eye, 
-  Edit2, 
   Check, 
   X, 
   AlertCircle, 
@@ -147,7 +146,8 @@ export function TransactionRow({
   };
 
   const formatAmount = (amount: string | number, isExpense: boolean, isTransfer: boolean) => {
-    const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const rawValue = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const value = Math.abs(rawValue);
     if (isNaN(value)) return '$0.00';
     
     const formatted = value.toLocaleString('en-CA', { 
@@ -409,6 +409,21 @@ export function TransactionRow({
         </div>
       </td>
 
+      {/* Receipt */}
+      <td className="p-4">
+        {transaction.receiptAttached ? (
+          <div className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+            <Paperclip className="h-3.5 w-3.5 mr-1" />
+            <span className="text-xs font-medium">Attached</span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-gray-500" aria-label="No receipt attached">
+            <Paperclip className="h-3.5 w-3.5 mr-1" />
+            <span className="text-xs">No receipt</span>
+          </div>
+        )}
+      </td>
+
       {/* Amount */}
       <td className="p-4 text-right">
         {editingFields.amount ? (
@@ -458,21 +473,6 @@ export function TransactionRow({
             }}
           >
             {formatAmount(transaction.amount, getTxnKind() === 'expense', getTxnKind() === 'transfer')}
-          </div>
-        )}
-      </td>
-
-      {/* Receipt */}
-      <td className="p-4">
-        {transaction.receiptAttached ? (
-          <div className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
-            <Paperclip className="h-3.5 w-3.5 mr-1" />
-            <span className="text-xs font-medium">Attached</span>
-          </div>
-        ) : (
-          <div className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-gray-500">
-            <Paperclip className="h-3.5 w-3.5 mr-1" />
-            <span className="text-xs">None</span>
           </div>
         )}
       </td>

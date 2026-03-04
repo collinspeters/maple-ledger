@@ -511,14 +511,16 @@ export default function Reports() {
         <Card className="shadow-card border-0 rounded-xl bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Receipt className="h-5 w-5 text-blue-600" />
+              <div className={`p-2 rounded-lg ${(taxSummary?.netTaxOwing || 0) >= 0 ? 'bg-blue-100' : 'bg-green-100'}`}>
+                <Receipt className={`h-5 w-5 ${(taxSummary?.netTaxOwing || 0) >= 0 ? 'text-blue-600' : 'text-green-600'}`} />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">
                   {taxSummary ? formatCurrency(Math.abs(taxSummary.netTaxOwing)) : '--'}
                 </p>
-                <p className="text-sm text-gray-600">Tax Owing</p>
+                <p className="text-sm text-gray-600">
+                  {(taxSummary?.netTaxOwing || 0) >= 0 ? 'Tax Owing' : 'Tax Refund'}
+                </p>
               </div>
             </div>
           </CardContent>
