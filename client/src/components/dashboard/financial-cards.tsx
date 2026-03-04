@@ -54,11 +54,16 @@ export default function FinancialCards() {
   const expenseChange = summary?.expenseChange ?? 0;
   const profitMargin = summary?.profitMargin ?? 0;
   const gstDueYear = lastYear + 1;
+  const totalRevenue = Math.abs(summary?.totalRevenue ?? 0);
+  const totalExpenses = Math.abs(summary?.totalExpenses ?? 0);
+  const netProfit = summary?.netProfit ?? 0;
+  const gstOwing = summary?.gstOwing ?? 0;
+  const gstLabel = gstOwing >= 0 ? "GST/HST Owing" : "GST/HST Refund";
 
   const cards = [
     {
       title: `${lastYear} Revenue`,
-      value: `$${summary?.totalRevenue?.toLocaleString() || '0'}`,
+      value: `$${totalRevenue.toLocaleString()}`,
       change: safeChange(revenueChange),
       changeType: (isFinite(revenueChange) && revenueChange >= 0) ? "positive" : "negative",
       icon: DollarSign,
@@ -67,7 +72,7 @@ export default function FinancialCards() {
     },
     {
       title: `${lastYear} Expenses`,
-      value: `$${summary?.totalExpenses?.toLocaleString() || '0'}`,
+      value: `$${totalExpenses.toLocaleString()}`,
       change: safeChange(expenseChange),
       changeType: (isFinite(expenseChange) && expenseChange <= 0) ? "positive" : "negative",
       icon: Receipt,
@@ -76,16 +81,16 @@ export default function FinancialCards() {
     },
     {
       title: "Net Profit",
-      value: `$${summary?.netProfit?.toLocaleString() || '0'}`,
+      value: `$${netProfit.toLocaleString()}`,
       change: safeMargin(profitMargin),
-      changeType: (summary?.netProfit ?? 0) >= 0 ? "positive" : "negative",
+      changeType: netProfit >= 0 ? "positive" : "negative",
       icon: TrendingUp,
       iconBg: "bg-blue-50",
       iconColor: "text-blue-600",
     },
     {
-      title: "GST/HST Owing",
-      value: `$${summary?.gstOwing?.toLocaleString() || '0'}`,
+      title: gstLabel,
+      value: `$${Math.abs(gstOwing).toLocaleString()}`,
       change: `Due Mar 31, ${gstDueYear}`,
       changeType: "neutral",
       icon: FileText,

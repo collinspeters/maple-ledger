@@ -143,8 +143,8 @@ export async function generateProfitLossReport(
   console.log(`Found ${transactions.length} transactions for P&L report`);
   
   // Separate revenue and expenses
-  const revenueTransactions = transactions.filter(t => !t.isExpense);
-  const expenseTransactions = transactions.filter(t => t.isExpense);
+  const revenueTransactions = transactions.filter(t => !t.isExpense && !t.isTransfer);
+  const expenseTransactions = transactions.filter(t => t.isExpense && !t.isTransfer);
   
   console.log(`Revenue transactions: ${revenueTransactions.length}, Expense transactions: ${expenseTransactions.length}`);
   
@@ -152,7 +152,7 @@ export async function generateProfitLossReport(
     .reduce((acc, t) => acc + parseFloat(t.amount), 0);
     
   const expenses = expenseTransactions
-    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+    .reduce((acc, t) => acc + Math.abs(parseFloat(t.amount) || 0), 0);
 
   // Group by categories
   const revenueCategories = new Map<string, number>();
@@ -161,12 +161,12 @@ export async function generateProfitLossReport(
   transactions.forEach(t => {
     // Use aiCategory if available, fallback to category
     const category = t.aiCategory || t.category || 'Uncategorized';
-    const amount = parseFloat(t.amount);
+    const rawAmount = parseFloat(t.amount) || 0;
     
     if (t.isExpense) {
-      expenseCategories.set(category, (expenseCategories.get(category) || 0) + amount);
+      expenseCategories.set(category, (expenseCategories.get(category) || 0) + Math.abs(rawAmount));
     } else {
-      revenueCategories.set(category, (revenueCategories.get(category) || 0) + amount);
+      revenueCategories.set(category, (revenueCategories.get(category) || 0) + rawAmount);
     }
   });
 
@@ -229,7 +229,7 @@ export async function generateBalanceSheetReport(
     .filter(t => t.isExpense && !t.isTransfer)
     .reduce((acc, t) => {
       const amount = parseFloat(t.amount);
-      return acc + (isNaN(amount) ? 0 : amount);
+      return acc + (isNaN(amount) ? 0 : Math.abs(amount));
     }, 0);
 
   const netIncome = totalRevenue - totalExpenses;
@@ -250,7 +250,7 @@ export async function generateBalanceSheetReport(
     
   const currentYearExpenses = currentYearTransactions
     .filter(t => t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+    .reduce((acc, t) => acc + Math.abs(parseFloat(t.amount) || 0), 0);
     
   const currentYearEarnings = currentYearRevenue - currentYearExpenses;
 
@@ -264,7 +264,7 @@ export async function generateBalanceSheetReport(
   };
 
   const liabilities = {
-    total: totalExpenses, // Current liabilities represent unpaid expenses
+    total: totalExpenses, // Simplified placeholder until liabilities are tracked explicitly
     current: [
       { account: 'Accounts Payable', amount: totalExpenses }
     ],
@@ -321,7 +321,7 @@ export async function generateTaxSummaryReport(
   // Estimate tax paid on expenses (Input Tax Credits)
   const estimatedTaxPaid = transactions
     .filter(t => t.isExpense && !t.isTransfer)
-    .reduce((acc, t) => acc + (parseFloat(t.amount) * hstRate), 0);
+    .reduce((acc, t) => acc + (Math.abs(parseFloat(t.amount) || 0) * hstRate), 0);
 
   const finalTaxCollected = taxCollected > 0 ? taxCollected : estimatedTaxCollected;
   const finalTaxPaid = taxPaid > 0 ? taxPaid : estimatedTaxPaid;
@@ -380,6 +380,7 @@ export async function generateTrialBalanceReport(
   transactions.forEach(transaction => {
     const account = transaction.category || 'Uncategorized';
     const amount = parseFloat(transaction.amount);
+    const normalizedAmount = Math.abs(isNaN(amount) ? 0 : amount);
     
     // Create account if it doesn't exist
     if (!accountBalances.has(account)) {
@@ -396,18 +397,18 @@ export async function generateTrialBalanceReport(
     
     if (transaction.isExpense) {
       // Expense Transaction: Debit Expense, Credit Cash (or Credit Owner's Equity for manual entries)
-      accountData.debit += amount;
+      accountData.debit += normalizedAmount;
       
       // For manual transactions without a funding source, balance with Owner's Equity
       if (!transaction.bankTransactionId) {
-        equityAccount.credit += amount; // Owner funded the expense
+        equityAccount.credit += normalizedAmount; // Owner funded the expense
       } else {
-        cashAccount.credit += amount; // Cash was used for the expense
+        cashAccount.credit += normalizedAmount; // Cash was used for the expense
       }
     } else {
       // Revenue Transaction: Debit Cash, Credit Revenue
-      accountData.credit += amount;
-      cashAccount.debit += amount;
+      accountData.credit += normalizedAmount;
+      cashAccount.debit += normalizedAmount;
     }
   });
 
@@ -459,7 +460,7 @@ export async function generateGeneralLedgerReport(
     );
 
     const transactions = sortedTransactions.map(transaction => {
-      const amount = parseFloat(transaction.amount);
+      const amount = Math.abs(parseFloat(transaction.amount) || 0);
       const isDebit = transaction.isExpense;
       
       // Update running balance
@@ -651,7 +652,7 @@ export async function generateMonthlyPLReport(
     if (!buckets[key]) continue;
     const amount = parseFloat(t.amount) || 0;
     if (t.isExpense) {
-      buckets[key].expenses += amount;
+      buckets[key].expenses += Math.abs(amount);
     } else {
       buckets[key].revenue += amount;
     }

@@ -15,7 +15,7 @@ export async function getDashboardData(req: Request, res: Response) {
     
     const expenses = transactions
       .filter(t => !t.isTransfer && t.isExpense)
-      .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount) || 0), 0);
 
     const postedCount = transactions.filter(t => t.isPosted).length;
     const totalCount = transactions.filter(t => !t.isTransfer).length;
@@ -28,7 +28,7 @@ export async function getDashboardData(req: Request, res: Response) {
         if (!acc[category]) {
           acc[category] = { total: 0, count: 0, withReceipts: 0, posted: 0 };
         }
-        acc[category].total += parseFloat(t.amount);
+        acc[category].total += Math.abs(parseFloat(t.amount) || 0);
         acc[category].count += 1;
         if (t.receiptAttached) acc[category].withReceipts += 1;
         if (t.isPosted) acc[category].posted += 1;

@@ -2916,13 +2916,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expensesByCategory: { [key: string]: number } = {};
       
       filteredTransactions.forEach(transaction => {
-        const amount = parseFloat(transaction.amount);
+        const rawAmount = parseFloat(transaction.amount) || 0;
+        const amount = Math.abs(rawAmount);
         if (transaction.isExpense) {
           totalExpenses += amount;
           const category = transaction.category || 'Other';
           expensesByCategory[category] = (expensesByCategory[category] || 0) + amount;
         } else {
-          totalRevenue += amount;
+          totalRevenue += rawAmount;
         }
       });
       
@@ -2951,11 +2952,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let monthExpenses = 0;
           
           monthTransactions.forEach(t => {
-            const amount = parseFloat(t.amount);
+            const rawAmount = parseFloat(t.amount) || 0;
+            const amount = Math.abs(rawAmount);
             if (t.isExpense) {
               monthExpenses += amount;
             } else {
-              monthRevenue += amount;
+              monthRevenue += rawAmount;
             }
           });
           

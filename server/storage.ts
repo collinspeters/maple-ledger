@@ -425,7 +425,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .select({
         totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN is_expense = false AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
-        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
+        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true AND is_transfer = false THEN ABS(amount::numeric) ELSE 0 END), 0)`,
         transactionCount: sql<number>`COUNT(*)`,
       })
       .from(transactions)
@@ -451,7 +451,7 @@ export class DatabaseStorage implements IStorage {
     const prevResult = await db
       .select({
         totalRevenue: sql<number>`COALESCE(SUM(CASE WHEN is_expense = false AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
-        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true AND is_transfer = false THEN amount::numeric ELSE 0 END), 0)`,
+        totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN is_expense = true AND is_transfer = false THEN ABS(amount::numeric) ELSE 0 END), 0)`,
       })
       .from(transactions)
       .where(

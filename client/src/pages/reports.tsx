@@ -484,7 +484,7 @@ export default function Reports() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {profitLoss ? formatCurrency(profitLoss.expenses.total) : '--'}
+                  {profitLoss ? formatCurrency(Math.abs(profitLoss.expenses.total)) : '--'}
                 </p>
                 <p className="text-sm text-gray-600">Total Expenses</p>
               </div>
@@ -516,7 +516,7 @@ export default function Reports() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {taxSummary ? formatCurrency(taxSummary.netTaxOwing) : '--'}
+                  {taxSummary ? formatCurrency(Math.abs(taxSummary.netTaxOwing)) : '--'}
                 </p>
                 <p className="text-sm text-gray-600">Tax Owing</p>
               </div>
@@ -672,12 +672,12 @@ export default function Reports() {
                                 <ChevronRight className="h-4 w-4 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </TableCell>
-                            <TableCell className="text-right font-medium text-red-600 whitespace-nowrap">{formatCurrency(category.amount)}</TableCell>
+                            <TableCell className="text-right font-medium text-red-600 whitespace-nowrap">{formatCurrency(Math.abs(category.amount))}</TableCell>
                           </TableRow>
                         ))}
                         <TableRow className="border-t border-red-200 bg-red-50">
                           <TableCell className="font-bold pl-6">Total Expenses</TableCell>
-                          <TableCell className="text-right font-bold text-red-600">{formatCurrency(profitLoss.expenses.total)}</TableCell>
+                          <TableCell className="text-right font-bold text-red-600">{formatCurrency(Math.abs(profitLoss.expenses.total))}</TableCell>
                         </TableRow>
                         <TableRow><TableCell colSpan={2} className="h-4"></TableCell></TableRow>
                         <TableRow className="border-t-2 border-gray-400 bg-blue-50">
@@ -720,7 +720,7 @@ export default function Reports() {
                           <TableRow key={row.month} className={row.revenue === 0 && row.expenses === 0 ? 'opacity-40' : ''}>
                             <TableCell className="font-medium">{row.label}</TableCell>
                             <TableCell className="text-right text-green-600">{formatCurrency(row.revenue)}</TableCell>
-                            <TableCell className="text-right text-red-600">{formatCurrency(row.expenses)}</TableCell>
+                            <TableCell className="text-right text-red-600">{formatCurrency(Math.abs(row.expenses))}</TableCell>
                             <TableCell className={`text-right font-semibold ${row.netProfit >= 0 ? 'text-blue-700' : 'text-orange-600'}`}>
                               {formatCurrency(row.netProfit)}
                             </TableCell>
@@ -729,7 +729,7 @@ export default function Reports() {
                         <TableRow className="border-t-2 font-bold bg-gray-50">
                           <TableCell>Annual Total</TableCell>
                           <TableCell className="text-right text-green-700">{formatCurrency(monthlyPL.totals.revenue)}</TableCell>
-                          <TableCell className="text-right text-red-700">{formatCurrency(monthlyPL.totals.expenses)}</TableCell>
+                          <TableCell className="text-right text-red-700">{formatCurrency(Math.abs(monthlyPL.totals.expenses))}</TableCell>
                           <TableCell className={`text-right ${monthlyPL.totals.netProfit >= 0 ? 'text-blue-700' : 'text-orange-600'}`}>
                             {formatCurrency(monthlyPL.totals.netProfit)}
                           </TableCell>
@@ -756,7 +756,7 @@ export default function Reports() {
                       </div>
                       <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                         <p className="text-xs text-red-700 font-medium uppercase tracking-wide">Total Expenses</p>
-                        <p className="text-2xl font-bold text-red-800 mt-1">{formatCurrency(monthlyPL.totals.expenses)}</p>
+                        <p className="text-2xl font-bold text-red-800 mt-1">{formatCurrency(Math.abs(monthlyPL.totals.expenses))}</p>
                       </div>
                       <div className={`rounded-lg border p-4 ${monthlyPL.totals.netProfit >= 0 ? 'border-blue-200 bg-blue-50' : 'border-orange-200 bg-orange-50'}`}>
                         <p className={`text-xs font-medium uppercase tracking-wide ${monthlyPL.totals.netProfit >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>Net Profit</p>
@@ -793,7 +793,7 @@ export default function Reports() {
                           <TableRow key={row.month}>
                             <TableCell>{row.label}</TableCell>
                             <TableCell className="text-right text-green-600">{formatCurrency(row.revenue)}</TableCell>
-                            <TableCell className="text-right text-red-600">{formatCurrency(row.expenses)}</TableCell>
+                            <TableCell className="text-right text-red-600">{formatCurrency(Math.abs(row.expenses))}</TableCell>
                             <TableCell className={`text-right font-medium ${row.netProfit >= 0 ? 'text-blue-700' : 'text-orange-600'}`}>
                               {formatCurrency(row.netProfit)}
                             </TableCell>
@@ -978,7 +978,7 @@ export default function Reports() {
                     <Card>
                       <CardContent className="p-4 text-center">
                         <div className="text-2xl font-bold text-green-600 mb-2">
-                          {formatCurrency(taxSummary.taxCollected)}
+                          {formatCurrency(Math.abs(taxSummary.taxCollected))}
                         </div>
                         <div className="text-sm text-gray-600">GST/HST Collected</div>
                         <div className="text-xs text-gray-500 mt-1">Tax charged to customers</div>
@@ -988,7 +988,7 @@ export default function Reports() {
                     <Card>
                       <CardContent className="p-4 text-center">
                         <div className="text-2xl font-bold text-blue-600 mb-2">
-                          {formatCurrency(taxSummary.taxPaid)}
+                          {formatCurrency(Math.abs(taxSummary.taxPaid))}
                         </div>
                         <div className="text-sm text-gray-600">GST/HST Paid</div>
                         <div className="text-xs text-gray-500 mt-1">Input Tax Credits</div>
@@ -1023,11 +1023,11 @@ export default function Reports() {
                           <div className="grid grid-cols-3 gap-4 text-sm">
                             <div>
                               <div className="text-gray-600">Collected</div>
-                              <div className="font-medium">{formatCurrency(province.collected)}</div>
+                              <div className="font-medium">{formatCurrency(Math.abs(province.collected))}</div>
                             </div>
                             <div>
                               <div className="text-gray-600">Paid</div>
-                              <div className="font-medium">{formatCurrency(province.paid)}</div>
+                              <div className="font-medium">{formatCurrency(Math.abs(province.paid))}</div>
                             </div>
                             <div>
                               <div className="text-gray-600">Net</div>
