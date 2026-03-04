@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import {
   TrendingUp,
@@ -22,7 +21,6 @@ import {
   Download,
   Mail,
   Calendar as CalendarIcon,
-  Building2,
   Receipt,
   Scale,
   BookOpen,
@@ -238,50 +236,70 @@ export default function Reports() {
   const [showTransactionDetail, setShowTransactionDetail] = useState(false);
 
   // Fetch reports data
-  const { data: profitLoss, isLoading: plLoading } = useQuery<ProfitLossReport>({
+  const { data: profitLossRaw, isLoading: plLoading, error: plError } = useQuery<any>({
     queryKey: [`/api/reports/profit-loss?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
+  const profitLoss: ProfitLossReport | undefined = profitLossRaw?.data || profitLossRaw;
 
-  const { data: balanceSheet, isLoading: bsLoading } = useQuery<BalanceSheetReport>({
+  const { data: balanceSheetRaw, isLoading: bsLoading, error: bsError } = useQuery<any>({
     queryKey: [`/api/reports/balance-sheet?asOf=${dateRange.to.toISOString()}`],
   });
+  const balanceSheet: BalanceSheetReport | undefined = balanceSheetRaw?.data || balanceSheetRaw;
 
-  const { data: taxSummary, isLoading: taxLoading } = useQuery<TaxSummaryReport>({
+  const { data: taxSummaryRaw, isLoading: taxLoading, error: taxError } = useQuery<any>({
     queryKey: [`/api/reports/tax-summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
+  const taxSummary: TaxSummaryReport | undefined = taxSummaryRaw?.data || taxSummaryRaw;
 
-  const { data: trialBalance, isLoading: tbLoading } = useQuery<TrialBalanceReport>({
+  const { data: trialBalanceRaw, isLoading: tbLoading, error: tbError } = useQuery<any>({
     queryKey: [`/api/reports/trial-balance?asOf=${dateRange.to.toISOString()}`],
   });
+  const trialBalance: TrialBalanceReport | undefined = trialBalanceRaw?.data || trialBalanceRaw;
 
-  const { data: generalLedger, isLoading: glLoading } = useQuery<GeneralLedgerReport>({
+  const { data: generalLedgerRaw, isLoading: glLoading, error: glError } = useQuery<any>({
     queryKey: [`/api/reports/general-ledger?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
+  const generalLedger: GeneralLedgerReport | undefined = generalLedgerRaw?.data || generalLedgerRaw;
 
-  const { data: transfersSummary, isLoading: transfersLoading } = useQuery<TransfersSummaryReport>({
+  const { data: transfersSummaryRaw, isLoading: transfersLoading, error: transfersError } = useQuery<any>({
     queryKey: [`/api/reports/transfers-summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
+  const transfersSummary: TransfersSummaryReport | undefined = transfersSummaryRaw?.data || transfersSummaryRaw;
 
-  const { data: ownerEquitySummary, isLoading: ownerEquityLoading } = useQuery<OwnerEquitySummaryReport>({
+  const { data: ownerEquitySummaryRaw, isLoading: ownerEquityLoading, error: ownerEquityError } = useQuery<any>({
     queryKey: [`/api/reports/owner-equity-summary?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
+  const ownerEquitySummary: OwnerEquitySummaryReport | undefined = ownerEquitySummaryRaw?.data || ownerEquitySummaryRaw;
 
-  const { data: t2125Report, isLoading: t2125Loading } = useQuery<T2125Report>({
+  const { data: t2125ReportRaw, isLoading: t2125Loading, error: t2125Error } = useQuery<any>({
     queryKey: [`/api/reports/t2125?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`],
   });
+  const t2125Report: T2125Report | undefined = t2125ReportRaw?.data || t2125ReportRaw;
 
   const [plView, setPlView] = useState<'summary' | 'monthly' | 'annual'>('summary');
   const plYear = dateRange.from.getFullYear();
 
-  const { data: monthlyPL, isLoading: monthlyPLLoading } = useQuery<MonthlyPLReport>({
+  const { data: monthlyPLRaw, isLoading: monthlyPLLoading } = useQuery<any>({
     queryKey: [`/api/reports/profit-loss/monthly?year=${plYear}`],
     enabled: plView === 'monthly' || plView === 'annual',
   });
+  const monthlyPL: MonthlyPLReport | undefined = monthlyPLRaw?.data || monthlyPLRaw;
 
   // Get all transactions for category drill-down
-  const { data: transactions } = useQuery<Transaction[]>({
+  const { data: transactionsRaw } = useQuery<any>({
     queryKey: ['/api/transactions'],
   });
+  const transactions: Transaction[] = Array.isArray(transactionsRaw)
+    ? transactionsRaw
+    : Array.isArray(transactionsRaw?.data?.transactions)
+      ? transactionsRaw.data.transactions
+      : Array.isArray(transactionsRaw?.transactions)
+        ? transactionsRaw.transactions
+        : Array.isArray(transactionsRaw?.data)
+          ? transactionsRaw.data
+          : [];
+
+  const reportsError = plError || bsError || taxError || tbError || glError || transfersError || ownerEquityError || t2125Error;
 
   const formatCurrency = (amount: number) => {
     // Handle NaN, null, undefined values
@@ -431,6 +449,14 @@ export default function Reports() {
           )}
         </div>
       </div>
+
+      {reportsError && (
+        <Card className="border-red-200">
+          <CardContent className="py-4 text-sm text-red-700">
+            Some report sections failed to load. Try refreshing or changing the date range.
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -593,7 +619,20 @@ export default function Reports() {
                           <TableCell></TableCell>
                         </TableRow>
                         {profitLoss.revenue.categories.map((category, index) => (
-                          <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
+                          <TableRow
+                            key={index}
+                            className="hover:bg-gray-50 cursor-pointer group"
+                            onClick={() => handleCategoryClick(category.category)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleCategoryClick(category.category);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Open transactions for ${category.category.replace(/_/g, " ")}`}
+                          >
                             <TableCell className="pl-6 group-hover:text-blue-600 max-w-0 w-full">
                               <div className="flex items-center min-w-0">
                                 <span className="truncate capitalize" title={category.category.replace(/_/g, ' ')}>{category.category.replace(/_/g, ' ')}</span>
@@ -613,7 +652,20 @@ export default function Reports() {
                           <TableCell></TableCell>
                         </TableRow>
                         {profitLoss.expenses.categories.map((category, index) => (
-                          <TableRow key={index} className="hover:bg-gray-50 cursor-pointer group" onClick={() => handleCategoryClick(category.category)}>
+                          <TableRow
+                            key={index}
+                            className="hover:bg-gray-50 cursor-pointer group"
+                            onClick={() => handleCategoryClick(category.category)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleCategoryClick(category.category);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Open transactions for ${category.category.replace(/_/g, " ")}`}
+                          >
                             <TableCell className="pl-6 group-hover:text-blue-600 max-w-0 w-full">
                               <div className="flex items-center min-w-0">
                                 <span className="truncate capitalize" title={category.category.replace(/_/g, ' ')}>{category.category.replace(/_/g, ' ')}</span>
@@ -697,7 +749,7 @@ export default function Reports() {
                 ) : monthlyPL ? (
                   <div className="space-y-6">
                     <p className="text-sm text-gray-500">Annual summary for {monthlyPL.year}</p>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                         <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Total Revenue</p>
                         <p className="text-2xl font-bold text-green-800 mt-1">{formatCurrency(monthlyPL.totals.revenue)}</p>
@@ -862,7 +914,7 @@ export default function Reports() {
                         </div>
                         <div className="flex justify-between py-1 pl-4">
                           <span className="text-gray-600">Current Year Earnings</span>
-                          <span>{formatCurrency(balanceSheet.equity.currentYearEarnings || 0)}</span>
+                          <span>{formatCurrency((balanceSheet.equity as any).currentEarnings || 0)}</span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
                           <span>Total Equity</span>
@@ -1389,7 +1441,7 @@ export default function Reports() {
                 <div className="space-y-6">
 
                   {/* Summary cards */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                       <p className="text-xs text-green-700 font-medium uppercase tracking-wide">Gross Income</p>
                       <p className="text-2xl font-bold text-green-800 mt-1">

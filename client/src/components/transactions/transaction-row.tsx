@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent, type KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -110,6 +110,16 @@ export function TransactionRow({
     onOpenDetails(transaction);
   };
 
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (!onOpenDetails) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button, input, select, textarea, [role="button"], [data-no-row-open="true"]')) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpenDetails(transaction);
+    }
+  };
+
   const getTxnKind = () => {
     if (transaction.txnKind) return transaction.txnKind;
     if (transaction.isTransfer) return 'transfer';
@@ -178,6 +188,9 @@ export function TransactionRow({
         ${transaction.needsReview ? 'border-l-4 border-l-orange-400' : ''}
       `}
         onClick={handleRowClick}
+        onKeyDown={handleRowKeyDown}
+        tabIndex={0}
+        aria-label={`Transaction row ${transaction.vendor || transaction.description || 'Unknown'} ${transaction.amount}`}
       >
       {/* Selection Checkbox */}
       <td className="w-12 p-4">

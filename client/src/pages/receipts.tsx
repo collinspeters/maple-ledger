@@ -10,8 +10,6 @@ import ReceiptViewer from "@/components/receipts/receipt-viewer";
 import ReceiptMatchSuggestions from "@/components/receipts/receipt-match-suggestions";
 import {
   Receipt as ReceiptIcon,
-  Upload,
-  Search,
   Calendar,
   DollarSign,
   Building2,
@@ -22,7 +20,6 @@ import {
   Eye,
   Link as LinkIcon,
   X,
-  Filter
 } from "lucide-react";
 
 type Receipt = {
@@ -66,27 +63,52 @@ export default function Receipts() {
   const [viewerOpen, setViewerOpen] = useState(false);
 
   // Fetch all receipts
-  const { data: receipts = [], isLoading } = useQuery<Receipt[]>({
+  const { data: receiptsRaw = [], isLoading, error: receiptsError } = useQuery<any>({
     queryKey: ["/api/receipts"],
   });
+  const receipts: Receipt[] = Array.isArray(receiptsRaw)
+    ? receiptsRaw
+    : Array.isArray(receiptsRaw?.data?.items)
+      ? receiptsRaw.data.items
+      : Array.isArray(receiptsRaw?.items)
+        ? receiptsRaw.items
+        : Array.isArray(receiptsRaw?.data)
+          ? receiptsRaw.data
+          : [];
 
   // Fetch unmatched receipts with suggestions
-  const { data: unmatchedReceipts = [] } = useQuery<Receipt[]>({
+  const { data: unmatchedReceiptsRaw = [], error: unmatchedReceiptsError } = useQuery<any>({
     queryKey: ["/api/receipts/unmatched"],
   });
+  const unmatchedReceipts: Receipt[] = Array.isArray(unmatchedReceiptsRaw)
+    ? unmatchedReceiptsRaw
+    : Array.isArray(unmatchedReceiptsRaw?.data?.items)
+      ? unmatchedReceiptsRaw.data.items
+      : Array.isArray(unmatchedReceiptsRaw?.items)
+        ? unmatchedReceiptsRaw.items
+        : Array.isArray(unmatchedReceiptsRaw?.data)
+          ? unmatchedReceiptsRaw.data
+          : [];
 
   // Fetch matched transaction for selected receipt
-  const { data: matchedTransaction } = useQuery<Transaction>({
+  const { data: matchedTransactionRaw } = useQuery<any>({
     queryKey: ["/api/transactions", selectedReceipt?.matchedTransactionId],
     enabled: !!selectedReceipt?.matchedTransactionId,
   });
+  const matchedTransaction: Transaction | undefined = matchedTransactionRaw?.data || matchedTransactionRaw;
 
   // Delete receipt mutation
   const deleteMutation = useMutation({
     mutationFn: (receiptId: string) =>
-      fetch(`/api/receipts/${receiptId}`, { 
+      fetch(`/api/receipts/${receiptId}`, {
         method: "DELETE",
-        credentials: "include" 
+        credentials: "include"
+      }).then(async (res) => {
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload?.message || "Delete failed");
+        }
+        return res;
       }),
     onSuccess: () => {
       toast({
@@ -194,22 +216,30 @@ export default function Receipts() {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Receipts</h1>
           <p className="text-gray-600 mt-2">
             Upload and manage your business receipts with smart matching
           </p>
         </div>
-        <div className="upload" data-testid="upload">
+        <div className="upload self-start sm:self-auto" data-testid="upload">
           <ReceiptUpload onUploadComplete={() => {
           queryClient.invalidateQueries({ queryKey: ["/api/receipts"] });
           queryClient.invalidateQueries({ queryKey: ["/api/receipts/unmatched"] });
         }} />
         </div>
       </div>
+
+      {(receiptsError || unmatchedReceiptsError) && (
+        <Card className="border-red-200">
+          <CardContent className="py-4 text-sm text-red-700">
+            Some receipt data failed to load. Try refreshing this page.
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -283,7 +313,7 @@ export default function Receipts() {
 
       {/* Receipts Tabs */}
       <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="w-full overflow-x-auto whitespace-nowrap flex sm:grid sm:grid-cols-5">
           <TabsTrigger value="all">All Receipts ({receipts.length})</TabsTrigger>
           <TabsTrigger value="matched">Matched ({matchedReceipts.length})</TabsTrigger>
           <TabsTrigger value="processed">Processed ({processedReceipts.length})</TabsTrigger>
@@ -498,6 +528,7 @@ function ReceiptList({
                     size="sm"
                     onClick={() => onReceiptClick(receipt)}
                     className="text-blue-600 hover:text-blue-700"
+                    aria-label={`View receipt ${receipt.fileName}`}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     View
@@ -507,6 +538,7 @@ function ReceiptList({
                     size="sm"
                     onClick={() => onDelete(receipt.id)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    aria-label={`Delete receipt ${receipt.fileName}`}
                   >
                     <X className="h-4 w-4 mr-1" />
                     Delete
