@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle, CheckCircle2, MessageSquare } from "lucide-react";
 
 type ReviewItem = {
   id: string;
@@ -30,21 +31,32 @@ export default function ReviewPage() {
   const [message, setMessage] = useState("");
   const [lastAction, setLastAction] = useState<{ id: string; action: "resolved" | "skipped" } | null>(null);
 
-  const { data } = useQuery<{ items: ReviewItem[]; data?: { items: ReviewItem[] } }>({
+  const { data, isLoading, error } = useQuery<{ items: ReviewItem[]; data?: { items: ReviewItem[] } }>({
     queryKey: ["/api/review/items"],
   });
   const items = data?.items || data?.data?.items || [];
+
+  useEffect(() => {
+    if (!items.length) {
+      setSelectedId(null);
+      return;
+    }
+    if (!selectedId || !items.some((i) => i.id === selectedId)) {
+      setSelectedId(items[0].id);
+    }
+  }, [items, selectedId]);
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) || items[0] || null,
     [items, selectedId]
   );
 
-  const { data: messagesData } = useQuery<{ messages: ReviewMessage[]; data?: { messages: ReviewMessage[] } }>({
+  const { data: messagesData, isLoading: messagesLoading } = useQuery<{ messages: ReviewMessage[]; data?: { messages: ReviewMessage[] } }>({
     queryKey: selected ? [`/api/review/items/${selected.id}/messages`] : ["/api/review/items/messages/empty"],
     enabled: Boolean(selected),
   });
   const messages = messagesData?.messages || messagesData?.data?.messages || [];
+  const selectedIndex = selected ? items.findIndex((item) => item.id === selected.id) : -1;
 
   const getNextItemId = (currentId: string): string | null => {
     const idx = items.findIndex((i) => i.id === currentId);
@@ -64,7 +76,11 @@ export default function ReviewPage() {
         setSelectedId(getNextItemId(selected.id));
       }
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+      toast({ title: "Resolved", description: "Item resolved and moved to the next one." });
     },
+    onError: (error: any) => {
+      toast({ title: "Resolve failed", description: error?.message || "Please try again.", variant: "destructive" });
+    }
   });
 
   const skipMutation = useMutation({
@@ -75,7 +91,11 @@ export default function ReviewPage() {
         setSelectedId(getNextItemId(selected.id));
       }
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+      toast({ title: "Skipped", description: "Item skipped and moved to the next one." });
     },
+    onError: (error: any) => {
+      toast({ title: "Skip failed", description: error?.message || "Please try again.", variant: "destructive" });
+    }
   });
 
   const undoMutation = useMutation({
@@ -122,6 +142,13 @@ export default function ReviewPage() {
         <p className="text-sm text-gray-600">Resolve ambiguous items quickly and keep books finalized.</p>
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          Failed to load review items. Refresh and try again.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -131,7 +158,13 @@ export default function ReviewPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 max-h-[70vh] overflow-y-auto">
-            {items.length === 0 && <p className="text-sm text-gray-500">No open review items.</p>}
+            {isLoading && <p className="text-sm text-gray-500">Loading queue...</p>}
+            {!isLoading && items.length === 0 && (
+              <div className="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                All caught up. No open review items.
+              </div>
+            )}
             {items.map((item) => (
               <button
                 key={item.id}
@@ -141,7 +174,15 @@ export default function ReviewPage() {
                 onClick={() => setSelectedId(item.id)}
               >
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline">{item.kind.replace("_", " ")}</Badge>
+                  <Badge variant="outline">
+                    {item.kind === "txn_kind"
+                      ? "Kind"
+                      : item.kind === "receipt_match"
+                        ? "Receipt Match"
+                        : item.kind === "reconciliation"
+                          ? "Reconciliation"
+                          : "Category"}
+                  </Badge>
                   <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-sm mt-2 line-clamp-2">{item.prompt}</p>
@@ -152,7 +193,9 @@ export default function ReviewPage() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>{selected ? "Review Item" : "Select an item"}</CardTitle>
+            <CardTitle>
+              {selected ? `Review Item ${selectedIndex + 1} of ${items.length}` : "Select an item"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {!selected && <p className="text-sm text-gray-500">Choose an item from the queue.</p>}
@@ -172,7 +215,7 @@ export default function ReviewPage() {
                         onClick={() => resolveMutation.mutate({ id: selected.id, selectedOption: opt.value })}
                         disabled={resolveMutation.isPending}
                       >
-                        {opt.label} (Apply & Next)
+                        {opt.label}
                       </Button>
                     ))}
                   </div>
@@ -180,7 +223,13 @@ export default function ReviewPage() {
 
                 <div className="space-y-2">
                   <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-3 bg-white">
-                    {messages.length === 0 && <p className="text-sm text-gray-500">No messages yet.</p>}
+                    {messagesLoading && <p className="text-sm text-gray-500">Loading messages...</p>}
+                    {!messagesLoading && messages.length === 0 && (
+                      <p className="text-sm text-gray-500 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        No messages yet.
+                      </p>
+                    )}
                     {messages.map((m) => (
                       <div key={m.id} className="text-sm">
                         <span className="font-medium capitalize">{m.role}:</span> {m.content}
@@ -219,6 +268,7 @@ export default function ReviewPage() {
                       Undo last
                     </Button>
                   </div>
+                  <p className="text-xs text-gray-500">Tip: choose an option chip for fastest Apply & Next flow.</p>
                 </div>
               </div>
             )}

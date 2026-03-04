@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 
 type ReconAccount = {
   bank_account_id: string;
@@ -33,19 +34,20 @@ export default function ReconciliationPage() {
   const [endingBalance, setEndingBalance] = useState("");
   const [statementEndDate, setStatementEndDate] = useState("");
 
-  const { data: accountsData } = useQuery<{ accounts: ReconAccount[] }>({
+  const { data: accountsData, isLoading: accountsLoading, error: accountsError } = useQuery<{ accounts: ReconAccount[]; data?: { accounts: ReconAccount[] } }>({
     queryKey: ["/api/reconciliation/accounts"],
   });
-  const accounts = useMemo(() => accountsData?.accounts || [], [accountsData]);
+  const accounts = useMemo(() => accountsData?.accounts || accountsData?.data?.accounts || [], [accountsData]);
 
   const activeQueryKey = selectedAccount
     ? [`/api/reconciliation/${selectedAccount}/${selectedMonth}`]
     : ["/api/reconciliation/empty"];
 
-  const { data: reconData, isLoading } = useQuery<ReconResponse>({
+  const { data: reconDataRaw, isLoading, error: reconError } = useQuery<ReconResponse | { data: ReconResponse }>({
     queryKey: activeQueryKey,
     enabled: Boolean(selectedAccount),
   });
+  const reconData: ReconResponse | undefined = (reconDataRaw as any)?.data || (reconDataRaw as any);
 
   useEffect(() => {
     if (!reconData?.statement) return;
@@ -56,6 +58,11 @@ export default function ReconciliationPage() {
       setEndingBalance(String(reconData.statement.endingBalance));
     }
   }, [reconData, statementEndDate, endingBalance]);
+
+  useEffect(() => {
+    setEndingBalance("");
+    setStatementEndDate("");
+  }, [selectedAccount, selectedMonth]);
 
   const saveStatement = useMutation({
     mutationFn: async () =>
@@ -99,11 +106,38 @@ export default function ReconciliationPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
     },
+    onError: (error: any) => {
+      toast({ title: "Update failed", description: error?.message || "Could not update clear status", variant: "destructive" });
+    },
   });
+
+  const handleFinish = () => {
+    toast({
+      title: "Reconciliation complete",
+      description: "This statement is balanced and ready to close.",
+    });
+  };
+
+  const difference = reconData?.difference ?? 0;
+  const isBalanced = Math.abs(difference) < 0.005;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">Reconciliation</h1>
+
+      {accountsError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          Failed to load bank accounts for reconciliation.
+        </div>
+      )}
+
+      {reconError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          Failed to load reconciliation data for this account/month.
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -117,8 +151,11 @@ export default function ReconciliationPage() {
               className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={selectedAccount}
               onChange={(e) => setSelectedAccount(e.target.value)}
+              disabled={accountsLoading || accounts.length === 0}
             >
-              <option value="">Select account</option>
+              <option value="">
+                {accountsLoading ? "Loading accounts..." : accounts.length === 0 ? "No bank accounts found" : "Select account"}
+              </option>
               {accounts.map((a) => (
                 <option key={a.bank_account_id} value={a.bank_account_id}>{a.name}</option>
               ))}
@@ -147,9 +184,25 @@ export default function ReconciliationPage() {
             <Button variant="outline" onClick={() => autoClear.mutate()} disabled={!selectedAccount || autoClear.isPending}>
               Auto-clear
             </Button>
+            <Button
+              variant="ghost"
+              onClick={() => queryClient.invalidateQueries({ queryKey: activeQueryKey })}
+              disabled={!selectedAccount}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {accounts.length === 0 && !accountsLoading && (
+        <Card>
+          <CardContent className="py-8 text-sm text-gray-600">
+            Connect a bank account first to run reconciliation.
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -169,11 +222,11 @@ export default function ReconciliationPage() {
                 </div>
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-gray-600">Statement difference</p>
-                  <p className={`text-lg font-semibold ${Math.abs(reconData?.difference ?? 0) < 0.005 ? "text-green-700" : "text-red-700"}`}>
-                    ${(reconData?.difference ?? 0).toFixed(2)}
+                  <p className={`text-lg font-semibold ${isBalanced ? "text-green-700" : "text-red-700"}`}>
+                    ${difference.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {Math.abs(reconData?.difference ?? 0) < 0.005 ? "Balanced" : "Not balanced"}
+                    {isBalanced ? "Balanced" : "Not balanced"}
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
@@ -183,7 +236,17 @@ export default function ReconciliationPage() {
               </div>
 
               <div className="space-y-2">
-                {Math.abs(reconData?.difference ?? 0) >= 0.005 && (
+                {isBalanced ? (
+                  <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Reconciliation is balanced.
+                    </div>
+                    <Button size="sm" onClick={handleFinish}>
+                      Finish reconciliation
+                    </Button>
+                  </div>
+                ) : (
                   <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                     Reconciliation is not balanced. Review uncleared transactions or update statement ending balance.
                   </div>
