@@ -63,13 +63,20 @@ export default function TransactionReviewQueue() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: transactions, isLoading } = useQuery<Transaction[]>({
+  const { data: transactionsResponse, isLoading } = useQuery<any>({
     queryKey: ["/api/transactions/review-queue"],
   });
-  const { data: reviewItemsData } = useQuery<{ items: ReviewItem[] }>({
+  const transactions: Transaction[] = Array.isArray(transactionsResponse)
+    ? transactionsResponse
+    : Array.isArray(transactionsResponse?.data?.items)
+      ? transactionsResponse.data.items
+      : Array.isArray(transactionsResponse?.items)
+        ? transactionsResponse.items
+        : [];
+  const { data: reviewItemsData } = useQuery<{ items: ReviewItem[]; data?: { items: ReviewItem[] } }>({
     queryKey: ["/api/review/items"],
   });
-  const reviewItems = reviewItemsData?.items || [];
+  const reviewItems = reviewItemsData?.items || reviewItemsData?.data?.items || [];
 
   const approveMutation = useMutation({
     mutationFn: async (transactionIds: string[]) => {

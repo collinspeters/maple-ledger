@@ -26,10 +26,10 @@ export default function AccessPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"accountant" | "bookkeeper">("accountant");
 
-  const { data, isLoading } = useQuery<{ items: Collaborator[] }>({
+  const { data, isLoading } = useQuery<{ items: Collaborator[]; data?: { items: Collaborator[] } }>({
     queryKey: ["/api/access/collaborators"],
   });
-  const collaborators = useMemo(() => data?.items || [], [data]);
+  const collaborators = useMemo(() => data?.items || data?.data?.items || [], [data]);
 
   const inviteMutation = useMutation({
     mutationFn: async () =>

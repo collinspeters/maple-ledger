@@ -25,13 +25,27 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const [location] = useLocation();
 
-  const { data: reviewQueue = [] } = useQuery<any[]>({
+  const { data: reviewQueueResponse = [] } = useQuery<any>({
     queryKey: ["/api/transactions/review-queue"],
   });
+  const reviewQueue = Array.isArray(reviewQueueResponse)
+    ? reviewQueueResponse
+    : Array.isArray(reviewQueueResponse?.data?.items)
+      ? reviewQueueResponse.data.items
+      : Array.isArray(reviewQueueResponse?.items)
+        ? reviewQueueResponse.items
+        : [];
 
-  const { data: unmatchedReceipts = [] } = useQuery<any[]>({
+  const { data: unmatchedReceiptsResponse = [] } = useQuery<any>({
     queryKey: ["/api/receipts/unmatched"],
   });
+  const unmatchedReceipts = Array.isArray(unmatchedReceiptsResponse)
+    ? unmatchedReceiptsResponse
+    : Array.isArray(unmatchedReceiptsResponse?.data?.items)
+      ? unmatchedReceiptsResponse.data.items
+      : Array.isArray(unmatchedReceiptsResponse?.items)
+        ? unmatchedReceiptsResponse.items
+        : [];
 
   const txBadge = reviewQueue.length > 0 ? String(reviewQueue.length) : undefined;
   const receiptBadge = unmatchedReceipts.length > 0 ? String(unmatchedReceipts.length) : undefined;

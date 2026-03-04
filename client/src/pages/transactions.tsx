@@ -5,17 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { TransactionFiltersComponent, TransactionFilters } from "@/components/transactions/transaction-filters";
 import { BulkActions, BulkAction } from "@/components/transactions/bulk-actions";
 import { TransactionRow, Transaction } from "@/components/transactions/transaction-row";
 import { TransactionDrawer } from "@/components/transactions/transaction-drawer";
 import BulkCategorizeButton from "@/components/transactions/bulk-categorize-button";
 import { useToast } from "@/hooks/use-toast";
-type DateRange = {
-  from?: Date;
-  to?: Date;
-} | undefined;
+import { useLocation } from "wouter";
 import { 
   Plus, 
   Download, 
@@ -27,13 +23,13 @@ import {
   FileText,
   Loader2,
   CheckCircle2,
-  AlertCircle
 } from 'lucide-react';
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Transactions() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   // State management
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
@@ -59,17 +55,38 @@ export default function Transactions() {
   // Transactions component now working properly
 
   // Data fetching
-  const { data: transactions = [], isLoading, error } = useQuery<Transaction[]>({
+  const { data: transactionsResponse = [], isLoading, error } = useQuery<any>({
     queryKey: ["/api/transactions"],
   });
+  const transactions: Transaction[] = useMemo(() => {
+    if (Array.isArray(transactionsResponse)) return transactionsResponse as Transaction[];
+    if (Array.isArray(transactionsResponse?.data?.transactions)) return transactionsResponse.data.transactions as Transaction[];
+    if (Array.isArray(transactionsResponse?.transactions)) return transactionsResponse.transactions as Transaction[];
+    if (Array.isArray(transactionsResponse?.data)) return transactionsResponse.data as Transaction[];
+    return [];
+  }, [transactionsResponse]);
 
-  const { data: bankConnections = [] } = useQuery<any[]>({
+  const { data: bankConnectionsResponse = [] } = useQuery<any>({
     queryKey: ["/api/bank-connections"],
   });
+  const bankConnections: any[] = useMemo(() => {
+    if (Array.isArray(bankConnectionsResponse)) return bankConnectionsResponse;
+    if (Array.isArray(bankConnectionsResponse?.data?.connections)) return bankConnectionsResponse.data.connections;
+    if (Array.isArray(bankConnectionsResponse?.connections)) return bankConnectionsResponse.connections;
+    if (Array.isArray(bankConnectionsResponse?.data)) return bankConnectionsResponse.data;
+    return [];
+  }, [bankConnectionsResponse]);
 
-  const { data: chartOfAccounts = [] } = useQuery<any[]>({
+  const { data: chartOfAccountsResponse = [] } = useQuery<any>({
     queryKey: ["/api/chart-of-accounts"],
   });
+  const chartOfAccounts: any[] = useMemo(() => {
+    if (Array.isArray(chartOfAccountsResponse)) return chartOfAccountsResponse;
+    if (Array.isArray(chartOfAccountsResponse?.data?.accounts)) return chartOfAccountsResponse.data.accounts;
+    if (Array.isArray(chartOfAccountsResponse?.accounts)) return chartOfAccountsResponse.accounts;
+    if (Array.isArray(chartOfAccountsResponse?.data)) return chartOfAccountsResponse.data;
+    return [];
+  }, [chartOfAccountsResponse]);
 
   // Generate categories from existing transactions
   const categories = useMemo(() => {
@@ -186,11 +203,6 @@ export default function Transactions() {
       return true;
     });
 
-    console.log('🎯 After filtering:', { 
-      filtered: filtered.length, 
-      sampleTransaction: filtered[0] || 'No filtered transactions' 
-    });
-
     // Sort transactions
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -249,10 +261,11 @@ export default function Transactions() {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
-      setLastSyncResult({ added: data.totalAdded ?? 0, skipped: data.totalDuplicatesSkipped ?? 0 });
+      const payload = data?.data || data;
+      setLastSyncResult({ added: payload?.totalAdded ?? 0, skipped: payload?.totalDuplicatesSkipped ?? 0 });
       toast({
         title: 'Sync complete',
-        description: data.message ?? `${data.totalAdded} new transactions imported`,
+        description: payload?.message ?? `${payload?.totalAdded ?? 0} new transactions imported`,
       });
     },
     onError: () => {
@@ -445,7 +458,7 @@ export default function Transactions() {
         <div>
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground mt-1">
-            Showing {startIndex + 1}-{Math.min(endIndex, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length} transactions
+            Showing {filteredAndSortedTransactions.length === 0 ? 0 : startIndex + 1}-{Math.min(endIndex, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length} transactions
             {filteredAndSortedTransactions.length !== transactions.length && ` (${transactions.length} total)`}
           </p>
         </div>
@@ -473,11 +486,11 @@ export default function Transactions() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => navigate("/reports")}>
             <BarChart3 className="h-4 w-4 mr-2" />
             Reports
           </Button>
-          <Button data-testid="add-transaction">
+          <Button data-testid="add-transaction" onClick={() => navigate("/")}>
             <Plus className="h-4 w-4 mr-2" />
             Add Transaction
           </Button>
