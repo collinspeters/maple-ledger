@@ -1195,6 +1195,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content: `Selected option: ${selectedOption}`,
         });
       }
+
+      // Apply structured side-effects for known review item types/options.
+      if (item.entityType === "transaction" && (item.kind === "txn_kind" || item.kind === "category")) {
+        const transaction = await storage.getTransaction(item.entityId);
+        if (!transaction || transaction.userId !== ownerUserId) {
+          return res.status(404).json({ message: "Transaction not found for review item" });
+        }
+
+        const updates: Record<string, any> = {};
+
+        if (item.kind === "txn_kind" && selectedOption) {
+          if (selectedOption === "owner_draw" || selectedOption === "owner_contribution") {
+            const flags = mapTxnKindToLegacyFlags(
+              "equity",
+              transaction.isExpense ?? true,
+              transaction.isTransfer ?? false
+            );
+            updates.txnKind = "equity";
+            updates.equityType = selectedOption;
+            updates.isExpense = flags.isExpense;
+            updates.isTransfer = flags.isTransfer;
+          } else if (["expense", "income", "transfer", "equity"].includes(selectedOption)) {
+            const flags = mapTxnKindToLegacyFlags(
+              selectedOption,
+              transaction.isExpense ?? true,
+              transaction.isTransfer ?? false
+            );
+            updates.txnKind = selectedOption;
+            updates.isExpense = flags.isExpense;
+            updates.isTransfer = flags.isTransfer;
+            if (selectedOption !== "equity") {
+              updates.equityType = null;
+            }
+          }
+        }
+
+        if (item.kind === "category" && selectedOption) {
+          if (selectedOption === "accept_ai") {
+            if (transaction.aiCategory) {
+              updates.category = transaction.aiCategory;
+            }
+          } else if (!["choose_other", "mark_reviewed", "edit_classification"].includes(selectedOption)) {
+            // Treat option as an explicit category value.
+            updates.category = selectedOption;
+          }
+        }
+
+        updates.needsReview = false;
+        updates.isReviewed = true;
+        await storage.updateTransaction(transaction.id, updates);
+      }
+
+      if (item.entityType === "receipt" && item.kind === "receipt_match" && selectedOption === "confirm") {
+        const receipt = await storage.getReceiptById(item.entityId);
+        if (receipt && receipt.userId === ownerUserId && !receipt.isMatched) {
+          const modelSuggestion = (item.modelSuggestionJson as any) || {};
+          const suggestions = Array.isArray(modelSuggestion?.suggestions) ? modelSuggestion.suggestions : [];
+          const bestMatch = suggestions[0];
+          if (bestMatch?.id) {
+            const bestMatchTransaction = await storage.getTransaction(String(bestMatch.id));
+            if (!bestMatchTransaction || bestMatchTransaction.userId !== ownerUserId) {
+              return res.status(400).json({ message: "Suggested match is invalid for this account" });
+            }
+            await storage.updateReceipt(receipt.id, {
+              isMatched: true,
+              matchedTransactionId: String(bestMatch.id),
+              matchConfidence: bestMatch.matchScore ? String(Number(bestMatch.matchScore) / 100) : "0.9",
+              status: "matched",
+              updatedAt: new Date(),
+            });
+            await storage.updateTransaction(String(bestMatch.id), {
+              receiptId: receipt.id,
+              receiptAttached: true,
+              receiptSource: "upload",
+              auditReady: true,
+              updatedAt: new Date(),
+            });
+          }
+        }
+      }
+
       const updated = await storage.updateReviewItem(item.id, {
         status: "resolved",
         resolvedAt: new Date(),
@@ -1204,6 +1285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         kind: item.kind,
         entityType: item.entityType,
         entityId: item.entityId,
+        selectedOption,
       });
       res.json({ ok: true, data: { item: updated }, item: updated });
     } catch (error) {
