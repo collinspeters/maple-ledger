@@ -24,6 +24,14 @@ type ReviewMessage = {
   createdAt: string;
 };
 
+type ResolveResponse = {
+  ok: boolean;
+  item?: ReviewItem;
+  data?: { item?: ReviewItem };
+  requires_follow_up?: boolean;
+  follow_up_message?: string | null;
+};
+
 export default function ReviewPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,7 +78,18 @@ export default function ReviewPage() {
         method: "POST",
         body: JSON.stringify(selectedOption ? { selectedOption } : {}),
       }),
-    onSuccess: () => {
+    onSuccess: (payload: ResolveResponse) => {
+      if (payload?.requires_follow_up) {
+        toast({
+          title: "Action needed",
+          description: payload.follow_up_message || "Finish the related step, then resolve this item.",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+        if (selected) {
+          queryClient.invalidateQueries({ queryKey: [`/api/review/items/${selected.id}/messages`] });
+        }
+        return;
+      }
       if (selected) {
         setLastAction({ id: selected.id, action: "resolved" });
         setSelectedId(getNextItemId(selected.id));

@@ -1196,6 +1196,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      let requiresFollowUp = false;
+      let followUpMessage: string | null = null;
+
       // Apply structured side-effects for known review item types/options.
       if (item.entityType === "transaction" && (item.kind === "txn_kind" || item.kind === "category")) {
         const transaction = await storage.getTransaction(item.entityId);
@@ -1239,17 +1242,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else if (!["choose_other", "mark_reviewed", "edit_classification"].includes(selectedOption)) {
             // Treat option as an explicit category value.
             updates.category = selectedOption;
+          } else if (selectedOption === "choose_other" || selectedOption === "edit_classification") {
+            requiresFollowUp = true;
+            followUpMessage = "Pick a specific category in Transactions, then resolve this review item.";
           }
         }
 
-        updates.needsReview = false;
-        updates.isReviewed = true;
-        await storage.updateTransaction(transaction.id, updates);
+        if (!requiresFollowUp) {
+          updates.needsReview = false;
+          updates.isReviewed = true;
+          await storage.updateTransaction(transaction.id, updates);
+        }
       }
 
-      if (item.entityType === "receipt" && item.kind === "receipt_match" && selectedOption === "confirm") {
+      if (item.entityType === "receipt" && item.kind === "receipt_match") {
         const receipt = await storage.getReceiptById(item.entityId);
-        if (receipt && receipt.userId === ownerUserId && !receipt.isMatched) {
+        if (selectedOption === "manual_link" || selectedOption === "create_transaction") {
+          requiresFollowUp = true;
+          followUpMessage =
+            selectedOption === "manual_link"
+              ? "Open Receipts and link this receipt manually to a transaction."
+              : "Create a matching transaction first, then link this receipt.";
+        } else if (selectedOption === "confirm" && receipt && receipt.userId === ownerUserId && !receipt.isMatched) {
           const modelSuggestion = (item.modelSuggestionJson as any) || {};
           const suggestions = Array.isArray(modelSuggestion?.suggestions) ? modelSuggestion.suggestions : [];
           const bestMatch = suggestions[0];
@@ -1274,6 +1288,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         }
+      }
+
+      if (item.kind === "reconciliation" && (selectedOption === "recheck_uncleared" || selectedOption === "adjust_statement")) {
+        requiresFollowUp = true;
+        followUpMessage =
+          selectedOption === "recheck_uncleared"
+            ? "Review uncleared transactions in Reconciliation, then resolve."
+            : "Update the statement balance/end date in Reconciliation, then resolve.";
+      }
+
+      if (requiresFollowUp) {
+        if (followUpMessage) {
+          await storage.createReviewMessage({
+            reviewItemId: item.id,
+            role: "system",
+            content: followUpMessage,
+          });
+        }
+        const refreshed = await storage.getReviewItemById(item.id);
+        return res.json({
+          ok: true,
+          requires_follow_up: true,
+          follow_up_message: followUpMessage,
+          data: { item: refreshed || item },
+          item: refreshed || item,
+        });
       }
 
       const updated = await storage.updateReviewItem(item.id, {
