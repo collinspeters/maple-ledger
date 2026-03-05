@@ -14,6 +14,8 @@ interface Estimate {
   status: string;
   issueDate: string;
   expiryDate: string;
+  subtotal: string;
+  taxAmount: string;
   totalAmount: string;
   currency: string;
   acceptedAt?: string;

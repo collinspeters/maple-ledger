@@ -8,6 +8,12 @@ import {
 } from "@shared/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 
+const toNumber = (value: string | number | null | undefined): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const parsed = Number.parseFloat(value ?? "0");
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 interface ReportPeriod {
   startDate: Date;
   endDate: Date;
@@ -96,13 +102,14 @@ export class FinancialReportsService {
     const revenueData = journalData
       .filter(entry => entry.accountCategory === 'REVENUE')
       .reduce((acc, entry) => {
-        const amount = parseFloat(entry.creditAmount) - parseFloat(entry.debitAmount);
-        const existing = acc.find(item => item.account === entry.accountName);
+        const amount = toNumber(entry.creditAmount) - toNumber(entry.debitAmount);
+        const accountName = entry.accountName ?? "Uncategorized";
+        const existing = acc.find(item => item.account === accountName);
         if (existing) {
           existing.amount += amount;
         } else {
           acc.push({
-            account: entry.accountName,
+            account: accountName,
             amount,
             t2125Line: entry.t2125Category || undefined
           });
@@ -114,17 +121,18 @@ export class FinancialReportsService {
     const expenseData = journalData
       .filter(entry => entry.accountCategory === 'EXPENSE')
       .reduce((acc, entry) => {
-        const amount = parseFloat(entry.debitAmount) - parseFloat(entry.creditAmount);
-        const deductionRate = entry.deductionRate ? parseFloat(entry.deductionRate) : 1;
+        const amount = toNumber(entry.debitAmount) - toNumber(entry.creditAmount);
+        const deductionRate = entry.deductionRate ? toNumber(entry.deductionRate) : 1;
         const deductibleAmount = amount * deductionRate;
+        const accountName = entry.accountName ?? "Uncategorized";
         
-        const existing = acc.find(item => item.account === entry.accountName);
+        const existing = acc.find(item => item.account === accountName);
         if (existing) {
           existing.amount += amount;
           existing.deductibleAmount += deductibleAmount;
         } else {
           acc.push({
-            account: entry.accountName,
+            account: accountName,
             amount,
             t2125Line: entry.t2125Category || undefined,
             deductionRate,
@@ -136,8 +144,8 @@ export class FinancialReportsService {
         account: string; 
         amount: number; 
         t2125Line?: string;
-        deductionRate?: number;
-        deductibleAmount?: number;
+        deductionRate: number;
+        deductibleAmount: number;
       }>);
 
     const totalRevenue = revenueData.reduce((sum, item) => sum + item.amount, 0);
@@ -179,27 +187,27 @@ export class FinancialReportsService {
     const assets = {
       current: accounts
         .filter(acc => acc.category === 'ASSET' && acc.subcategory === 'Current Assets')
-        .map(acc => ({ account: acc.name, balance: parseFloat(acc.balance) })),
+        .map(acc => ({ account: acc.name, balance: toNumber(acc.balance) })),
       fixed: accounts
         .filter(acc => acc.category === 'ASSET' && acc.subcategory === 'Fixed Assets')
-        .map(acc => ({ account: acc.name, balance: parseFloat(acc.balance) })),
+        .map(acc => ({ account: acc.name, balance: toNumber(acc.balance) })),
       total: 0
     };
 
     const liabilities = {
       current: accounts
         .filter(acc => acc.category === 'LIABILITY' && acc.subcategory === 'Current Liabilities')
-        .map(acc => ({ account: acc.name, balance: parseFloat(acc.balance) })),
+        .map(acc => ({ account: acc.name, balance: toNumber(acc.balance) })),
       longTerm: accounts
         .filter(acc => acc.category === 'LIABILITY' && acc.subcategory === 'Long-term Liabilities')
-        .map(acc => ({ account: acc.name, balance: parseFloat(acc.balance) })),
+        .map(acc => ({ account: acc.name, balance: toNumber(acc.balance) })),
       total: 0
     };
 
     const equity = {
       accounts: accounts
         .filter(acc => acc.category === 'EQUITY')
-        .map(acc => ({ account: acc.name, balance: parseFloat(acc.balance) })),
+        .map(acc => ({ account: acc.name, balance: toNumber(acc.balance) })),
       total: 0
     };
 
@@ -259,7 +267,7 @@ export class FinancialReportsService {
 
     // Process revenue transactions
     revenueTransactions.forEach(tx => {
-      const amount = parseFloat(tx.amount);
+      const amount = toNumber(tx.amount);
       totalSales += amount;
 
       if (tx.zeroRated) {
@@ -275,8 +283,8 @@ export class FinancialReportsService {
       // Extract tax from OCR data if available
       if (tx.extractedTaxData) {
         const taxData = tx.extractedTaxData as any;
-        if (taxData.gst) gstCollected += parseFloat(taxData.gst);
-        if (taxData.hst) hstCollected += parseFloat(taxData.hst);
+        if (taxData.gst) gstCollected += toNumber(taxData.gst);
+        if (taxData.hst) hstCollected += toNumber(taxData.hst);
       }
     });
 
@@ -284,9 +292,9 @@ export class FinancialReportsService {
     let inputTaxCredits = 0;
     expenseTransactions.forEach(tx => {
       const taxData = tx.extractedTaxData as any;
-      if (taxData?.gst) inputTaxCredits += parseFloat(taxData.gst);
-      if (taxData?.hst) inputTaxCredits += parseFloat(taxData.hst);
-      if (taxData?.pst) inputTaxCredits += parseFloat(taxData.pst);
+      if (taxData?.gst) inputTaxCredits += toNumber(taxData.gst);
+      if (taxData?.hst) inputTaxCredits += toNumber(taxData.hst);
+      if (taxData?.pst) inputTaxCredits += toNumber(taxData.pst);
     });
 
     const netTaxOwing = (gstCollected + hstCollected) - inputTaxCredits;
@@ -339,7 +347,7 @@ export class FinancialReportsService {
         };
       }
       
-      acc[category].total += parseFloat(expense.amount);
+      acc[category].total += toNumber(expense.amount);
       acc[category].count += 1;
       if (expense.receiptAttached) acc[category].withReceipts += 1;
       if (expense.isPosted) acc[category].posted += 1;

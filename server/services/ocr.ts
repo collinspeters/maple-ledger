@@ -225,8 +225,8 @@ export async function findTransactionMatches(receipt: any, userId: string): Prom
         } else {
           const receiptWords = receiptVendor.split(/\s+/);
           const transactionWords = transactionVendor.split(/\s+/);
-          const commonWords = receiptWords.filter(w =>
-            w.length > 2 && transactionWords.some(t => t.includes(w) || w.includes(t))
+          const commonWords = receiptWords.filter((w: string) =>
+            w.length > 2 && transactionWords.some((t: string) => t.includes(w) || w.includes(t))
           );
           if (commonWords.length > 0) {
             vendorScore = Math.round(20 * 0.5);

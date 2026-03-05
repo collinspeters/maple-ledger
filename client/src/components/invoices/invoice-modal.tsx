@@ -16,6 +16,8 @@ import InvoicePreviewButton from "./invoice-preview-button";
 interface Client {
   id: string;
   businessName: string;
+  email: string;
+  country: string;
   currency: string;
 }
 
@@ -332,18 +334,9 @@ export default function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
             client: clients?.find(c => c.id === form.getValues("clientId")) || {
               id: "",
               businessName: "Select a client",
-              contactName: "",
               email: "",
-              phone: "",
-              address: "",
-              city: "",
-              province: "",
-              postalCode: "",
               country: "Canada",
-              currency: "CAD",
-              paymentTerms: 30,
-              isActive: true,
-              createdAt: new Date().toISOString()
+              currency: "CAD"
             },
             issueDate: form.getValues("issueDate"),
             dueDate: form.getValues("dueDate"),

@@ -42,12 +42,15 @@ export default function TransactionModal({ open, onOpenChange }: TransactionModa
 
   const createTransactionMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/transactions", {
+      return apiRequest("/api/transactions", {
+        method: "POST",
         ...data,
-        date: new Date(data.date),
-        amount: parseFloat(data.amount),
+        body: JSON.stringify({
+          ...data,
+          date: new Date(data.date),
+          amount: parseFloat(data.amount),
+        }),
       });
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });

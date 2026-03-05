@@ -290,6 +290,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  const reviewKindPriority: Record<string, number> = {
+    txn_kind: 0,
+    reconciliation: 1,
+    receipt_match: 2,
+    category: 3,
+  };
+
+  const getReviewKindPriority = (kind: string): number => {
+    const value = reviewKindPriority[kind];
+    return Number.isFinite(value) ? value : 99;
+  };
+
+  const enrichReviewItem = async (ownerUserId: string, item: any) => {
+    if (item.entityType === "transaction") {
+      const txn = await storage.getTransaction(item.entityId);
+      if (!txn || txn.userId !== ownerUserId) return item;
+      return {
+        ...item,
+        context: {
+          amount: txn.amount,
+          date: txn.date,
+          merchant: txn.vendor || txn.description || "",
+          account_id: txn.accountId || null,
+          txn_kind: txn.txnKind || deriveTxnKind(txn as any),
+          category: txn.category || null,
+        },
+      };
+    }
+    if (item.entityType === "receipt") {
+      const receipt = await storage.getReceiptById(item.entityId);
+      if (!receipt || receipt.userId !== ownerUserId) return item;
+      return {
+        ...item,
+        context: {
+          amount: receipt.extractedAmount || null,
+          date: receipt.extractedDate || null,
+          merchant: receipt.extractedVendor || "",
+          status: receipt.status,
+          is_matched: Boolean(receipt.isMatched),
+        },
+      };
+    }
+    if (item.entityType === "bank_statement") {
+      const meta = (item.modelSuggestionJson as any) || {};
+      return {
+        ...item,
+        context: {
+          statement_difference: meta?.difference ?? null,
+          statement_ending_balance: meta?.endingBalance ?? null,
+          book_ending_balance: meta?.bookEndingBalance ?? null,
+        },
+      };
+    }
+    return item;
+  };
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -741,6 +797,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clearedIds = new Set(clears.filter(c => c.cleared).map(c => c.transactionId));
       }
       const unclearedTransactions = unclearedBase.filter(t => !clearedIds.has(t.id));
+      const clearedTransactions = unclearedBase.filter(t => clearedIds.has(t.id));
 
       const endingBal = statement ? Number(statement.endingBalance) : 0;
       const difference = statement ? endingBal - bookEndingBalance : 0;
@@ -752,11 +809,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           book_ending_balance: bookEndingBalance,
           difference,
           uncleared_transactions: unclearedTransactions,
+          cleared_transactions: clearedTransactions,
         },
         statement: statement || null,
         book_ending_balance: bookEndingBalance,
         difference,
         uncleared_transactions: unclearedTransactions,
+        cleared_transactions: clearedTransactions,
       });
     } catch (error) {
       console.error("Reconciliation fetch failed:", error);
@@ -904,6 +963,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Reconciliation clear toggle failed:", error);
       res.status(500).json({ message: "Failed to set clear status" });
+    }
+  });
+
+  app.post("/api/reconciliation/:bank_account_id/:statement_month/finish", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const bankAccountId = req.params.bank_account_id;
+      const statementMonth = parseMonth(req.params.statement_month);
+      if (!statementMonth) {
+        return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
+      }
+
+      const statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
+      if (!statement) {
+        return res.status(400).json({ message: "Create and save statement first" });
+      }
+
+      const statementEndDate = new Date(statement.statementEndDate);
+      const periodStart = new Date(Date.UTC(statementMonth.getUTCFullYear(), statementMonth.getUTCMonth(), 1, 0, 0, 0));
+      const periodEnd = new Date(Date.UTC(statementMonth.getUTCFullYear(), statementMonth.getUTCMonth() + 1, 0, 23, 59, 59));
+
+      const [bookEndingBalance, transactions, openItems] = await Promise.all([
+        storage.getBookEndingBalance(ownerUserId, bankAccountId, statementEndDate),
+        storage.getTransactions(ownerUserId),
+        storage.getOpenReviewItems(ownerUserId),
+      ]);
+
+      const difference = Number(statement.endingBalance) - bookEndingBalance;
+      const tolerance = 0.005;
+      const isBalanced = Math.abs(difference) <= tolerance;
+
+      const periodTransactions = transactions.filter((t) => {
+        if (t.accountId !== bankAccountId) return false;
+        const d = new Date(t.date);
+        return d >= periodStart && d <= periodEnd;
+      });
+      const periodTxnIds = new Set(periodTransactions.map((t) => t.id));
+
+      const unresolvedCritical = openItems.filter((item) =>
+        (item.kind === "reconciliation" && item.entityType === "bank_statement" && item.entityId === statement.id) ||
+        (item.kind === "txn_kind" && item.entityType === "transaction" && periodTxnIds.has(item.entityId))
+      );
+
+      const uncategorizedExpenseCount = periodTransactions.filter((t) => {
+        const kind = deriveTxnKind(t as any);
+        return kind === "expense" && !t.category;
+      }).length;
+
+      const checklist = {
+        balanced: isBalanced,
+        unresolved_critical_review_items: unresolvedCritical.length,
+        uncategorized_expense_transactions: uncategorizedExpenseCount,
+      };
+
+      if (!isBalanced || unresolvedCritical.length > 0 || uncategorizedExpenseCount > 0) {
+        return res.status(409).json({
+          ok: false,
+          message: "Reconciliation cannot be finished yet.",
+          difference,
+          checklist,
+        });
+      }
+
+      await resolveOpenReviewItemsForEntity(ownerUserId, "bank_statement", statement.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "reconciliation.finished", "bank_statement", statement.id, {
+        actorUserId: user.id,
+        statementMonth: req.params.statement_month,
+        bankAccountId,
+        difference,
+        checklist,
+      });
+
+      res.json({
+        ok: true,
+        data: {
+          finished: true,
+          difference,
+          checklist,
+        },
+        finished: true,
+        difference,
+        checklist,
+      });
+    } catch (error) {
+      console.error("Reconciliation finish failed:", error);
+      res.status(500).json({ message: "Failed to finish reconciliation" });
     }
   });
 
@@ -1106,7 +1253,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as User;
       const ownerUserId = await getDataOwnerUserId(user);
-      const items = await storage.getOpenReviewItems(ownerUserId);
+      const openItems = await storage.getOpenReviewItems(ownerUserId);
+      const sorted = [...openItems].sort((a, b) => {
+        const p = getReviewKindPriority(a.kind) - getReviewKindPriority(b.kind);
+        if (p !== 0) return p;
+        const aTs = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTs = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return aTs - bTs;
+      });
+      const items = await Promise.all(sorted.map((item) => enrichReviewItem(ownerUserId, item)));
       res.json({ ok: true, data: { items }, items });
     } catch (error) {
       console.error("Failed fetching review items:", error);
@@ -1149,6 +1304,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/review/items/:id/messages", requireAuth, requireSubscription, async (req, res) => {
     try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const item = await storage.getReviewItemById(req.params.id);
+      if (!item || item.ownerUserId !== ownerUserId) {
+        return res.status(404).json({ message: "Review item not found" });
+      }
       const messages = await storage.getReviewMessages(req.params.id);
       res.json({ ok: true, data: { messages }, messages });
     } catch (error) {
@@ -1159,6 +1320,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/review/items/:id/messages", requireAuth, requireSubscription, async (req, res) => {
     try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const item = await storage.getReviewItemById(req.params.id);
+      if (!item || item.ownerUserId !== ownerUserId) {
+        return res.status(404).json({ message: "Review item not found" });
+      }
       const payload = insertReviewMessageSchema.parse({
         reviewItemId: req.params.id,
         role: req.body?.role || "user",
@@ -1466,7 +1633,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (txnKind === "equity" && !equityType) {
         return res.status(400).json({ message: "equityType is required when txnKind is equity" });
       }
-      const legacyFlags = mapTxnKindToLegacyFlags(txnKind, transactionData.isExpense, transactionData.isTransfer);
+      const legacyFlags = mapTxnKindToLegacyFlags(
+        txnKind,
+        transactionData.isExpense ?? undefined,
+        transactionData.isTransfer ?? undefined
+      );
 
       const transaction = await storage.createTransaction({
         ...transactionData,

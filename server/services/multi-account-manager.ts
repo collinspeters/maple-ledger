@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from '../db';
 import { bankConnections, transactions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { getAccounts } from './plaid';
@@ -238,8 +238,7 @@ export class MultiAccountManager {
       await db
         .update(bankConnections)
         .set({ 
-          isActive: false,
-          updatedAt: new Date()
+          isActive: false
         })
         .where(
           and(

@@ -18,6 +18,7 @@ type ReconResponse = {
   book_ending_balance: number;
   difference: number;
   uncleared_transactions: Array<{ id: string; date: string; description: string; amount: string }>;
+  cleared_transactions?: Array<{ id: string; date: string; description: string; amount: string }>;
 };
 
 function monthKey(d: Date): string {
@@ -54,7 +55,7 @@ export default function ReconciliationPage() {
     if (!statementEndDate && reconData.statement.statementEndDate) {
       setStatementEndDate(new Date(reconData.statement.statementEndDate).toISOString().split("T")[0]);
     }
-    if (!endingBalance && reconData.statement.endingBalance) {
+    if (!endingBalance && reconData.statement.endingBalance !== undefined && reconData.statement.endingBalance !== null) {
       setEndingBalance(String(reconData.statement.endingBalance));
     }
   }, [reconData, statementEndDate, endingBalance]);
@@ -112,11 +113,31 @@ export default function ReconciliationPage() {
   });
 
   const handleFinish = () => {
-    toast({
-      title: "Reconciliation complete",
-      description: "This statement is balanced and ready to close.",
-    });
+    finishReconciliation.mutate();
   };
+
+  const finishReconciliation = useMutation({
+    mutationFn: async () =>
+      apiRequest(`/api/reconciliation/${selectedAccount}/${selectedMonth}/finish`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: activeQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+      toast({
+        title: "Reconciliation complete",
+        description: "Close checklist passed for this statement period.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Cannot finish yet",
+        description: error?.message || "Resolve remaining checklist items first.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const difference = reconData?.difference ?? 0;
   const isBalanced = Math.abs(difference) < 0.005;
@@ -242,7 +263,7 @@ export default function ReconciliationPage() {
                       <CheckCircle2 className="h-4 w-4" />
                       Reconciliation is balanced.
                     </div>
-                    <Button size="sm" onClick={handleFinish}>
+                    <Button size="sm" onClick={handleFinish} disabled={finishReconciliation.isPending}>
                       Finish reconciliation
                     </Button>
                   </div>
@@ -268,6 +289,29 @@ export default function ReconciliationPage() {
                 ))}
                 {(reconData?.uncleared_transactions || []).length === 0 && (
                   <p className="text-sm text-gray-600">No uncleared transactions.</p>
+                )}
+
+                {(reconData?.cleared_transactions || []).length > 0 && (
+                  <div className="pt-3 border-t">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Cleared transactions</p>
+                    <div className="space-y-2">
+                      {(reconData?.cleared_transactions || []).map((t) => (
+                        <div key={`cleared-${t.id}`} className="flex items-center justify-between border rounded-lg px-3 py-2 bg-green-50/40">
+                          <div>
+                            <p className="font-medium text-gray-900">{t.description}</p>
+                            <p className="text-xs text-gray-600">{new Date(t.date).toLocaleDateString()} • ${Number(t.amount).toFixed(2)}</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => toggleClear.mutate({ transactionId: t.id, cleared: false })}
+                            disabled={toggleClear.isPending}
+                          >
+                            Mark uncleared
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </>

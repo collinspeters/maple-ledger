@@ -257,8 +257,8 @@ export class DoubleEntryService {
       description: transaction.description,
       bankAccountId,
       category: transaction.aiCategory || transaction.category || "",
-      isExpense: transaction.isExpense,
-      isTransfer: transaction.isTransfer
+      isExpense: transaction.isExpense ?? true,
+      isTransfer: transaction.isTransfer ?? false
     });
   }
 }

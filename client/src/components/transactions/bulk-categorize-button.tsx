@@ -34,7 +34,7 @@ export default function BulkCategorizeButton() {
 
   const bulkCategorizeMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest<BulkCategorizeResult>('/api/transactions/bulk-categorize', {
+      return apiRequest('/api/transactions/bulk-categorize', {
         method: 'POST',
         body: JSON.stringify({}),
       });

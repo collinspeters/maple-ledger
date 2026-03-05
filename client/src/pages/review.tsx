@@ -14,6 +14,15 @@ type ReviewItem = {
   entityId: string;
   prompt: string;
   optionsJson?: Array<{ label: string; value: string }> | null;
+  context?: {
+    amount?: string | number | null;
+    date?: string | null;
+    merchant?: string | null;
+    category?: string | null;
+    txn_kind?: string | null;
+    status?: string | null;
+    statement_difference?: number | null;
+  } | null;
   createdAt: string;
 };
 
@@ -37,6 +46,8 @@ export default function ReviewPage() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [moreOption, setMoreOption] = useState("");
   const [lastAction, setLastAction] = useState<{ id: string; action: "resolved" | "skipped" } | null>(null);
 
   const { data, isLoading, error } = useQuery<{ items: ReviewItem[]; data?: { items: ReviewItem[] } }>({
@@ -54,6 +65,12 @@ export default function ReviewPage() {
     }
   }, [items, selectedId]);
 
+  useEffect(() => {
+    setMessage("");
+    setShowNoteInput(false);
+    setMoreOption("");
+  }, [selectedId]);
+
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) || items[0] || null,
     [items, selectedId]
@@ -65,6 +82,8 @@ export default function ReviewPage() {
   });
   const messages = messagesData?.messages || messagesData?.data?.messages || [];
   const selectedIndex = selected ? items.findIndex((item) => item.id === selected.id) : -1;
+  const quickOptions = selected?.optionsJson?.slice(0, 4) || [];
+  const overflowOptions = selected?.optionsJson?.slice(4) || [];
 
   const getNextItemId = (currentId: string): string | null => {
     const idx = items.findIndex((i) => i.id === currentId);
@@ -205,6 +224,13 @@ export default function ReviewPage() {
                   <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-sm mt-2 line-clamp-2">{item.prompt}</p>
+                <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-1">
+                  {item.context?.merchant && <span>{item.context.merchant}</span>}
+                  {item.context?.date && <span>{new Date(item.context.date).toLocaleDateString()}</span>}
+                  {item.context?.amount !== null && item.context?.amount !== undefined && (
+                    <span>${Number(item.context.amount).toFixed(2)}</span>
+                  )}
+                </div>
               </button>
             ))}
           </CardContent>
@@ -222,11 +248,24 @@ export default function ReviewPage() {
               <div className="space-y-4">
                 <div className="border rounded-md p-3 bg-gray-50">
                   <p className="text-sm">{selected.prompt}</p>
+                  <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-x-3 gap-y-1">
+                    {selected.context?.merchant && <span>Merchant: {selected.context.merchant}</span>}
+                    {selected.context?.date && <span>Date: {new Date(selected.context.date).toLocaleDateString()}</span>}
+                    {selected.context?.amount !== null && selected.context?.amount !== undefined && (
+                      <span>Amount: ${Number(selected.context.amount).toFixed(2)}</span>
+                    )}
+                    {selected.context?.txn_kind && <span>Kind: {selected.context.txn_kind}</span>}
+                    {selected.context?.category && <span>Category: {selected.context.category}</span>}
+                    {selected.context?.statement_difference !== null && selected.context?.statement_difference !== undefined && (
+                      <span>Difference: ${Number(selected.context.statement_difference).toFixed(2)}</span>
+                    )}
+                  </div>
                 </div>
 
                 {!!selected.optionsJson?.length && (
-                  <div className="flex flex-wrap gap-2">
-                    {selected.optionsJson.map((opt) => (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                    {quickOptions.map((opt) => (
                       <Button
                         key={`${selected.id}-${opt.value}`}
                         variant="outline"
@@ -237,6 +276,35 @@ export default function ReviewPage() {
                         {opt.label}
                       </Button>
                     ))}
+                    </div>
+                    {overflowOptions.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                          value={moreOption}
+                          onChange={(e) => setMoreOption(e.target.value)}
+                        >
+                          <option value="">More options</option>
+                          {overflowOptions.map((opt) => (
+                            <option key={`${selected.id}-more-${opt.value}`} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (!moreOption) return;
+                            resolveMutation.mutate({ id: selected.id, selectedOption: moreOption });
+                            setMoreOption("");
+                          }}
+                          disabled={!moreOption || resolveMutation.isPending}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -255,12 +323,28 @@ export default function ReviewPage() {
                       </div>
                     ))}
                   </div>
-                  <textarea
-                    className="w-full border rounded-md p-2 text-sm min-h-20"
-                    placeholder="Add context or note..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
+                  {!showNoteInput ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-fit"
+                      onClick={() => setShowNoteInput(true)}
+                    >
+                      Add note
+                    </Button>
+                  ) : (
+                    <div className="space-y-1">
+                      <textarea
+                        className="w-full border rounded-md p-2 text-sm min-h-20"
+                        placeholder="Add context or note..."
+                        value={message}
+                        maxLength={500}
+                        onChange={(e) => setMessage(e.target.value)}
+                      />
+                      <p className="text-xs text-gray-500 text-right">{message.length}/500</p>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -270,7 +354,7 @@ export default function ReviewPage() {
                       Send Note
                     </Button>
                     <Button onClick={() => resolveMutation.mutate({ id: selected.id })} disabled={resolveMutation.isPending}>
-                      Resolve
+                      Apply & Next
                     </Button>
                     <Button
                       variant="ghost"
