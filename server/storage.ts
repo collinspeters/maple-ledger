@@ -18,6 +18,7 @@ import {
   collaborators,
   bankStatements,
   transactionClears,
+  periodCloses,
   reviewItems,
   reviewMessages,
   type User, 
@@ -54,6 +55,8 @@ import {
   type InsertBankStatement,
   type TransactionClear,
   type InsertTransactionClear,
+  type PeriodClose,
+  type InsertPeriodClose,
   type ReviewItem,
   type InsertReviewItem,
   type ReviewMessage,
@@ -174,6 +177,8 @@ export interface IStorage {
   getTransactionClearsForStatement(bankStatementId: string): Promise<TransactionClear[]>;
   getUnclearedTransactions(ownerUserId: string, bankAccountId: string, statementEndDate: Date): Promise<Transaction[]>;
   getBookEndingBalance(ownerUserId: string, bankAccountId: string, statementEndDate: Date): Promise<number>;
+  getPeriodClose(ownerUserId: string, bankAccountId: string, periodMonth: Date): Promise<PeriodClose | null>;
+  upsertPeriodClose(input: InsertPeriodClose): Promise<PeriodClose>;
 
   // Structured review
   createReviewItem(input: InsertReviewItem): Promise<ReviewItem>;
@@ -185,6 +190,24 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private toMonthStartUtc(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0));
+  }
+
+  private async isPeriodClosed(ownerUserId: string, bankAccountId: string, date: Date): Promise<boolean> {
+    const periodMonth = this.toMonthStartUtc(date);
+    const [row] = await db
+      .select()
+      .from(periodCloses)
+      .where(and(
+        eq(periodCloses.ownerUserId, ownerUserId),
+        eq(periodCloses.bankAccountId, bankAccountId),
+        eq(periodCloses.periodMonth, periodMonth),
+      ))
+      .limit(1);
+    return Boolean(row && row.status === "closed");
+  }
+
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -308,6 +331,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction> {
+    const existing = await this.getTransaction(id);
+    if (!existing) {
+      throw new Error("NOT_FOUND");
+    }
+    const nextDate = updates.date ? new Date(updates.date) : new Date(existing.date);
+    const nextAccountId = (updates.accountId ?? existing.accountId) || null;
+    if (nextAccountId) {
+      const locked = await this.isPeriodClosed(existing.userId, nextAccountId, nextDate);
+      if (locked) {
+        throw new Error("PERIOD_LOCKED");
+      }
+    }
+
     const [transaction] = await db
       .update(transactions)
       .set({ ...updates, updatedAt: new Date() })
@@ -325,6 +361,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTransaction(id: string): Promise<void> {
+    const existing = await this.getTransaction(id);
+    if (!existing) return;
+    if (existing.accountId) {
+      const locked = await this.isPeriodClosed(existing.userId, existing.accountId, new Date(existing.date));
+      if (locked) {
+        throw new Error("PERIOD_LOCKED");
+      }
+    }
     await db.delete(transactions).where(eq(transactions.id, id));
   }
 
@@ -902,6 +946,38 @@ export class DatabaseStorage implements IStorage {
     const raw = result[0]?.sum ?? "0";
     const num = Number(raw);
     return Number.isFinite(num) ? num : 0;
+  }
+
+  async getPeriodClose(ownerUserId: string, bankAccountId: string, periodMonth: Date): Promise<PeriodClose | null> {
+    const [row] = await db
+      .select()
+      .from(periodCloses)
+      .where(and(
+        eq(periodCloses.ownerUserId, ownerUserId),
+        eq(periodCloses.bankAccountId, bankAccountId),
+        eq(periodCloses.periodMonth, periodMonth)
+      ));
+    return row || null;
+  }
+
+  async upsertPeriodClose(input: InsertPeriodClose): Promise<PeriodClose> {
+    const existing = await this.getPeriodClose(input.ownerUserId, input.bankAccountId, input.periodMonth as Date);
+    if (existing) {
+      const [updated] = await db
+        .update(periodCloses)
+        .set({
+          status: input.status,
+          closedAt: input.closedAt ?? null,
+          closedBy: input.closedBy ?? null,
+          reopenReason: input.reopenReason ?? null,
+        })
+        .where(eq(periodCloses.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db.insert(periodCloses).values(input).returning();
+    return created;
   }
 
   // Structured review

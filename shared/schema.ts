@@ -342,6 +342,19 @@ export const transactionClears = pgTable("transaction_clears", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Month close status per account
+export const periodCloses = pgTable("period_closes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
+  bankAccountId: text("bank_account_id").notNull(),
+  periodMonth: timestamp("period_month").notNull(), // first day of month
+  status: text("status").notNull().default("open"), // open | closed
+  closedAt: timestamp("closed_at"),
+  closedBy: varchar("closed_by").references(() => users.id),
+  reopenReason: text("reopen_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Structured review queue (kept additive with existing needsReview flow)
 export const reviewItems = pgTable("review_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -607,6 +620,11 @@ export const insertTransactionClearSchema = createInsertSchema(transactionClears
   createdAt: true,
 });
 
+export const insertPeriodCloseSchema = createInsertSchema(periodCloses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertReviewItemSchema = createInsertSchema(reviewItems).omit({
   id: true,
   createdAt: true,
@@ -654,6 +672,8 @@ export type BankStatement = typeof bankStatements.$inferSelect;
 export type InsertBankStatement = z.infer<typeof insertBankStatementSchema>;
 export type TransactionClear = typeof transactionClears.$inferSelect;
 export type InsertTransactionClear = z.infer<typeof insertTransactionClearSchema>;
+export type PeriodClose = typeof periodCloses.$inferSelect;
+export type InsertPeriodClose = z.infer<typeof insertPeriodCloseSchema>;
 export type ReviewItem = typeof reviewItems.$inferSelect;
 export type InsertReviewItem = z.infer<typeof insertReviewItemSchema>;
 export type ReviewMessage = typeof reviewMessages.$inferSelect;

@@ -246,6 +246,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     a.getUTCMonth() === statementMonth.getUTCMonth()
   );
 
+  const toStatementMonthUtc = (d: Date): Date =>
+    new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0));
+
+  const isPeriodLockedError = (error: unknown): boolean =>
+    error instanceof Error && error.message === "PERIOD_LOCKED";
+
   const upsertOpenReviewItem = async (
     ownerUserId: string,
     kind: "txn_kind" | "category" | "receipt_match" | "reconciliation",
@@ -344,6 +350,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
     }
     return item;
+  };
+
+  const getPeriodBoundsUtc = (periodMonth: Date) => {
+    const start = new Date(Date.UTC(periodMonth.getUTCFullYear(), periodMonth.getUTCMonth(), 1, 0, 0, 0));
+    const end = new Date(Date.UTC(periodMonth.getUTCFullYear(), periodMonth.getUTCMonth() + 1, 0, 23, 59, 59));
+    return { start, end };
   };
 
   // Auth routes
@@ -832,6 +844,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
+      const existingClose = await storage.getPeriodClose(ownerUserId, bankAccountId, statementMonth);
+      if (existingClose?.status === "closed") {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before editing reconciliation." });
+      }
       const statementEndDate = req.body?.statement_end_date ? new Date(req.body.statement_end_date) : null;
       const endingBalance = req.body?.ending_balance;
       if (!statementEndDate || endingBalance === undefined || endingBalance === null) {
@@ -900,6 +916,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
+      const existingClose = await storage.getPeriodClose(ownerUserId, bankAccountId, statementMonth);
+      if (existingClose?.status === "closed") {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before changing clear flags." });
+      }
       const statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
       if (!statement) {
         return res.status(400).json({ message: "Create statement first" });
@@ -938,6 +958,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
+      const existingClose = await storage.getPeriodClose(ownerUserId, bankAccountId, statementMonth);
+      if (existingClose?.status === "closed") {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before changing clear flags." });
+      }
       const statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
       if (!statement) {
         return res.status(400).json({ message: "Create statement first" });
@@ -966,7 +990,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/reconciliation/:bank_account_id/:statement_month/finish", requireAuth, requireSubscription, async (req, res) => {
+  app.post("/api/reconciliation/:bank_account_id/:statement_month/finish", requireAuth, requireSubscription, requireOwnerAccount, async (req, res) => {
     try {
       const user = req.user as User;
       const ownerUserId = await getDataOwnerUserId(user);
@@ -975,6 +999,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!statementMonth) {
         return res.status(400).json({ message: "Invalid statement month, use YYYY-MM" });
       }
+      const existingClose = await storage.getPeriodClose(ownerUserId, bankAccountId, statementMonth);
+      if (existingClose?.status === "closed") {
+        return res.json({
+          ok: true,
+          data: {
+            finished: true,
+            already_closed: true,
+          },
+          finished: true,
+          already_closed: true,
+        });
+      }
 
       const statement = await storage.getBankStatement(ownerUserId, bankAccountId, statementMonth);
       if (!statement) {
@@ -982,8 +1018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const statementEndDate = new Date(statement.statementEndDate);
-      const periodStart = new Date(Date.UTC(statementMonth.getUTCFullYear(), statementMonth.getUTCMonth(), 1, 0, 0, 0));
-      const periodEnd = new Date(Date.UTC(statementMonth.getUTCFullYear(), statementMonth.getUTCMonth() + 1, 0, 23, 59, 59));
+      const { start: periodStart, end: periodEnd } = getPeriodBoundsUtc(statementMonth);
 
       const [bookEndingBalance, transactions, openItems] = await Promise.all([
         storage.getBookEndingBalance(ownerUserId, bankAccountId, statementEndDate),
@@ -1028,6 +1063,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await resolveOpenReviewItemsForEntity(ownerUserId, "bank_statement", statement.id);
+      await storage.upsertPeriodClose({
+        ownerUserId,
+        bankAccountId,
+        periodMonth: statementMonth,
+        status: "closed",
+        closedAt: new Date(),
+        closedBy: user.id,
+        reopenReason: null,
+      });
+
       const { logAuditEvent } = await import("./services/audit-log");
       await logAuditEvent(ownerUserId, "reconciliation.finished", "bank_statement", statement.id, {
         actorUserId: user.id,
@@ -1041,16 +1086,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ok: true,
         data: {
           finished: true,
+          status: "closed",
           difference,
           checklist,
         },
         finished: true,
+        status: "closed",
         difference,
         checklist,
       });
     } catch (error) {
       console.error("Reconciliation finish failed:", error);
       res.status(500).json({ message: "Failed to finish reconciliation" });
+    }
+  });
+
+  app.get("/api/period-close/:bank_account_id/:period_month", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const bankAccountId = req.params.bank_account_id;
+      const periodMonth = parseMonth(req.params.period_month);
+      if (!periodMonth) {
+        return res.status(400).json({ message: "Invalid period month, use YYYY-MM" });
+      }
+      const row = await storage.getPeriodClose(ownerUserId, bankAccountId, periodMonth);
+      res.json({
+        ok: true,
+        data: {
+          status: row?.status || "open",
+          closed_at: row?.closedAt || null,
+          closed_by: row?.closedBy || null,
+          reopen_reason: row?.reopenReason || null,
+        },
+        status: row?.status || "open",
+        closed_at: row?.closedAt || null,
+        closed_by: row?.closedBy || null,
+        reopen_reason: row?.reopenReason || null,
+      });
+    } catch (error) {
+      console.error("Period close status failed:", error);
+      res.status(500).json({ message: "Failed to fetch period close status" });
+    }
+  });
+
+  app.post("/api/period-close/:bank_account_id/:period_month/close", requireAuth, requireSubscription, requireOwnerAccount, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const bankAccountId = req.params.bank_account_id;
+      const periodMonth = parseMonth(req.params.period_month);
+      if (!periodMonth) {
+        return res.status(400).json({ message: "Invalid period month, use YYYY-MM" });
+      }
+
+      const existingClose = await storage.getPeriodClose(ownerUserId, bankAccountId, periodMonth);
+      if (existingClose?.status === "closed") {
+        return res.json({ ok: true, data: { status: "closed", already_closed: true }, status: "closed", already_closed: true });
+      }
+
+      const statement = await storage.getBankStatement(ownerUserId, bankAccountId, periodMonth);
+      if (!statement) {
+        return res.status(400).json({ message: "A saved statement is required before closing this period" });
+      }
+      const statementEndDate = new Date(statement.statementEndDate);
+      const bookEndingBalance = await storage.getBookEndingBalance(ownerUserId, bankAccountId, statementEndDate);
+      const difference = Number(statement.endingBalance) - bookEndingBalance;
+      if (Math.abs(difference) > 0.005) {
+        return res.status(409).json({ message: "Cannot close period until reconciliation difference is zero (or tolerance)" });
+      }
+
+      const openItems = await storage.getOpenReviewItems(ownerUserId);
+      const { start: periodStart, end: periodEnd } = getPeriodBoundsUtc(periodMonth);
+      const txns = await storage.getTransactions(ownerUserId);
+      const txnIds = new Set(txns
+        .filter((t) => t.accountId === bankAccountId && new Date(t.date) >= periodStart && new Date(t.date) <= periodEnd)
+        .map((t) => t.id));
+      const unresolvedCritical = openItems.some((item) =>
+        (item.kind === "reconciliation" && item.entityType === "bank_statement" && item.entityId === statement.id) ||
+        (item.kind === "txn_kind" && item.entityType === "transaction" && txnIds.has(item.entityId))
+      );
+      if (unresolvedCritical) {
+        return res.status(409).json({ message: "Cannot close period with unresolved critical review items" });
+      }
+
+      const closed = await storage.upsertPeriodClose({
+        ownerUserId,
+        bankAccountId,
+        periodMonth,
+        status: "closed",
+        closedAt: new Date(),
+        closedBy: user.id,
+        reopenReason: null,
+      });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "period.closed", "period_close", closed.id, {
+        actorUserId: user.id,
+        bankAccountId,
+        periodMonth: req.params.period_month,
+      });
+
+      res.json({ ok: true, data: { status: "closed", closed_at: closed.closedAt, closed_by: closed.closedBy }, status: "closed", closed_at: closed.closedAt, closed_by: closed.closedBy });
+    } catch (error) {
+      console.error("Period close failed:", error);
+      res.status(500).json({ message: "Failed to close period" });
+    }
+  });
+
+  app.post("/api/period-close/:bank_account_id/:period_month/reopen", requireAuth, requireSubscription, requireOwnerAccount, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const bankAccountId = req.params.bank_account_id;
+      const periodMonth = parseMonth(req.params.period_month);
+      if (!periodMonth) {
+        return res.status(400).json({ message: "Invalid period month, use YYYY-MM" });
+      }
+      const reason = String(req.body?.reason || "").trim();
+      if (!reason) {
+        return res.status(400).json({ message: "reason is required" });
+      }
+
+      const opened = await storage.upsertPeriodClose({
+        ownerUserId,
+        bankAccountId,
+        periodMonth,
+        status: "open",
+        closedAt: null,
+        closedBy: null,
+        reopenReason: reason,
+      });
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "period.reopened", "period_close", opened.id, {
+        actorUserId: user.id,
+        bankAccountId,
+        periodMonth: req.params.period_month,
+        reason,
+      });
+
+      res.json({ ok: true, data: { status: "open", reopen_reason: reason }, status: "open", reopen_reason: reason });
+    } catch (error) {
+      console.error("Period reopen failed:", error);
+      res.status(500).json({ message: "Failed to reopen period" });
     }
   });
 
@@ -1496,6 +1673,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json({ ok: true, data: { item: updated }, item: updated });
     } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before resolving this item." });
+      }
       console.error("Failed resolving review item:", error);
       res.status(500).json({ message: "Failed to resolve review item" });
     }
@@ -1639,6 +1819,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionData.isTransfer ?? undefined
       );
 
+      if (transactionData.accountId) {
+        const statementMonth = toStatementMonthUtc(new Date(transactionData.date));
+        const existingClose = await storage.getPeriodClose(ownerUserId, transactionData.accountId, statementMonth);
+        if (existingClose?.status === "closed") {
+          return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before creating transactions in this month." });
+        }
+      }
+
       const transaction = await storage.createTransaction({
         ...transactionData,
         txnKind,
@@ -1696,6 +1884,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         console.error("Transaction validation error:", error.errors);
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before editing transactions." });
       }
       console.error("Transaction creation error:", error);
       res.status(500).json({ message: "Failed to create transaction" });
@@ -1809,6 +2000,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json(transaction);
     } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before editing transactions." });
+      }
       res.status(500).json({ message: "Failed to update transaction" });
     }
   });
@@ -1845,6 +2039,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json({ message: "Transaction deleted" });
     } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before deleting transactions." });
+      }
       res.status(500).json({ message: "Failed to delete transaction" });
     }
   });
@@ -1946,6 +2143,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         results 
       });
     } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "One or more selected transactions are in a closed period." });
+      }
       console.error("Bulk action error:", error);
       res.status(500).json({ message: "Failed to perform bulk action" });
     }
