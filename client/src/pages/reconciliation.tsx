@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 
@@ -21,6 +23,13 @@ type ReconResponse = {
   cleared_transactions?: Array<{ id: string; date: string; description: string; amount: string }>;
 };
 
+type PeriodCloseResponse = {
+  status: "open" | "closed";
+  closed_at?: string | null;
+  closed_by?: string | null;
+  reopen_reason?: string | null;
+};
+
 function monthKey(d: Date): string {
   const y = d.getFullYear();
   const m = `${d.getMonth() + 1}`.padStart(2, "0");
@@ -34,6 +43,8 @@ export default function ReconciliationPage() {
   const [selectedMonth, setSelectedMonth] = useState(monthKey(new Date()));
   const [endingBalance, setEndingBalance] = useState("");
   const [statementEndDate, setStatementEndDate] = useState("");
+  const [showReopenDialog, setShowReopenDialog] = useState(false);
+  const [reopenReason, setReopenReason] = useState("");
 
   const { data: accountsData, isLoading: accountsLoading, error: accountsError } = useQuery<{ accounts: ReconAccount[]; data?: { accounts: ReconAccount[] } }>({
     queryKey: ["/api/reconciliation/accounts"],
@@ -49,6 +60,12 @@ export default function ReconciliationPage() {
     enabled: Boolean(selectedAccount),
   });
   const reconData: ReconResponse | undefined = (reconDataRaw as any)?.data || (reconDataRaw as any);
+  const { data: periodCloseRaw } = useQuery<PeriodCloseResponse | { data: PeriodCloseResponse }>({
+    queryKey: selectedAccount ? [`/api/period-close/${selectedAccount}/${selectedMonth}`] : ["/api/period-close/empty"],
+    enabled: Boolean(selectedAccount),
+  });
+  const periodClose: PeriodCloseResponse = ((periodCloseRaw as any)?.data || (periodCloseRaw as any) || { status: "open" }) as PeriodCloseResponse;
+  const isPeriodClosed = periodClose?.status === "closed";
 
   useEffect(() => {
     if (!reconData?.statement) return;
@@ -79,7 +96,11 @@ export default function ReconciliationPage() {
       toast({ title: "Statement saved", description: "Reconciliation statement updated." });
     },
     onError: (error: any) => {
-      toast({ title: "Save failed", description: error.message || "Could not save statement", variant: "destructive" });
+      toast({
+        title: "Save failed",
+        description: error?.message || "Could not save statement",
+        variant: "destructive",
+      });
     },
   });
 
@@ -94,7 +115,11 @@ export default function ReconciliationPage() {
       toast({ title: "Auto-clear complete", description: `Cleared ${data.cleared_count ?? 0} transactions.` });
     },
     onError: (error: any) => {
-      toast({ title: "Auto-clear failed", description: error.message || "Could not auto-clear", variant: "destructive" });
+      toast({
+        title: "Auto-clear failed",
+        description: error?.message || "Could not auto-clear",
+        variant: "destructive",
+      });
     },
   });
 
@@ -125,6 +150,7 @@ export default function ReconciliationPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
       toast({
         title: "Reconciliation complete",
         description: "Close checklist passed for this statement period.",
@@ -136,6 +162,38 @@ export default function ReconciliationPage() {
         description: error?.message || "Resolve remaining checklist items first.",
         variant: "destructive",
       });
+    },
+  });
+
+  const closePeriod = useMutation({
+    mutationFn: async () =>
+      apiRequest(`/api/period-close/${selectedAccount}/${selectedMonth}/close`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
+      toast({ title: "Period closed", description: "Writes are now locked for this month/account." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Close failed", description: error?.message || "Could not close period", variant: "destructive" });
+    },
+  });
+
+  const reopenPeriod = useMutation({
+    mutationFn: async () =>
+      apiRequest(`/api/period-close/${selectedAccount}/${selectedMonth}/reopen`, {
+        method: "POST",
+        body: JSON.stringify({ reason: reopenReason.trim() }),
+      }),
+    onSuccess: () => {
+      setShowReopenDialog(false);
+      setReopenReason("");
+      queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
+      toast({ title: "Period reopened", description: "You can edit this period again." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Reopen failed", description: error?.message || "Could not reopen period", variant: "destructive" });
     },
   });
 
@@ -160,9 +218,20 @@ export default function ReconciliationPage() {
         </div>
       )}
 
+      {isPeriodClosed && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          This period is closed. Reopen it to edit statement values or clear flags.
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-semibold text-gray-900">Statement setup</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold text-gray-900">Statement setup</h2>
+            <span className={`text-xs px-2 py-1 rounded-full border ${isPeriodClosed ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-green-100 text-green-800 border-green-200"}`}>
+              Period {isPeriodClosed ? "Closed" : "Open"}
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4">
           <div className="md:col-span-2">
@@ -198,11 +267,11 @@ export default function ReconciliationPage() {
             <Button
               className="bg-primary hover:bg-primary-dark"
               onClick={() => saveStatement.mutate()}
-              disabled={!selectedAccount || !statementEndDate || !endingBalance || saveStatement.isPending}
+              disabled={!selectedAccount || !statementEndDate || !endingBalance || saveStatement.isPending || isPeriodClosed}
             >
               Save statement
             </Button>
-            <Button variant="outline" onClick={() => autoClear.mutate()} disabled={!selectedAccount || autoClear.isPending}>
+            <Button variant="outline" onClick={() => autoClear.mutate()} disabled={!selectedAccount || autoClear.isPending || isPeriodClosed}>
               Auto-clear
             </Button>
             <Button
@@ -212,6 +281,20 @@ export default function ReconciliationPage() {
             >
               <RefreshCw className="h-4 w-4 mr-1" />
               Refresh
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => closePeriod.mutate()}
+              disabled={!selectedAccount || closePeriod.isPending || isPeriodClosed}
+            >
+              Close period
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowReopenDialog(true)}
+              disabled={!selectedAccount || reopenPeriod.isPending || !isPeriodClosed}
+            >
+              Reopen period
             </Button>
           </div>
         </CardContent>
@@ -263,7 +346,7 @@ export default function ReconciliationPage() {
                       <CheckCircle2 className="h-4 w-4" />
                       Reconciliation is balanced.
                     </div>
-                    <Button size="sm" onClick={handleFinish} disabled={finishReconciliation.isPending}>
+                    <Button size="sm" onClick={handleFinish} disabled={finishReconciliation.isPending || isPeriodClosed}>
                       Finish reconciliation
                     </Button>
                   </div>
@@ -281,7 +364,7 @@ export default function ReconciliationPage() {
                     <Button
                       variant="outline"
                       onClick={() => toggleClear.mutate({ transactionId: t.id, cleared: true })}
-                      disabled={toggleClear.isPending}
+                      disabled={toggleClear.isPending || isPeriodClosed}
                     >
                       Mark cleared
                     </Button>
@@ -304,7 +387,7 @@ export default function ReconciliationPage() {
                           <Button
                             variant="outline"
                             onClick={() => toggleClear.mutate({ transactionId: t.id, cleared: false })}
-                            disabled={toggleClear.isPending}
+                            disabled={toggleClear.isPending || isPeriodClosed}
                           >
                             Mark uncleared
                           </Button>
@@ -318,6 +401,34 @@ export default function ReconciliationPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reopen period</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="reopen-reason">Reason (required)</Label>
+            <Textarea
+              id="reopen-reason"
+              placeholder="Why are you reopening this closed period?"
+              value={reopenReason}
+              maxLength={500}
+              onChange={(e) => setReopenReason(e.target.value)}
+            />
+            <p className="text-xs text-gray-500 text-right">{reopenReason.length}/500</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setShowReopenDialog(false)}>Cancel</Button>
+              <Button
+                onClick={() => reopenPeriod.mutate()}
+                disabled={!reopenReason.trim() || reopenPeriod.isPending}
+              >
+                Reopen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
