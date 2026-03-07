@@ -323,6 +323,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    if (transaction.accountId) {
+      const date = transaction.date ? new Date(transaction.date) : new Date();
+      const locked = await this.isPeriodClosed(transaction.userId, transaction.accountId, date);
+      if (locked) {
+        throw new Error("PERIOD_LOCKED");
+      }
+    }
     const [newTransaction] = await db
       .insert(transactions)
       .values(transaction)

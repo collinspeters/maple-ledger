@@ -2529,6 +2529,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createTransaction(transactionData);
             syncedCount++;
           } catch (error) {
+            if (isPeriodLockedError(error)) {
+              console.log("Skipping locked-period transaction during initial sync:", transaction.transaction_id);
+              continue;
+            }
             console.log("Skipping duplicate transaction:", transaction.transaction_id);
           }
         }

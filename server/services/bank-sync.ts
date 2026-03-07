@@ -26,6 +26,10 @@ export interface SyncSummary {
   completedAt: string;
 }
 
+function isPeriodLockedError(error: unknown): boolean {
+  return error instanceof Error && error.message === 'PERIOD_LOCKED';
+}
+
 /**
  * Generate a stable de-duplication hash for a transaction.
  * Uses bankTransactionId if available; falls back to description+amount+date.
@@ -329,8 +333,15 @@ export async function syncBankConnection(
       receiptSource: 'bank_feed',
     };
 
-    await storage.createTransaction(txnData);
-    added++;
+    try {
+      await storage.createTransaction(txnData);
+      added++;
+    } catch (error) {
+      if (isPeriodLockedError(error)) {
+        continue;
+      }
+      throw error;
+    }
   }
 
   // Advance cursor
