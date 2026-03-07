@@ -1331,6 +1331,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/transactions/archived", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const transactions = await storage.getArchivedTransactions(ownerUserId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching archived transactions:", error);
+      res.status(500).json({ message: "Failed to fetch archived transactions" });
+    }
+  });
+
   // Bulk AI categorization for existing transactions
   app.post("/api/transactions/bulk-categorize", requireAuth, async (req, res) => {
     try {
@@ -2209,6 +2221,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(receipts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch receipts" });
+    }
+  });
+
+  app.get("/api/receipts/archived", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const receipts = await storage.getArchivedReceipts(ownerUserId);
+      res.json(receipts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch archived receipts" });
     }
   });
 

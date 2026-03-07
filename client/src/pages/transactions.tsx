@@ -36,6 +36,7 @@ export default function Transactions() {
   const [lastSyncResult, setLastSyncResult] = useState<{ added: number; skipped: number } | null>(null);
   const [selectedTransactionForDrawer, setSelectedTransactionForDrawer] = useState<Transaction | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -65,6 +66,18 @@ export default function Transactions() {
     if (Array.isArray(transactionsResponse?.data)) return transactionsResponse.data as Transaction[];
     return [];
   }, [transactionsResponse]);
+
+  const { data: archivedTransactionsResponse = [] } = useQuery<any>({
+    queryKey: ["/api/transactions/archived"],
+    enabled: showArchived,
+  });
+  const archivedTransactions: (Transaction & { deletedAt?: string | null })[] = useMemo(() => {
+    if (Array.isArray(archivedTransactionsResponse)) return archivedTransactionsResponse as (Transaction & { deletedAt?: string | null })[];
+    if (Array.isArray(archivedTransactionsResponse?.data?.transactions)) return archivedTransactionsResponse.data.transactions as (Transaction & { deletedAt?: string | null })[];
+    if (Array.isArray(archivedTransactionsResponse?.transactions)) return archivedTransactionsResponse.transactions as (Transaction & { deletedAt?: string | null })[];
+    if (Array.isArray(archivedTransactionsResponse?.data)) return archivedTransactionsResponse.data as (Transaction & { deletedAt?: string | null })[];
+    return [];
+  }, [archivedTransactionsResponse]);
 
   const { data: bankConnectionsResponse = [] } = useQuery<any>({
     queryKey: ["/api/bank-connections"],
@@ -287,6 +300,7 @@ export default function Transactions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions/archived'] });
     },
   });
 
@@ -299,6 +313,29 @@ export default function Transactions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions/archived'] });
+    },
+  });
+
+  const restoreTransactionMutation = useMutation({
+    mutationFn: async (id: string) =>
+      apiRequest(`/api/transactions/${id}/restore`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions/archived'] });
+      toast({
+        title: "Transaction restored",
+        description: "The transaction has been moved back to active records.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Restore failed",
+        description: error?.message || "Could not restore this transaction.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -458,17 +495,25 @@ export default function Transactions() {
         <div>
           <h1 className="text-3xl font-bold">Transactions</h1>
           <p className="text-muted-foreground mt-1">
-            Showing {filteredAndSortedTransactions.length === 0 ? 0 : startIndex + 1}-{Math.min(endIndex, filteredAndSortedTransactions.length)} of {filteredAndSortedTransactions.length} transactions
-            {filteredAndSortedTransactions.length !== transactions.length && ` (${transactions.length} total)`}
+            {showArchived
+              ? `${archivedTransactions.length} archived transaction${archivedTransactions.length === 1 ? '' : 's'}`
+              : `Showing ${filteredAndSortedTransactions.length === 0 ? 0 : startIndex + 1}-${Math.min(endIndex, filteredAndSortedTransactions.length)} of ${filteredAndSortedTransactions.length} transactions${filteredAndSortedTransactions.length !== transactions.length ? ` (${transactions.length} total)` : ''}`}
           </p>
         </div>
         
         <div className="flex items-center gap-2">
           <Button
+            variant={showArchived ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowArchived((prev) => !prev)}
+          >
+            {showArchived ? "Show Active" : "Show Archived"}
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
+            disabled={syncMutation.isPending || showArchived}
             data-testid="sync-now"
           >
             {syncMutation.isPending ? (
@@ -510,10 +555,10 @@ export default function Transactions() {
       )}
 
       {/* AI Categorization Section */}
-      <BulkCategorizeButton />
+      {!showArchived && <BulkCategorizeButton />}
 
       {/* Filters Toggle */}
-      <div className="flex items-center justify-between">
+      {!showArchived && <div className="flex items-center justify-between">
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
@@ -552,10 +597,10 @@ export default function Transactions() {
             </Button>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Filters */}
-      {showFilters && (
+      {!showArchived && showFilters && (
         <div className="filters" data-testid="filters">
           <TransactionFiltersComponent
             filters={filters}
@@ -572,8 +617,8 @@ export default function Transactions() {
       <Card data-testid="transactions">
         <CardHeader className="transaction-list border-b">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle>All Transactions</CardTitle>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <CardTitle>{showArchived ? "Archived Transactions" : "All Transactions"}</CardTitle>
+            {!showArchived && <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={selectedTransactions.size === paginatedTransactions.length && paginatedTransactions.length > 0}
@@ -606,11 +651,40 @@ export default function Transactions() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </div>}
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {filteredAndSortedTransactions.length > 0 ? (
+          {showArchived ? (
+            archivedTransactions.length > 0 ? (
+              <div className="divide-y">
+                {archivedTransactions.map((transaction) => (
+                  <div key={transaction.id} className="p-4 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium">{transaction.vendor || transaction.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(transaction.date).toLocaleDateString()} • ${Number(transaction.amount).toFixed(2)}
+                        {transaction.deletedAt ? ` • Archived ${new Date(transaction.deletedAt).toLocaleDateString()}` : ""}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => restoreTransactionMutation.mutate(transaction.id)}
+                      disabled={restoreTransactionMutation.isPending}
+                    >
+                      Restore
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No archived transactions</h3>
+              </div>
+            )
+          ) : filteredAndSortedTransactions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px]">
                 <thead className="bg-muted/50 sticky top-0 z-10">
@@ -666,7 +740,7 @@ export default function Transactions() {
         </CardContent>
         
         {/* Pagination Controls */}
-        {filteredAndSortedTransactions.length > 0 && totalPages > 1 && (
+        {!showArchived && filteredAndSortedTransactions.length > 0 && totalPages > 1 && (
           <div className="border-t p-4 flex-shrink-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
@@ -729,7 +803,7 @@ export default function Transactions() {
       </Card>
 
       {/* Bulk Actions */}
-      <BulkActions
+      {!showArchived && <BulkActions
         selectedCount={selectedTransactions.size}
         selectedTransactions={filteredAndSortedTransactions.filter(t => selectedTransactions.has(t.id))}
         categories={categories}
@@ -737,7 +811,7 @@ export default function Transactions() {
         onBulkAction={handleBulkAction}
         onClearSelection={() => setSelectedTransactions(new Set())}
         isLoading={bulkActionMutation.isPending}
-      />
+      />}
 
       <TransactionDrawer
         open={isDrawerOpen}

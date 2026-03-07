@@ -80,6 +80,7 @@ export interface IStorage {
   
   // Transaction methods
   getTransactions(userId: string, limit?: number): Promise<Transaction[]>;
+  getArchivedTransactions(userId: string, limit?: number): Promise<Transaction[]>;
   getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]>;
   getTransactionByPlaidId(plaidTransactionId: string): Promise<Transaction | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
@@ -91,6 +92,7 @@ export interface IStorage {
   
   // Receipt methods
   getReceipts(userId: string): Promise<Receipt[]>;
+  getArchivedReceipts(userId: string): Promise<Receipt[]>;
   createReceipt(receipt: InsertReceipt): Promise<Receipt>;
   updateReceipt(id: string, updates: Partial<Receipt>): Promise<Receipt>;
   getReceiptIncludingDeleted(id: string): Promise<Receipt | null>;
@@ -307,6 +309,18 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  async getArchivedTransactions(userId: string, limit = 1000): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .where(and(
+        eq(transactions.userId, userId),
+        sql`${transactions.deletedAt} IS NOT NULL`
+      ))
+      .orderBy(desc(transactions.deletedAt), desc(transactions.date))
+      .limit(limit);
+  }
+
   async getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]> {
     return await db
       .select()
@@ -435,6 +449,17 @@ export class DatabaseStorage implements IStorage {
         isNull(receipts.deletedAt)
       ))
       .orderBy(desc(receipts.createdAt));
+  }
+
+  async getArchivedReceipts(userId: string): Promise<Receipt[]> {
+    return await db
+      .select()
+      .from(receipts)
+      .where(and(
+        eq(receipts.userId, userId),
+        sql`${receipts.deletedAt} IS NOT NULL`
+      ))
+      .orderBy(desc(receipts.deletedAt), desc(receipts.createdAt));
   }
 
   async createReceipt(receipt: InsertReceipt): Promise<Receipt> {

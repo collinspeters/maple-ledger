@@ -44,6 +44,7 @@ type Receipt = {
   isAuditReady: boolean;
   createdAt: string;
   updatedAt?: string;
+  deletedAt?: string | null;
 };
 
 type Transaction = {
@@ -74,6 +75,19 @@ export default function Receipts() {
         ? receiptsRaw.items
         : Array.isArray(receiptsRaw?.data)
           ? receiptsRaw.data
+          : [];
+
+  const { data: archivedReceiptsRaw = [] } = useQuery<any>({
+    queryKey: ["/api/receipts/archived"],
+  });
+  const archivedReceipts: Receipt[] = Array.isArray(archivedReceiptsRaw)
+    ? archivedReceiptsRaw
+    : Array.isArray(archivedReceiptsRaw?.data?.items)
+      ? archivedReceiptsRaw.data.items
+      : Array.isArray(archivedReceiptsRaw?.items)
+        ? archivedReceiptsRaw.items
+        : Array.isArray(archivedReceiptsRaw?.data)
+          ? archivedReceiptsRaw.data
           : [];
 
   // Fetch unmatched receipts with suggestions
@@ -112,16 +126,47 @@ export default function Receipts() {
       }),
     onSuccess: () => {
       toast({
-        title: "Receipt Deleted",
-        description: "Receipt has been successfully deleted.",
+        title: "Receipt Archived",
+        description: "Receipt has been archived. You can restore it from Archived.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/receipts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/receipts/unmatched"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/receipts/archived"] });
     },
     onError: () => {
       toast({
         title: "Delete Failed",
         description: "Failed to delete receipt. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (receiptId: string) =>
+      fetch(`/api/receipts/${receiptId}/restore`, {
+        method: "POST",
+        credentials: "include"
+      }).then(async (res) => {
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload?.message || "Restore failed");
+        }
+        return res;
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Receipt Restored",
+        description: "Receipt has been restored to active records.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/receipts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/receipts/unmatched"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/receipts/archived"] });
+    },
+    onError: () => {
+      toast({
+        title: "Restore Failed",
+        description: "Failed to restore receipt. Please try again.",
         variant: "destructive",
       });
     },
@@ -313,12 +358,13 @@ export default function Receipts() {
 
       {/* Receipts Tabs */}
       <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="w-full overflow-x-auto whitespace-nowrap flex sm:grid sm:grid-cols-5">
+        <TabsList className="w-full overflow-x-auto whitespace-nowrap flex sm:grid sm:grid-cols-6">
           <TabsTrigger value="all">All Receipts ({receipts.length})</TabsTrigger>
           <TabsTrigger value="matched">Matched ({matchedReceipts.length})</TabsTrigger>
           <TabsTrigger value="processed">Processed ({processedReceipts.length})</TabsTrigger>
           <TabsTrigger value="processing">Processing ({processingReceipts.length})</TabsTrigger>
           <TabsTrigger value="failed">Failed ({failedReceipts.length})</TabsTrigger>
+          <TabsTrigger value="archived">Archived ({archivedReceipts.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
@@ -362,6 +408,16 @@ export default function Receipts() {
             onDelete={(id) => deleteMutation.mutate(id)}
           />
         </TabsContent>
+
+        <TabsContent value="archived">
+          <ReceiptList
+            receipts={archivedReceipts}
+            onReceiptClick={handleReceiptClick}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            onRestore={(id) => restoreMutation.mutate(id)}
+            allowDelete={false}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Receipt Viewer Dialog */}
@@ -384,11 +440,15 @@ export default function Receipts() {
 function ReceiptList({ 
   receipts, 
   onReceiptClick, 
-  onDelete 
+  onDelete,
+  onRestore,
+  allowDelete = true,
 }: { 
   receipts: Receipt[]; 
   onReceiptClick: (receipt: Receipt) => void;
   onDelete: (id: string) => void;
+  onRestore?: (id: string) => void;
+  allowDelete?: boolean;
 }) {
   const formatCurrency = (amount?: string, currency = "CAD") => {
     if (!amount) return "N/A";
@@ -523,26 +583,40 @@ function ReceiptList({
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 ml-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onReceiptClick(receipt)}
-                    className="text-blue-600 hover:text-blue-700"
-                    aria-label={`View receipt ${receipt.fileName}`}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(receipt.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    aria-label={`Delete receipt ${receipt.fileName}`}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
+                  {allowDelete && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onReceiptClick(receipt)}
+                      className="text-blue-600 hover:text-blue-700"
+                      aria-label={`View receipt ${receipt.fileName}`}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  )}
+                  {allowDelete ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(receipt.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      aria-label={`Delete receipt ${receipt.fileName}`}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRestore?.(receipt.id)}
+                      className="text-green-700 hover:text-green-800 hover:bg-green-50"
+                      aria-label={`Restore receipt ${receipt.fileName}`}
+                    >
+                      Restore
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
