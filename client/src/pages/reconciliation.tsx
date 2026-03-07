@@ -42,6 +42,13 @@ type CloseErrorPayload = {
   checklist?: CloseChecklist;
 };
 
+function isPeriodLockedError(error: any): boolean {
+  if (!error) return false;
+  const code = typeof error?.code === "string" ? error.code : "";
+  const message = typeof error?.message === "string" ? error.message : String(error ?? "");
+  return code === "PERIOD_LOCKED" || message.includes("PERIOD_LOCKED") || message.toLowerCase().includes("period is closed");
+}
+
 function monthKey(d: Date): string {
   const y = d.getFullYear();
   const m = `${d.getMonth() + 1}`.padStart(2, "0");
@@ -58,6 +65,7 @@ export default function ReconciliationPage() {
   const [showReopenDialog, setShowReopenDialog] = useState(false);
   const [reopenReason, setReopenReason] = useState("");
   const [closeError, setCloseError] = useState<CloseErrorPayload | null>(null);
+  const [lockErrorMessage, setLockErrorMessage] = useState<string | null>(null);
 
   const { data: accountsData, isLoading: accountsLoading, error: accountsError } = useQuery<{ accounts: ReconAccount[]; data?: { accounts: ReconAccount[] } }>({
     queryKey: ["/api/reconciliation/accounts"],
@@ -93,7 +101,14 @@ export default function ReconciliationPage() {
   useEffect(() => {
     setEndingBalance("");
     setStatementEndDate("");
+    setLockErrorMessage(null);
   }, [selectedAccount, selectedMonth]);
+
+  const refreshPeriodStatus = () => {
+    if (!selectedAccount) return;
+    queryClient.invalidateQueries({ queryKey: activeQueryKey });
+    queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
+  };
 
   const saveStatement = useMutation({
     mutationFn: async () =>
@@ -106,10 +121,15 @@ export default function ReconciliationPage() {
       }),
     onSuccess: () => {
       setCloseError(null);
+      setLockErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       toast({ title: "Statement saved", description: "Reconciliation statement updated." });
     },
     onError: (error: any) => {
+      if (isPeriodLockedError(error)) {
+        setLockErrorMessage("This period is closed. Reopen it before editing reconciliation values.");
+        refreshPeriodStatus();
+      }
       toast({
         title: "Save failed",
         description: error?.message || "Could not save statement",
@@ -126,10 +146,15 @@ export default function ReconciliationPage() {
       }),
     onSuccess: (data) => {
       setCloseError(null);
+      setLockErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       toast({ title: "Auto-clear complete", description: `Cleared ${data.cleared_count ?? 0} transactions.` });
     },
     onError: (error: any) => {
+      if (isPeriodLockedError(error)) {
+        setLockErrorMessage("This period is closed. Reopen it before changing clear flags.");
+        refreshPeriodStatus();
+      }
       toast({
         title: "Auto-clear failed",
         description: error?.message || "Could not auto-clear",
@@ -146,9 +171,14 @@ export default function ReconciliationPage() {
       }),
     onSuccess: () => {
       setCloseError(null);
+      setLockErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
     },
     onError: (error: any) => {
+      if (isPeriodLockedError(error)) {
+        setLockErrorMessage("This period is closed. Reopen it before changing clear flags.");
+        refreshPeriodStatus();
+      }
       toast({ title: "Update failed", description: error?.message || "Could not update clear status", variant: "destructive" });
     },
   });
@@ -173,6 +203,7 @@ export default function ReconciliationPage() {
     },
     onSuccess: () => {
       setCloseError(null);
+      setLockErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
       queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
@@ -182,6 +213,10 @@ export default function ReconciliationPage() {
       });
     },
     onError: (error: any) => {
+      if (isPeriodLockedError(error)) {
+        setLockErrorMessage("This period is already closed.");
+        refreshPeriodStatus();
+      }
       setCloseError({
         message: error?.message,
         difference: error?.difference,
@@ -211,10 +246,15 @@ export default function ReconciliationPage() {
     },
     onSuccess: () => {
       setCloseError(null);
+      setLockErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
       toast({ title: "Period closed", description: "Writes are now locked for this month/account." });
     },
     onError: (error: any) => {
+      if (isPeriodLockedError(error)) {
+        setLockErrorMessage("This period is already closed.");
+        refreshPeriodStatus();
+      }
       setCloseError({
         message: error?.message,
         difference: error?.difference,
@@ -234,6 +274,7 @@ export default function ReconciliationPage() {
       setShowReopenDialog(false);
       setReopenReason("");
       setCloseError(null);
+      setLockErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
       toast({ title: "Period reopened", description: "You can edit this period again." });
     },
@@ -266,6 +307,12 @@ export default function ReconciliationPage() {
       {isPeriodClosed && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           This period is closed. Reopen it to edit statement values or clear flags.
+        </div>
+      )}
+
+      {lockErrorMessage && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {lockErrorMessage}
         </div>
       )}
 
