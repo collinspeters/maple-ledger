@@ -1571,6 +1571,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!transaction || transaction.userId !== ownerUserId) {
           return res.status(404).json({ message: "Transaction not found for review item" });
         }
+        if (!selectedOption) {
+          return res.status(400).json({ message: "selectedOption is required for transaction review items" });
+        }
 
         const updates: Record<string, any> = {};
 

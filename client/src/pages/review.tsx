@@ -84,6 +84,8 @@ export default function ReviewPage() {
   const selectedIndex = selected ? items.findIndex((item) => item.id === selected.id) : -1;
   const quickOptions = selected?.optionsJson?.slice(0, 4) || [];
   const overflowOptions = selected?.optionsJson?.slice(4) || [];
+  const requiresExplicitOption =
+    selected?.entityType === "transaction" && (selected.kind === "txn_kind" || selected.kind === "category");
 
   const getNextItemId = (currentId: string): string | null => {
     const idx = items.findIndex((i) => i.id === currentId);
@@ -353,7 +355,10 @@ export default function ReviewPage() {
                     >
                       Send Note
                     </Button>
-                    <Button onClick={() => resolveMutation.mutate({ id: selected.id })} disabled={resolveMutation.isPending}>
+                    <Button
+                      onClick={() => resolveMutation.mutate({ id: selected.id })}
+                      disabled={resolveMutation.isPending || requiresExplicitOption}
+                    >
                       Apply & Next
                     </Button>
                     <Button
@@ -371,7 +376,11 @@ export default function ReviewPage() {
                       Undo last
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500">Tip: choose an option chip for fastest Apply & Next flow.</p>
+                  <p className="text-xs text-gray-500">
+                    {requiresExplicitOption
+                      ? "Choose a decision option above to resolve this item."
+                      : "Tip: choose an option chip for fastest Apply & Next flow."}
+                  </p>
                 </div>
               </div>
             )}
