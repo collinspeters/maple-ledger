@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, decimal, boolean, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, decimal, boolean, integer, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -343,17 +343,32 @@ export const transactionClears = pgTable("transaction_clears", {
 });
 
 // Month close status per account
-export const periodCloses = pgTable("period_closes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
-  bankAccountId: text("bank_account_id").notNull(),
-  periodMonth: timestamp("period_month").notNull(), // first day of month
-  status: text("status").notNull().default("open"), // open | closed
-  closedAt: timestamp("closed_at"),
-  closedBy: varchar("closed_by").references(() => users.id),
-  reopenReason: text("reopen_reason"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const periodCloses = pgTable(
+  "period_closes",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    ownerUserId: varchar("owner_user_id").notNull().references(() => users.id),
+    bankAccountId: text("bank_account_id").notNull(),
+    periodMonth: timestamp("period_month").notNull(), // first day of month
+    status: text("status").notNull().default("open"), // open | closed
+    closedAt: timestamp("closed_at"),
+    closedBy: varchar("closed_by").references(() => users.id),
+    reopenReason: text("reopen_reason"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    ownerAccountPeriodUnique: uniqueIndex("period_closes_owner_account_period_uidx").on(
+      table.ownerUserId,
+      table.bankAccountId,
+      table.periodMonth
+    ),
+    ownerAccountStatusIdx: index("period_closes_owner_account_status_idx").on(
+      table.ownerUserId,
+      table.bankAccountId,
+      table.status
+    ),
+  })
+);
 
 // Structured review queue (kept additive with existing needsReview flow)
 export const reviewItems = pgTable("review_items", {

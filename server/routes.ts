@@ -1386,6 +1386,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error(`Failed to categorize transaction ${transaction.id}:`, error);
+          if (isPeriodLockedError(error)) {
+            results.push({
+              id: transaction.id,
+              status: 'locked',
+              error: 'This period is closed. Reopen it before updating this transaction.',
+            });
+            continue;
+          }
           results.push({ 
             id: transaction.id, 
             status: 'error', 
@@ -2794,11 +2802,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       status: "matched",
                       updatedAt: new Date(),
                     });
-                    await storage.updateTransaction(topMatch.id, {
-                      receiptAttached: true,
-                      receiptId: receipt.id,
-                    });
-                    await resolveOpenReviewItemsForEntity(user.id, "receipt", receipt.id);
+                    try {
+                      await storage.updateTransaction(topMatch.id, {
+                        receiptAttached: true,
+                        receiptId: receipt.id,
+                      });
+                      await resolveOpenReviewItemsForEntity(user.id, "receipt", receipt.id);
+                    } catch (error) {
+                      if (isPeriodLockedError(error)) {
+                        await storage.updateReceipt(receipt.id, {
+                          isMatched: false,
+                          matchedTransactionId: null,
+                          status: "unmatched",
+                          updatedAt: new Date(),
+                        });
+                        await upsertOpenReviewItem(
+                          user.id,
+                          "receipt_match",
+                          "receipt",
+                          receipt.id,
+                          "Suggested match is in a closed period. Reopen that period to attach this receipt.",
+                          [
+                            { label: "Reopen period", value: "reopen_period" },
+                            { label: "Link manually", value: "manual_link" },
+                          ],
+                          { suggestions: matches.slice(0, 3) }
+                        );
+                      } else {
+                        throw error;
+                      }
+                    }
                   } else {
                     await storage.updateReceipt(receipt.id, {
                       suggestedMatches: matches,
@@ -2976,6 +3009,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
     } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before matching receipts." });
+      }
       res.status(500).json({ message: "Failed to process match" });
     }
   });
@@ -3017,6 +3053,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Receipt deleted successfully" });
     } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before unlinking receipts." });
+      }
       res.status(500).json({ message: "Failed to delete receipt" });
     }
   });
