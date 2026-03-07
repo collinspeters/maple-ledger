@@ -65,6 +65,7 @@ export class TransferMatchingService {
         and(
           eq(transactions.userId, userId),
           eq(transactions.isTransfer, true),
+          isNull(transactions.deletedAt),
           gte(transactions.date, startDate),
           lte(transactions.date, endDate),
           ne(transactions.bankTransactionId, sourceTransaction.plaidTransactionId)
@@ -179,6 +180,7 @@ export class TransferMatchingService {
         and(
           eq(transactions.userId, userId),
           eq(transactions.isTransfer, true),
+          isNull(transactions.deletedAt),
           ne(transactions.transferPairId, null as any)
         )
       );

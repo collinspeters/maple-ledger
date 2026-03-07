@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { transactions } from '@shared/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, isNull } from 'drizzle-orm';
 import { T2125_CATEGORIES, getExpenseCategories, getIncomeCategories, type T2125Category } from '@shared/t2125-categories';
 
 // ---------------------------------------------------------------------------
@@ -155,6 +155,7 @@ export async function generateT2125Report(
     .where(
       and(
         eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
         gte(transactions.date, startDate),
         lte(transactions.date, endDate)
       )

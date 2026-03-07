@@ -6,7 +6,7 @@ import {
   journalEntries, 
   journalEntryLines 
 } from "@shared/schema";
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, lte, sql, isNull } from "drizzle-orm";
 
 const toNumber = (value: string | number | null | undefined): number => {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -236,6 +236,7 @@ export class FinancialReportsService {
       .leftJoin(chartOfAccounts, eq(transactions.category, chartOfAccounts.t2125Category))
       .where(and(
         eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
         eq(transactions.isExpense, false),
         eq(transactions.isTransfer, false),
         gte(transactions.date, period.startDate),
@@ -251,6 +252,7 @@ export class FinancialReportsService {
       .from(transactions)
       .where(and(
         eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
         eq(transactions.isExpense, true),
         eq(transactions.isTransfer, false),
         gte(transactions.date, period.startDate),
@@ -328,6 +330,7 @@ export class FinancialReportsService {
       .from(transactions)
       .where(and(
         eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
         eq(transactions.isExpense, true),
         eq(transactions.isTransfer, false),
         gte(transactions.date, period.startDate),
@@ -385,6 +388,7 @@ export class FinancialReportsService {
       .from(transactions)
       .where(and(
         eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
         eq(transactions.isTransfer, false)
       ));
 
@@ -393,6 +397,7 @@ export class FinancialReportsService {
       .from(transactions)
       .where(and(
         eq(transactions.userId, userId),
+        isNull(transactions.deletedAt),
         eq(transactions.isTransfer, false),
         eq(transactions.isPosted, true)
       ));

@@ -68,6 +68,7 @@ export const transactions = pgTable("transactions", {
   isPosted: boolean("is_posted").default(false), // Whether double-entry posting is complete
   // Chart of accounts reference
   chartAccountId: varchar("chart_account_id"), // Reference to chart_of_accounts.id
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -95,6 +96,7 @@ export const receipts = pgTable("receipts", {
   notes: text("notes"),
   tags: text("tags").array(),
   isAuditReady: boolean("is_audit_ready").default(false),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -548,6 +550,7 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true,
 }).extend({
   date: z.string().transform((str) => new Date(str)),
 });
@@ -556,6 +559,7 @@ export const insertReceiptSchema = createInsertSchema(receipts).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true,
 });
 
 export const insertAiSuggestionSchema = createInsertSchema(aiSuggestions).omit({

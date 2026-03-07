@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { bankConnections, transactions } from '../../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { getAccounts } from './plaid';
 import { TransferMatchingService } from './transfer-matching';
 
@@ -189,6 +189,7 @@ export class MultiAccountManager {
           and(
             eq(transactions.userId, userId),
             eq(transactions.isTransfer, true),
+            isNull(transactions.deletedAt),
             // Add date range filtering here if needed
           )
         );

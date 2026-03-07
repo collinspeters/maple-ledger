@@ -1,7 +1,7 @@
 // Double-entry accounting service for BookkeepAI
 import { db } from "../db";
 import { chartOfAccounts, journalEntries, journalEntryLines, transactions } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, isNull } from "drizzle-orm";
 import { findAccountByT2125Category } from "@shared/chart-of-accounts";
 
 interface DoubleEntryTransaction {
@@ -231,7 +231,10 @@ export class DoubleEntryService {
     const [transaction] = await db
       .select()
       .from(transactions)
-      .where(eq(transactions.id, transactionId));
+      .where(and(
+        eq(transactions.id, transactionId),
+        isNull(transactions.deletedAt)
+      ));
 
     if (!transaction || transaction.isPosted) {
       return; // Already posted or not found

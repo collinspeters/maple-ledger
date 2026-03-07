@@ -8,7 +8,6 @@ import { Strategy as LocalStrategy } from "passport-local";
 import Stripe from "stripe";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import crypto from "crypto";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, checkSubscriptionAccess, getTrialDaysRemaining } from "./services/auth";
@@ -3036,14 +3035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Receipt not found" });
       }
 
-      // Remove file from filesystem
-      try {
-        if (fs.existsSync(receipt.filePath)) {
-          fs.unlinkSync(receipt.filePath);
-        }
-      } catch (error) {
-        console.error("Error deleting receipt file:", error);
-      }
+      // Preserve source file for auditability; only mark record deleted.
 
       // If receipt was matched, update the transaction
       if (receipt.isMatched && receipt.matchedTransactionId) {
@@ -3061,7 +3053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { logAuditEvent } = await import("./services/audit-log");
       await logAuditEvent(ownerUserId, "receipt.deleted", "receipt", req.params.id);
 
-      res.json({ message: "Receipt deleted successfully" });
+      res.json({ message: "Receipt archived successfully" });
     } catch (error) {
       if (isPeriodLockedError(error)) {
         return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before unlinking receipts." });

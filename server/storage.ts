@@ -63,7 +63,7 @@ import {
   type InsertReviewMessage
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -295,7 +295,10 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(transactions)
-      .where(eq(transactions.userId, userId))
+      .where(and(
+        eq(transactions.userId, userId),
+        isNull(transactions.deletedAt)
+      ))
       .orderBy(desc(transactions.date))
       .limit(limit);
   }
@@ -307,6 +310,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(transactions.userId, userId),
+          isNull(transactions.deletedAt),
           gte(transactions.date, startDate),
           lte(transactions.date, endDate)
         )
@@ -354,7 +358,10 @@ export class DatabaseStorage implements IStorage {
     const [transaction] = await db
       .update(transactions)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(transactions.id, id))
+      .where(and(
+        eq(transactions.id, id),
+        isNull(transactions.deletedAt)
+      ))
       .returning();
     return transaction;
   }
@@ -363,7 +370,10 @@ export class DatabaseStorage implements IStorage {
     const [transaction] = await db
       .select()
       .from(transactions)
-      .where(eq(transactions.id, id));
+      .where(and(
+        eq(transactions.id, id),
+        isNull(transactions.deletedAt)
+      ));
     return transaction || null;
   }
 
@@ -376,14 +386,20 @@ export class DatabaseStorage implements IStorage {
         throw new Error("PERIOD_LOCKED");
       }
     }
-    await db.delete(transactions).where(eq(transactions.id, id));
+    await db
+      .update(transactions)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(transactions.id, id));
   }
 
   async getReceipts(userId: string): Promise<Receipt[]> {
     return await db
       .select()
       .from(receipts)
-      .where(eq(receipts.userId, userId))
+      .where(and(
+        eq(receipts.userId, userId),
+        isNull(receipts.deletedAt)
+      ))
       .orderBy(desc(receipts.createdAt));
   }
 
@@ -399,7 +415,10 @@ export class DatabaseStorage implements IStorage {
     const [receipt] = await db
       .update(receipts)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(receipts.id, id))
+      .where(and(
+        eq(receipts.id, id),
+        isNull(receipts.deletedAt)
+      ))
       .returning();
     return receipt;
   }
@@ -408,13 +427,19 @@ export class DatabaseStorage implements IStorage {
     const [receipt] = await db
       .select()
       .from(receipts)
-      .where(eq(receipts.id, id))
+      .where(and(
+        eq(receipts.id, id),
+        isNull(receipts.deletedAt)
+      ))
       .limit(1);
     return receipt || null;
   }
 
   async deleteReceipt(id: string): Promise<void> {
-    await db.delete(receipts).where(eq(receipts.id, id));
+    await db
+      .update(receipts)
+      .set({ deletedAt: new Date(), status: "deleted", updatedAt: new Date() })
+      .where(eq(receipts.id, id));
   }
 
   async getUnmatchedReceipts(userId: string): Promise<Receipt[]> {
@@ -424,6 +449,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(receipts.userId, userId),
+          isNull(receipts.deletedAt),
           eq(receipts.isMatched, false)
         )
       )
@@ -483,6 +509,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(transactions.userId, userId),
+          isNull(transactions.deletedAt),
           gte(transactions.date, startDate),
           lte(transactions.date, endDate)
         )
@@ -508,6 +535,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(transactions.userId, userId),
+          isNull(transactions.deletedAt),
           gte(transactions.date, prevStartDate),
           lte(transactions.date, prevEndDate)
         )
@@ -932,6 +960,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .where(and(
         eq(transactions.userId, ownerUserId),
+        isNull(transactions.deletedAt),
         eq(transactions.accountId, bankAccountId),
         lte(transactions.date, statementEndDate)
       ))
@@ -946,6 +975,7 @@ export class DatabaseStorage implements IStorage {
       .from(transactions)
       .where(and(
         eq(transactions.userId, ownerUserId),
+        isNull(transactions.deletedAt),
         eq(transactions.accountId, bankAccountId),
         lte(transactions.date, statementEndDate)
       ));
@@ -1106,6 +1136,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(transactions.userId, userId),
+          isNull(transactions.deletedAt),
           eq(transactions.isExpense, true),
           eq(transactions.isTransfer, false)
         )
@@ -1139,6 +1170,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(transactions.userId, userId),
+          isNull(transactions.deletedAt),
           gte(transactions.date, sixMonthsAgo)
         )
       )
