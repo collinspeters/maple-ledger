@@ -1419,7 +1419,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: results.length,
           success: results.filter(r => r.status === 'success').length,
           errors: results.filter(r => r.status === 'error').length,
-          skipped: results.filter(r => r.status === 'skipped').length
+          skipped: results.filter(r => r.status === 'skipped').length,
+          locked: results.filter(r => r.status === 'locked').length,
         }
       });
     } catch (error) {
@@ -1622,12 +1623,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (item.entityType === "receipt" && item.kind === "receipt_match") {
         const receipt = await storage.getReceiptById(item.entityId);
-        if (selectedOption === "manual_link" || selectedOption === "create_transaction") {
+        if (selectedOption === "manual_link" || selectedOption === "create_transaction" || selectedOption === "reopen_period") {
           requiresFollowUp = true;
           followUpMessage =
             selectedOption === "manual_link"
               ? "Open Receipts and link this receipt manually to a transaction."
-              : "Create a matching transaction first, then link this receipt.";
+              : selectedOption === "create_transaction"
+                ? "Create a matching transaction first, then link this receipt."
+                : "Reopen the closed period in Reconciliation, then confirm this receipt match.";
         } else if (selectedOption === "confirm" && receipt && receipt.userId === ownerUserId && !receipt.isMatched) {
           const modelSuggestion = (item.modelSuggestionJson as any) || {};
           const suggestions = Array.isArray(modelSuggestion?.suggestions) ? modelSuggestion.suggestions : [];
