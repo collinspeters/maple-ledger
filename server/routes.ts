@@ -2063,12 +2063,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ownerUserId,
         before: beforeSnapshot,
       });
-      res.json({ message: "Transaction deleted" });
+      res.json({ message: "Transaction archived" });
     } catch (error) {
       if (isPeriodLockedError(error)) {
         return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before deleting transactions." });
       }
       res.status(500).json({ message: "Failed to delete transaction" });
+    }
+  });
+
+  app.post("/api/transactions/:id/restore", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const existing = await storage.getTransactionIncludingDeleted(req.params.id);
+      if (!existing || existing.userId !== ownerUserId) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      const restored = await storage.restoreTransaction(req.params.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "transaction.restored", "transaction", req.params.id, {
+        actorUserId: user.id,
+        ownerUserId,
+      });
+      res.json({ message: "Transaction restored", transaction: restored });
+    } catch (error) {
+      if (isPeriodLockedError(error)) {
+        return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before restoring transactions." });
+      }
+      res.status(500).json({ message: "Failed to restore transaction" });
     }
   });
 
@@ -3059,6 +3082,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ code: "PERIOD_LOCKED", message: "This period is closed. Reopen it before unlinking receipts." });
       }
       res.status(500).json({ message: "Failed to delete receipt" });
+    }
+  });
+
+  app.post("/api/receipts/:id/restore", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const existing = await storage.getReceiptIncludingDeleted(req.params.id);
+      if (!existing || existing.userId !== ownerUserId) {
+        return res.status(404).json({ message: "Receipt not found" });
+      }
+      const restored = await storage.restoreReceipt(req.params.id);
+      const { logAuditEvent } = await import("./services/audit-log");
+      await logAuditEvent(ownerUserId, "receipt.restored", "receipt", req.params.id, {
+        actorUserId: user.id,
+        ownerUserId,
+      });
+      res.json({ message: "Receipt restored", receipt: restored });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to restore receipt" });
     }
   });
 

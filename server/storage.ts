@@ -85,12 +85,16 @@ export interface IStorage {
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransaction(id: string, updates: Partial<Transaction>): Promise<Transaction>;
   getTransaction(id: string): Promise<Transaction | null>;
+  getTransactionIncludingDeleted(id: string): Promise<Transaction | null>;
   deleteTransaction(id: string): Promise<void>;
+  restoreTransaction(id: string): Promise<Transaction>;
   
   // Receipt methods
   getReceipts(userId: string): Promise<Receipt[]>;
   createReceipt(receipt: InsertReceipt): Promise<Receipt>;
   updateReceipt(id: string, updates: Partial<Receipt>): Promise<Receipt>;
+  getReceiptIncludingDeleted(id: string): Promise<Receipt | null>;
+  restoreReceipt(id: string): Promise<Receipt>;
   getUnmatchedReceipts(userId: string): Promise<Receipt[]>;
   
   // AI Suggestion methods
@@ -377,6 +381,14 @@ export class DatabaseStorage implements IStorage {
     return transaction || null;
   }
 
+  async getTransactionIncludingDeleted(id: string): Promise<Transaction | null> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, id));
+    return transaction || null;
+  }
+
   async deleteTransaction(id: string): Promise<void> {
     const existing = await this.getTransaction(id);
     if (!existing) return;
@@ -390,6 +402,28 @@ export class DatabaseStorage implements IStorage {
       .update(transactions)
       .set({ deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(transactions.id, id));
+  }
+
+  async restoreTransaction(id: string): Promise<Transaction> {
+    const existing = await this.getTransactionIncludingDeleted(id);
+    if (!existing) {
+      throw new Error("NOT_FOUND");
+    }
+    if (!existing.deletedAt) {
+      return existing;
+    }
+    if (existing.accountId) {
+      const locked = await this.isPeriodClosed(existing.userId, existing.accountId, new Date(existing.date));
+      if (locked) {
+        throw new Error("PERIOD_LOCKED");
+      }
+    }
+    const [restored] = await db
+      .update(transactions)
+      .set({ deletedAt: null, updatedAt: new Date() })
+      .where(eq(transactions.id, id))
+      .returning();
+    return restored;
   }
 
   async getReceipts(userId: string): Promise<Receipt[]> {
@@ -435,11 +469,44 @@ export class DatabaseStorage implements IStorage {
     return receipt || null;
   }
 
+  async getReceiptIncludingDeleted(id: string): Promise<Receipt | null> {
+    const [receipt] = await db
+      .select()
+      .from(receipts)
+      .where(eq(receipts.id, id))
+      .limit(1);
+    return receipt || null;
+  }
+
   async deleteReceipt(id: string): Promise<void> {
     await db
       .update(receipts)
       .set({ deletedAt: new Date(), status: "deleted", updatedAt: new Date() })
       .where(eq(receipts.id, id));
+  }
+
+  async restoreReceipt(id: string): Promise<Receipt> {
+    const existing = await this.getReceiptIncludingDeleted(id);
+    if (!existing) {
+      throw new Error("NOT_FOUND");
+    }
+    if (!existing.deletedAt) {
+      return existing;
+    }
+    const [restored] = await db
+      .update(receipts)
+      .set({
+        deletedAt: null,
+        status: "unmatched",
+        isMatched: false,
+        matchedTransactionId: null,
+        matchConfidence: null,
+        isAuditReady: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(receipts.id, id))
+      .returning();
+    return restored;
   }
 
   async getUnmatchedReceipts(userId: string): Promise<Receipt[]> {
