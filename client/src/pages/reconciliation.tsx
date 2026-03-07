@@ -30,6 +30,18 @@ type PeriodCloseResponse = {
   reopen_reason?: string | null;
 };
 
+type CloseChecklist = {
+  balanced: boolean;
+  unresolved_critical_review_items: number;
+  uncategorized_expense_transactions: number;
+};
+
+type CloseErrorPayload = {
+  message?: string;
+  difference?: number;
+  checklist?: CloseChecklist;
+};
+
 function monthKey(d: Date): string {
   const y = d.getFullYear();
   const m = `${d.getMonth() + 1}`.padStart(2, "0");
@@ -45,6 +57,7 @@ export default function ReconciliationPage() {
   const [statementEndDate, setStatementEndDate] = useState("");
   const [showReopenDialog, setShowReopenDialog] = useState(false);
   const [reopenReason, setReopenReason] = useState("");
+  const [closeError, setCloseError] = useState<CloseErrorPayload | null>(null);
 
   const { data: accountsData, isLoading: accountsLoading, error: accountsError } = useQuery<{ accounts: ReconAccount[]; data?: { accounts: ReconAccount[] } }>({
     queryKey: ["/api/reconciliation/accounts"],
@@ -92,6 +105,7 @@ export default function ReconciliationPage() {
         }),
       }),
     onSuccess: () => {
+      setCloseError(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       toast({ title: "Statement saved", description: "Reconciliation statement updated." });
     },
@@ -111,6 +125,7 @@ export default function ReconciliationPage() {
         body: JSON.stringify({}),
       }),
     onSuccess: (data) => {
+      setCloseError(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       toast({ title: "Auto-clear complete", description: `Cleared ${data.cleared_count ?? 0} transactions.` });
     },
@@ -130,6 +145,7 @@ export default function ReconciliationPage() {
         body: JSON.stringify({ transaction_id: transactionId, cleared }),
       }),
     onSuccess: () => {
+      setCloseError(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
     },
     onError: (error: any) => {
@@ -142,12 +158,21 @@ export default function ReconciliationPage() {
   };
 
   const finishReconciliation = useMutation({
-    mutationFn: async () =>
-      apiRequest(`/api/reconciliation/${selectedAccount}/${selectedMonth}/finish`, {
+    mutationFn: async () => {
+      const res = await fetch(`/api/reconciliation/${selectedAccount}/${selectedMonth}/finish`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({}),
-      }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw payload;
+      }
+      return payload;
+    },
     onSuccess: () => {
+      setCloseError(null);
       queryClient.invalidateQueries({ queryKey: activeQueryKey });
       queryClient.invalidateQueries({ queryKey: ["/api/review/items"] });
       queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
@@ -157,6 +182,11 @@ export default function ReconciliationPage() {
       });
     },
     onError: (error: any) => {
+      setCloseError({
+        message: error?.message,
+        difference: error?.difference,
+        checklist: error?.checklist,
+      });
       toast({
         title: "Cannot finish yet",
         description: error?.message || "Resolve remaining checklist items first.",
@@ -166,16 +196,30 @@ export default function ReconciliationPage() {
   });
 
   const closePeriod = useMutation({
-    mutationFn: async () =>
-      apiRequest(`/api/period-close/${selectedAccount}/${selectedMonth}/close`, {
+    mutationFn: async () => {
+      const res = await fetch(`/api/period-close/${selectedAccount}/${selectedMonth}/close`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({}),
-      }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw payload;
+      }
+      return payload;
+    },
     onSuccess: () => {
+      setCloseError(null);
       queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
       toast({ title: "Period closed", description: "Writes are now locked for this month/account." });
     },
     onError: (error: any) => {
+      setCloseError({
+        message: error?.message,
+        difference: error?.difference,
+        checklist: error?.checklist,
+      });
       toast({ title: "Close failed", description: error?.message || "Could not close period", variant: "destructive" });
     },
   });
@@ -189,6 +233,7 @@ export default function ReconciliationPage() {
     onSuccess: () => {
       setShowReopenDialog(false);
       setReopenReason("");
+      setCloseError(null);
       queryClient.invalidateQueries({ queryKey: [`/api/period-close/${selectedAccount}/${selectedMonth}`] });
       toast({ title: "Period reopened", description: "You can edit this period again." });
     },
@@ -221,6 +266,21 @@ export default function ReconciliationPage() {
       {isPeriodClosed && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           This period is closed. Reopen it to edit statement values or clear flags.
+        </div>
+      )}
+
+      {closeError?.checklist && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
+          <p className="font-medium">{closeError.message || "Cannot close this period yet."}</p>
+          {!closeError.checklist.balanced && (
+            <p>- Reconciliation difference must be zero (current: ${(closeError.difference ?? difference).toFixed(2)}).</p>
+          )}
+          {closeError.checklist.unresolved_critical_review_items > 0 && (
+            <p>- Resolve {closeError.checklist.unresolved_critical_review_items} critical review item(s) in `/review`.</p>
+          )}
+          {closeError.checklist.uncategorized_expense_transactions > 0 && (
+            <p>- Categorize {closeError.checklist.uncategorized_expense_transactions} expense transaction(s) for this period.</p>
+          )}
         </div>
       )}
 

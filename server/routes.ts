@@ -1152,22 +1152,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const statementEndDate = new Date(statement.statementEndDate);
       const bookEndingBalance = await storage.getBookEndingBalance(ownerUserId, bankAccountId, statementEndDate);
       const difference = Number(statement.endingBalance) - bookEndingBalance;
-      if (Math.abs(difference) > 0.005) {
-        return res.status(409).json({ message: "Cannot close period until reconciliation difference is zero (or tolerance)" });
-      }
-
-      const openItems = await storage.getOpenReviewItems(ownerUserId);
       const { start: periodStart, end: periodEnd } = getPeriodBoundsUtc(periodMonth);
-      const txns = await storage.getTransactions(ownerUserId);
-      const txnIds = new Set(txns
+      const [openItems, txns] = await Promise.all([
+        storage.getOpenReviewItems(ownerUserId),
+        storage.getTransactions(ownerUserId),
+      ]);
+      const periodTransactions = txns.filter((t) => t.accountId === bankAccountId && new Date(t.date) >= periodStart && new Date(t.date) <= periodEnd);
+      const txnIds = new Set(periodTransactions
         .filter((t) => t.accountId === bankAccountId && new Date(t.date) >= periodStart && new Date(t.date) <= periodEnd)
         .map((t) => t.id));
-      const unresolvedCritical = openItems.some((item) =>
+      const unresolvedCriticalCount = openItems.filter((item) =>
         (item.kind === "reconciliation" && item.entityType === "bank_statement" && item.entityId === statement.id) ||
         (item.kind === "txn_kind" && item.entityType === "transaction" && txnIds.has(item.entityId))
-      );
-      if (unresolvedCritical) {
-        return res.status(409).json({ message: "Cannot close period with unresolved critical review items" });
+      ).length;
+      const uncategorizedExpenseCount = periodTransactions.filter((t) => {
+        const kind = deriveTxnKind(t as any);
+        return kind === "expense" && !t.category;
+      }).length;
+      const checklist = {
+        balanced: Math.abs(difference) <= 0.005,
+        unresolved_critical_review_items: unresolvedCriticalCount,
+        uncategorized_expense_transactions: uncategorizedExpenseCount,
+      };
+      if (!checklist.balanced || checklist.unresolved_critical_review_items > 0 || checklist.uncategorized_expense_transactions > 0) {
+        return res.status(409).json({
+          ok: false,
+          message: "Cannot close period yet.",
+          difference,
+          checklist,
+        });
       }
 
       const closed = await storage.upsertPeriodClose({
