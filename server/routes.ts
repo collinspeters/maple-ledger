@@ -377,6 +377,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
         emailVerificationToken,
       });
+      try {
+        const { sendVerificationEmail } = await import("./services/email");
+        await sendVerificationEmail(user.email, emailVerificationToken);
+      } catch (emailError) {
+        console.error("Verification email send failed:", emailError);
+      }
       
       // Log in the user
       req.login(user, (err: any) => {
@@ -477,7 +483,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       resetPasswordExpiresAt: expires,
     } as Partial<User>);
 
-    // v1 placeholder: return token for manual email wiring
+    try {
+      const { sendPasswordResetEmail } = await import("./services/email");
+      await sendPasswordResetEmail(user.email, token);
+    } catch (emailError) {
+      console.error("Password reset email send failed:", emailError);
+    }
+
     return res.json({
       message: "If that email exists, a reset link has been generated.",
       ...(process.env.NODE_ENV !== "production" ? { resetToken: token, expiresAt: expires } : {}),
@@ -2212,29 +2224,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Receipt routes
-  app.get("/api/receipts", requireAuth, requireSubscription, async (req, res) => {
-    try {
-      const user = req.user as User;
-      const ownerUserId = await getDataOwnerUserId(user);
-      const receipts = await storage.getReceipts(ownerUserId);
-      res.json(receipts);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch receipts" });
-    }
-  });
-
-  app.get("/api/receipts/archived", requireAuth, requireSubscription, async (req, res) => {
-    try {
-      const user = req.user as User;
-      const ownerUserId = await getDataOwnerUserId(user);
-      const receipts = await storage.getArchivedReceipts(ownerUserId);
-      res.json(receipts);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch archived receipts" });
-    }
-  });
-
   // Financial summary route
   app.get("/api/financial-summary", requireAuth, requireSubscription, async (req, res) => {
     try {
@@ -2536,11 +2525,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Sync transactions immediately after connecting
-        const syncData = await syncTransactions(tokenData.accessToken);
+        const maxPages = 50;
+        let pageCount = 0;
+        let cursor: string | undefined = undefined;
+        let hasMore = true;
+        const allAdded: any[] = [];
+        while (hasMore && pageCount < maxPages) {
+          const syncData = await syncTransactions(tokenData.accessToken, cursor);
+          allAdded.push(...syncData.added);
+          hasMore = syncData.hasMore;
+          cursor = syncData.nextCursor;
+          pageCount += 1;
+        }
         let syncedCount = 0;
         
         // Process added transactions using hybrid categorization system
-        for (const transaction of syncData.added) {
+        for (const transaction of allAdded) {
           try {
             // Get user's account IDs for transfer detection
             const userAccountIds = connections.map(conn => conn.accountId);
@@ -2768,6 +2768,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(receipts);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch receipts" });
+    }
+  });
+
+  app.get("/api/receipts/archived", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const receipts = await storage.getArchivedReceipts(ownerUserId);
+      res.json(receipts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch archived receipts" });
     }
   });
 
@@ -3129,6 +3140,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Financial Reports Routes
+  app.get("/api/reports/:report_type/export", requireAuth, requireSubscription, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const ownerUserId = await getDataOwnerUserId(user);
+      const reportType = String(req.params.report_type || "").trim().toLowerCase();
+      const from = req.query?.from ? new Date(String(req.query.from)) : null;
+      const to = req.query?.to ? new Date(String(req.query.to)) : null;
+      const asOf = req.query?.asOf ? new Date(String(req.query.asOf)) : null;
+
+      const startDate = from || new Date(new Date().getFullYear(), 0, 1);
+      const endDate = to || new Date();
+      const asOfDate = asOf || endDate;
+
+      let reportData: any;
+      let reportLabel = reportType;
+
+      if (reportType === "profit-loss") {
+        const { generateProfitLossReport } = await import("./services/reports");
+        reportData = await generateProfitLossReport(ownerUserId, startDate, endDate);
+        reportLabel = "Profit & Loss";
+      } else if (reportType === "balance-sheet") {
+        const { generateBalanceSheetReport } = await import("./services/reports");
+        reportData = await generateBalanceSheetReport(ownerUserId, asOfDate);
+        reportLabel = "Balance Sheet";
+      } else if (reportType === "tax-summary") {
+        const { generateTaxSummaryReport } = await import("./services/reports");
+        reportData = await generateTaxSummaryReport(ownerUserId, startDate, endDate);
+        reportLabel = "Tax Summary";
+      } else if (reportType === "trial-balance") {
+        const { generateTrialBalanceReport } = await import("./services/reports");
+        reportData = await generateTrialBalanceReport(ownerUserId, asOfDate);
+        reportLabel = "Trial Balance";
+      } else if (reportType === "general-ledger") {
+        const { generateGeneralLedgerReport } = await import("./services/reports");
+        reportData = await generateGeneralLedgerReport(ownerUserId, startDate, endDate);
+        reportLabel = "General Ledger";
+      } else if (reportType === "transfers-summary") {
+        const { generateTransferSummaryReport } = await import("./services/reports");
+        reportData = await generateTransferSummaryReport(ownerUserId, startDate, endDate);
+        reportLabel = "Transfers Summary";
+      } else if (reportType === "owner-equity-summary") {
+        const { generateOwnerEquitySummaryReport } = await import("./services/reports");
+        reportData = await generateOwnerEquitySummaryReport(ownerUserId, startDate, endDate);
+        reportLabel = "Owner Equity Summary";
+      } else if (reportType === "t2125") {
+        const { generateT2125Report } = await import("./services/t2125-report");
+        reportData = await generateT2125Report(ownerUserId, startDate, endDate);
+        reportLabel = "T2125 Summary";
+      } else {
+        return res.status(400).json({ message: "Unsupported report type for PDF export" });
+      }
+
+      const esc = (value: string) =>
+        value
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+
+      const jsonContent = esc(JSON.stringify(reportData, null, 2));
+      const generatedAt = new Date().toISOString();
+      const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${esc(reportLabel)} - MapleLedger</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; margin: 28px; color: #111827; }
+      h1 { margin: 0 0 8px 0; font-size: 22px; }
+      p.meta { margin: 0 0 20px 0; color: #4b5563; font-size: 12px; }
+      pre { white-space: pre-wrap; word-break: break-word; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; font-size: 11px; line-height: 1.4; }
+      .brand { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="brand">MapleLedger</div>
+    <h1>${esc(reportLabel)}</h1>
+    <p class="meta">Generated at ${esc(generatedAt)}</p>
+    <pre>${jsonContent}</pre>
+  </body>
+</html>`;
+
+      const puppeteer = await import("puppeteer");
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: "networkidle0" });
+        const pdf = await page.pdf({
+          format: "A4",
+          printBackground: true,
+          margin: { top: "12mm", right: "10mm", bottom: "12mm", left: "10mm" },
+        });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=\"${reportType}.pdf\"`);
+        return res.send(Buffer.from(pdf));
+      } finally {
+        await browser.close();
+      }
+    } catch (error) {
+      console.error("PDF export error:", error);
+      res.status(500).json({ message: "Failed to export PDF" });
+    }
+  });
+
   app.get("/api/reports/profit-loss", requireAuth, requireSubscription, async (req, res) => {
     try {
       const user = req.user as User;

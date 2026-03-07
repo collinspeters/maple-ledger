@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,6 +21,7 @@ import Review from "@/pages/review";
 import Reports from "@/pages/reports";
 import Banking from "@/pages/banking";
 import Settings from "@/pages/settings";
+import OnboardingPage from "@/pages/onboarding";
 import ChartOfAccountsPage from "@/pages/chart-of-accounts";
 import AIAssistant from "@/pages/ai-assistant";
 import AccessPage from "@/pages/access";
@@ -33,8 +34,13 @@ import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import Topbar from "@/components/layout/topbar";
 
+function needsOnboarding(user: any): boolean {
+  return !user?.businessName || !user?.province || !user?.fiscalYearStart;
+}
+
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -46,6 +52,10 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
   if (!user) {
     return <Login />;
+  }
+
+  if (needsOnboarding(user) && location !== "/onboarding") {
+    return <OnboardingPage />;
   }
 
   return (
@@ -73,6 +83,7 @@ function AuthRoute({ component: Component }: { component: React.ComponentType })
   }
 
   if (user) {
+    if (needsOnboarding(user)) return <OnboardingPage />;
     return <Dashboard />;
   }
 
@@ -103,6 +114,7 @@ function Router() {
       <Route path="/reconciliation" component={() => <ProtectedRoute component={ReconciliationPage} />} />
 
       <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
+      <Route path="/onboarding" component={() => <ProtectedRoute component={OnboardingPage} />} />
       <Route path="/subscribe" component={Subscribe} />
       <Route component={NotFound} />
     </Switch>

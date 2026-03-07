@@ -256,18 +256,27 @@ export async function syncBankConnection(
 
   let rawAdded: any[] = [];
   let hasMore = false;
+  const maxPages = 50;
+  let pageCount = 0;
 
   if (useMockData) {
-    const delta = fetchMockDelta(connection.syncCursor);
-    rawAdded = delta.added;
-    nextCursor = delta.nextCursor;
-    hasMore = delta.hasMore;
+    do {
+      const delta = fetchMockDelta(nextCursor);
+      rawAdded.push(...delta.added);
+      nextCursor = delta.nextCursor;
+      hasMore = delta.hasMore;
+      pageCount += 1;
+    } while (hasMore && pageCount < maxPages);
   } else {
-    const syncData = await syncTransactions(connection.plaidAccessToken, connection.syncCursor || undefined);
-    rawAdded = syncData.added;
-    nextCursor = syncData.nextCursor;
-    hasMore = syncData.hasMore;
-    removed = syncData.removed.length;
+    do {
+      const syncData = await syncTransactions(connection.plaidAccessToken, nextCursor || undefined);
+      rawAdded.push(...syncData.added);
+      nextCursor = syncData.nextCursor;
+      hasMore = syncData.hasMore;
+      removed += syncData.removed.length;
+      modified += syncData.modified.length;
+      pageCount += 1;
+    } while (hasMore && pageCount < maxPages);
   }
 
   // Process added transactions
